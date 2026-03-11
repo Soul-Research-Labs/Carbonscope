@@ -20,7 +20,7 @@ export default function ReportsPage() {
     }
     if (user) {
       listReports()
-        .then(setReports)
+        .then((res) => setReports(res.items))
         .catch((e) => setError(e.message))
         .finally(() => setFetching(false));
     }

@@ -19,6 +19,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(res.status, body.detail ?? res.statusText);
   }
 
+  if (res.status === 204) return undefined as T;
   return res.json();
 }
 
@@ -29,6 +30,15 @@ export class ApiError extends Error {
   ) {
     super(message);
   }
+}
+
+// ── Shared types ────────────────────────────────────────────────────
+
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  limit: number;
+  offset: number;
 }
 
 // ── Auth ────────────────────────────────────────────────────────────
@@ -64,6 +74,33 @@ export async function login(email: string, password: string): Promise<Token> {
   return request<Token>("/auth/login", {
     method: "POST",
     body: JSON.stringify({ email, password }),
+  });
+}
+
+export async function getProfile(): Promise<User> {
+  return request<User>("/auth/me");
+}
+
+export async function updateProfile(data: {
+  full_name?: string;
+  email?: string;
+}): Promise<User> {
+  return request<User>("/auth/me", {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function changePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<void> {
+  return request<void>("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify({
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
   });
 }
 
@@ -114,8 +151,37 @@ export async function uploadData(data: {
   });
 }
 
-export async function listDataUploads(): Promise<DataUpload[]> {
-  return request<DataUpload[]>("/data");
+export async function listDataUploads(params?: {
+  year?: number;
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<DataUpload>> {
+  const q = new URLSearchParams();
+  if (params?.year != null) q.set("year", String(params.year));
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request<PaginatedResponse<DataUpload>>(`/data${qs ? `?${qs}` : ""}`);
+}
+
+export async function getUploadById(id: string): Promise<DataUpload> {
+  return request<DataUpload>(`/data/${encodeURIComponent(id)}`);
+}
+
+export async function patchUpload(
+  id: string,
+  data: { year?: number; provided_data?: Record<string, unknown>; notes?: string },
+): Promise<DataUpload> {
+  return request<DataUpload>(`/data/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteUpload(id: string): Promise<void> {
+  return request<void>(`/data/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
 }
 
 // ── Estimation & Reports ────────────────────────────────────────────
@@ -146,13 +212,51 @@ export async function createEstimate(
   });
 }
 
-export async function listReports(year?: number): Promise<EmissionReport[]> {
-  const q = year ? `?year=${year}` : "";
-  return request<EmissionReport[]>(`/reports${q}`);
+export async function listReports(params?: {
+  year?: number;
+  confidenceMin?: number;
+  sortBy?: "created_at" | "year" | "total" | "confidence";
+  order?: "asc" | "desc";
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<EmissionReport>> {
+  const q = new URLSearchParams();
+  if (params?.year != null) q.set("year", String(params.year));
+  if (params?.confidenceMin != null) q.set("confidence_min", String(params.confidenceMin));
+  if (params?.sortBy) q.set("sort_by", params.sortBy);
+  if (params?.order) q.set("order", params.order);
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request<PaginatedResponse<EmissionReport>>(`/reports${qs ? `?${qs}` : ""}`);
 }
 
 export async function getReport(id: string): Promise<EmissionReport> {
   return request<EmissionReport>(`/reports/${encodeURIComponent(id)}`);
+}
+
+export async function deleteReport(id: string): Promise<void> {
+  return request<void>(`/reports/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+  });
+}
+
+export async function exportReports(
+  format: "csv" | "json" = "csv",
+  year?: number,
+): Promise<Blob> {
+  const token =
+    typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const q = new URLSearchParams({ format });
+  if (year != null) q.set("year", String(year));
+  const headers: Record<string, string> = {};
+  if (token) headers["Authorization"] = `Bearer ${token}`;
+  const res = await fetch(`${BASE}/reports/export?${q}`, { headers });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new ApiError(res.status, body.detail ?? res.statusText);
+  }
+  return res.blob();
 }
 
 // ── Dashboard ───────────────────────────────────────────────────────
