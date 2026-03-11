@@ -51,7 +51,9 @@ export default function QuestionnaireDetailPage() {
         if (!prev) return prev;
         return {
           ...prev,
-          questions: prev.questions.map((q) => (q.id === updated.id ? updated : q)),
+          questions: prev.questions.map((q) =>
+            q.id === updated.id ? updated : q,
+          ),
         };
       });
       setEditingId(null);
@@ -64,12 +66,16 @@ export default function QuestionnaireDetailPage() {
 
   async function handleApprove(question: QuestionOut) {
     try {
-      const updated = await updateQuestion(id, question.id, { status: "approved" });
+      const updated = await updateQuestion(id, question.id, {
+        status: "approved",
+      });
       setDetail((prev) => {
         if (!prev) return prev;
         return {
           ...prev,
-          questions: prev.questions.map((q) => (q.id === updated.id ? updated : q)),
+          questions: prev.questions.map((q) =>
+            q.id === updated.id ? updated : q,
+          ),
         };
       });
     } catch {
@@ -104,7 +110,9 @@ export default function QuestionnaireDetailPage() {
     return <div className="p-8 text-center text-[var(--muted)]">Loading…</div>;
   }
 
-  const approvedCount = detail.questions.filter((q) => q.status === "approved").length;
+  const approvedCount = detail.questions.filter(
+    (q) => q.status === "approved",
+  ).length;
   const totalCount = detail.questions.length;
 
   return (
@@ -135,7 +143,9 @@ export default function QuestionnaireDetailPage() {
       <div className="w-full h-2 bg-gray-800 rounded mb-6">
         <div
           className="h-2 bg-[var(--primary)] rounded transition-all"
-          style={{ width: `${totalCount ? (approvedCount / totalCount) * 100 : 0}%` }}
+          style={{
+            width: `${totalCount ? (approvedCount / totalCount) * 100 : 0}%`,
+          }}
         />
       </div>
 
@@ -154,10 +164,14 @@ export default function QuestionnaireDetailPage() {
           >
             <div className="flex items-start justify-between mb-3">
               <div>
-                <span className="text-sm font-mono text-[var(--muted)] mr-2">Q{q.question_number}</span>
+                <span className="text-sm font-mono text-[var(--muted)] mr-2">
+                  Q{q.question_number}
+                </span>
                 <span className="font-medium">{q.question_text}</span>
               </div>
-              <span className={`text-xs font-medium uppercase ${statusColor(q.status)}`}>
+              <span
+                className={`text-xs font-medium uppercase ${statusColor(q.status)}`}
+              >
                 {q.status}
               </span>
             </div>
@@ -171,7 +185,12 @@ export default function QuestionnaireDetailPage() {
             {/* AI Draft */}
             {q.ai_draft_answer && (
               <div className="mb-3">
-                <p className="text-xs text-[var(--muted)] mb-1">AI Draft {q.confidence ? `(${Math.round(q.confidence * 100)}% confidence)` : ""}</p>
+                <p className="text-xs text-[var(--muted)] mb-1">
+                  AI Draft{" "}
+                  {q.confidence
+                    ? `(${Math.round(q.confidence * 100)}% confidence)`
+                    : ""}
+                </p>
                 <p className="text-sm text-[var(--foreground)] bg-gray-900/50 rounded p-3">
                   {q.ai_draft_answer}
                 </p>

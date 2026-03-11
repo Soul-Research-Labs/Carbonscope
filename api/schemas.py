@@ -390,3 +390,95 @@ class ScenarioOut(BaseModel):
     updated_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── Subscriptions & Billing ─────────────────────────────────────────
+
+
+class SubscriptionOut(BaseModel):
+    id: str
+    company_id: str
+    plan: str
+    status: str
+    current_period_start: datetime | None = None
+    current_period_end: datetime | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class SubscriptionCreate(BaseModel):
+    plan: str = Field(pattern="^(free|pro|enterprise)$")
+
+
+class CreditBalanceOut(BaseModel):
+    company_id: str
+    balance: int
+    plan: str
+
+
+class CreditLedgerOut(BaseModel):
+    id: str
+    amount: int
+    reason: str
+    balance_after: int
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── Alerts ──────────────────────────────────────────────────────────
+
+
+class AlertOut(BaseModel):
+    id: str
+    company_id: str
+    alert_type: str
+    severity: str
+    title: str
+    message: str
+    is_read: bool
+    acknowledged_at: datetime | None = None
+    metadata_json: dict[str, Any] | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── Data Marketplace ────────────────────────────────────────────────
+
+
+class DataListingCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=500)
+    description: str | None = None
+    data_type: str = Field(pattern="^(emission_report|benchmark|supply_chain)$")
+    report_id: str  # source report to anonymize
+    price_credits: int = Field(ge=0, default=0)
+
+
+class DataListingOut(BaseModel):
+    id: str
+    seller_company_id: str
+    title: str
+    description: str | None = None
+    data_type: str
+    industry: str
+    region: str
+    year: int
+    price_credits: int
+    anonymized_data: dict[str, Any]
+    status: str
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class DataPurchaseOut(BaseModel):
+    id: str
+    listing_id: str
+    buyer_company_id: str
+    price_credits: int
+    listing: DataListingOut
+    created_at: datetime
+
+    model_config = {"from_attributes": True}

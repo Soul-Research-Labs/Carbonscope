@@ -21,7 +21,9 @@ export default function QuestionnairesPage() {
   const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"list" | "upload" | "templates">("list");
+  const [activeTab, setActiveTab] = useState<"list" | "upload" | "templates">(
+    "list",
+  );
 
   const fetchData = useCallback(async () => {
     try {
@@ -91,13 +93,16 @@ export default function QuestionnairesPage() {
       exported: "bg-gray-900/30 text-gray-400",
     };
     return (
-      <span className={`px-2 py-0.5 rounded text-xs font-medium ${colors[status] || "bg-gray-800 text-gray-400"}`}>
+      <span
+        className={`px-2 py-0.5 rounded text-xs font-medium ${colors[status] || "bg-gray-800 text-gray-400"}`}
+      >
         {status}
       </span>
     );
   };
 
-  if (loading) return <div className="p-8 text-center text-[var(--muted)]">Loading…</div>;
+  if (loading)
+    return <div className="p-8 text-center text-[var(--muted)]">Loading…</div>;
 
   return (
     <div className="max-w-5xl mx-auto p-8">
@@ -121,7 +126,11 @@ export default function QuestionnairesPage() {
                 : "border-transparent text-[var(--muted)] hover:text-[var(--foreground)]"
             }`}
           >
-            {tab === "list" ? "My Questionnaires" : tab === "upload" ? "Upload Document" : "Template Library"}
+            {tab === "list"
+              ? "My Questionnaires"
+              : tab === "upload"
+                ? "Upload Document"
+                : "Template Library"}
           </button>
         ))}
       </div>
@@ -130,8 +139,9 @@ export default function QuestionnairesPage() {
       {activeTab === "upload" && (
         <div className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] p-8 text-center">
           <p className="text-[var(--muted)] mb-4">
-            Upload a sustainability questionnaire (PDF, DOCX, XLSX, or CSV). Our AI will extract
-            questions and generate draft responses using your company data.
+            Upload a sustainability questionnaire (PDF, DOCX, XLSX, or CSV). Our
+            AI will extract questions and generate draft responses using your
+            company data.
           </p>
           <label className="inline-block cursor-pointer">
             <input
@@ -163,9 +173,13 @@ export default function QuestionnairesPage() {
                   {tpl.framework}
                 </span>
               </div>
-              <p className="text-sm text-[var(--muted)] mb-3">{tpl.description}</p>
+              <p className="text-sm text-[var(--muted)] mb-3">
+                {tpl.description}
+              </p>
               <div className="flex items-center justify-between">
-                <span className="text-xs text-[var(--muted)]">{tpl.question_count} questions</span>
+                <span className="text-xs text-[var(--muted)]">
+                  {tpl.question_count} questions
+                </span>
                 <button
                   onClick={() => handleApplyTemplate(tpl.id)}
                   className="px-3 py-1.5 rounded bg-[var(--primary)] text-black text-sm font-medium hover:opacity-90"
@@ -183,7 +197,8 @@ export default function QuestionnairesPage() {
         <div className="space-y-3">
           {questionnaires.length === 0 ? (
             <p className="text-center text-[var(--muted)] py-12">
-              No questionnaires yet. Upload a document or apply a template to get started.
+              No questionnaires yet. Upload a document or apply a template to
+              get started.
             </p>
           ) : (
             questionnaires.map((q) => (
@@ -201,7 +216,8 @@ export default function QuestionnairesPage() {
                   <div className="flex items-center gap-3 mt-1">
                     {statusBadge(q.status)}
                     <span className="text-xs text-[var(--muted)]">
-                      {q.file_type.toUpperCase()} · {(q.file_size / 1024).toFixed(0)} KB
+                      {q.file_type.toUpperCase()} ·{" "}
+                      {(q.file_size / 1024).toFixed(0)} KB
                     </span>
                     <span className="text-xs text-[var(--muted)]">
                       {new Date(q.created_at).toLocaleDateString()}

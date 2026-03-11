@@ -22,7 +22,7 @@ from api.schemas import (
     EstimateRequest,
     PaginatedResponse,
 )
-from api.services.subnet_bridge import estimate_emissions_local
+from api.services.subnet_bridge import estimate_emissions, estimate_emissions_local
 from api.services.webhooks import dispatch_event
 from api.services import audit
 
@@ -77,8 +77,13 @@ async def create_estimate(
     if company.revenue_usd and not pd.get("revenue_usd"):
         pd["revenue_usd"] = company.revenue_usd
 
-    # Run estimation (local for now — swap to estimate_emissions() for subnet)
-    est = estimate_emissions_local(questionnaire)
+    # Run estimation — local or subnet based on config
+    from api.config import ESTIMATION_MODE
+
+    if ESTIMATION_MODE == "subnet":
+        est = await estimate_emissions(questionnaire)
+    else:
+        est = estimate_emissions_local(questionnaire)
 
     emissions = est["emissions"]
 

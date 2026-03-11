@@ -1,6 +1,8 @@
-"""FastAPI dependencies — current user extraction, DB sessions."""
+"""FastAPI dependencies — current user extraction, plan gates, DB sessions."""
 
 from __future__ import annotations
+
+from typing import Callable
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -37,3 +39,49 @@ async def get_current_user(
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
     return user
+
+
+def require_plan(feature: str) -> Callable:
+    """Dependency factory that gates an endpoint behind a plan feature.
+
+    Usage: Depends(require_plan("pdf_export"))
+    """
+
+    async def _check(
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        from api.services.subscriptions import check_feature_access
+
+        if not await check_feature_access(db, user.company_id, feature):
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=f"Feature '{feature}' requires a Pro or Enterprise plan. Upgrade at /billing/subscription",
+            )
+        return user
+
+    return _check
+
+
+def require_credits(operation: str) -> Callable:
+    """Dependency factory that checks and deducts credits for an operation.
+
+    Usage: Depends(require_credits("estimate"))
+    """
+
+    async def _check(
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        from api.services.subscriptions import check_credit_and_deduct
+
+        try:
+            await check_credit_and_deduct(db, user.company_id, operation)
+        except ValueError as e:
+            raise HTTPException(
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
+                detail=str(e),
+            )
+        return user
+
+    return _check

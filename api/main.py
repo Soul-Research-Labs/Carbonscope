@@ -24,6 +24,9 @@ from api.routes.webhook_routes import router as webhook_router
 from api.routes.audit_routes import router as audit_router
 from api.routes.questionnaire_routes import router as questionnaire_router
 from api.routes.scenario_routes import router as scenario_router
+from api.routes.billing_routes import router as billing_router
+from api.routes.alert_routes import router as alert_router
+from api.routes.marketplace_routes import router as marketplace_router
 
 logger = logging.getLogger(__name__)
 
@@ -31,16 +34,21 @@ logger = logging.getLogger(__name__)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Startup: create DB tables. Shutdown: no-op."""
+    """Startup: create DB tables, start scheduler. Shutdown: stop scheduler."""
     await init_db()
-    logger.info("CarbonScope API v0.4.0 started")
+    logger.info("CarbonScope API v0.5.0 started")
+
+    from api.services.scheduler import start_scheduler, stop_scheduler
+
+    start_scheduler()
     yield
+    await stop_scheduler()
 
 
 app = FastAPI(
     title="CarbonScope Platform API",
     description="Decentralized corporate carbon emission estimation powered by Bittensor",
-    version="0.4.0",
+    version="0.5.0",
     lifespan=lifespan,
 )
 app.state.limiter = limiter
@@ -66,6 +74,9 @@ app.include_router(webhook_router, prefix="/api/v1")
 app.include_router(audit_router, prefix="/api/v1")
 app.include_router(questionnaire_router, prefix="/api/v1")
 app.include_router(scenario_router, prefix="/api/v1")
+app.include_router(billing_router, prefix="/api/v1")
+app.include_router(alert_router, prefix="/api/v1")
+app.include_router(marketplace_router, prefix="/api/v1")
 
 
 @app.get("/health")
@@ -82,6 +93,6 @@ async def health():
         db_ok = False
     return {
         "status": "ok" if db_ok else "degraded",
-        "version": "0.4.0",
+        "version": "0.5.0",
         "database": "connected" if db_ok else "unavailable",
     }

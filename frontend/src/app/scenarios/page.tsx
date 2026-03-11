@@ -37,7 +37,8 @@ const ADJUSTMENT_TYPES = [
   {
     key: "supplier_change",
     label: "Supplier Optimization",
-    description: "Model reducing Scope 3 by switching to lower-emission suppliers",
+    description:
+      "Model reducing Scope 3 by switching to lower-emission suppliers",
     param: "scope3_reduction_pct",
     paramLabel: "Scope 3 Reduction %",
     min: 0,
@@ -68,7 +69,9 @@ export default function ScenariosPage() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [baseReportId, setBaseReportId] = useState("");
-  const [adjustments, setAdjustments] = useState<Record<string, Record<string, number>>>({});
+  const [adjustments, setAdjustments] = useState<
+    Record<string, Record<string, number>>
+  >({});
   const [creating, setCreating] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -117,7 +120,9 @@ export default function ScenariosPage() {
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!name || !baseReportId || Object.keys(adjustments).length === 0) {
-      setError("Please provide a name, select a report, and choose at least one adjustment");
+      setError(
+        "Please provide a name, select a report, and choose at least one adjustment",
+      );
       return;
     }
     setCreating(true);
@@ -136,7 +141,9 @@ export default function ScenariosPage() {
       setDescription("");
       setAdjustments({});
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to create scenario");
+      setError(
+        err instanceof Error ? err.message : "Failed to create scenario",
+      );
     } finally {
       setCreating(false);
     }
@@ -160,7 +167,8 @@ export default function ScenariosPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-center text-[var(--muted)]">Loading…</div>;
+  if (loading)
+    return <div className="p-8 text-center text-[var(--muted)]">Loading…</div>;
 
   return (
     <div className="max-w-5xl mx-auto p-8">
@@ -182,12 +190,17 @@ export default function ScenariosPage() {
 
       {/* Create form */}
       {showCreate && (
-        <form onSubmit={handleCreate} className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] p-6 mb-6">
+        <form
+          onSubmit={handleCreate}
+          className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] p-6 mb-6"
+        >
           <h2 className="text-lg font-semibold mb-4">Create Scenario</h2>
 
           <div className="grid gap-4 md:grid-cols-2 mb-4">
             <div>
-              <label className="block text-sm text-[var(--muted)] mb-1">Scenario Name</label>
+              <label className="block text-sm text-[var(--muted)] mb-1">
+                Scenario Name
+              </label>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -197,7 +210,9 @@ export default function ScenariosPage() {
               />
             </div>
             <div>
-              <label className="block text-sm text-[var(--muted)] mb-1">Base Report</label>
+              <label className="block text-sm text-[var(--muted)] mb-1">
+                Base Report
+              </label>
               <select
                 value={baseReportId}
                 onChange={(e) => setBaseReportId(e.target.value)}
@@ -213,7 +228,9 @@ export default function ScenariosPage() {
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm text-[var(--muted)] mb-1">Description (optional)</label>
+            <label className="block text-sm text-[var(--muted)] mb-1">
+              Description (optional)
+            </label>
             <input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -229,24 +246,41 @@ export default function ScenariosPage() {
                 <div
                   key={adj.key}
                   className={`rounded border p-4 cursor-pointer transition-colors ${
-                    active ? "border-[var(--primary)] bg-green-900/10" : "border-[var(--card-border)] bg-gray-900/50"
+                    active
+                      ? "border-[var(--primary)] bg-green-900/10"
+                      : "border-[var(--card-border)] bg-gray-900/50"
                   }`}
-                  onClick={() => toggleAdjustment(adj.key, adj.param, adj.default)}
+                  onClick={() =>
+                    toggleAdjustment(adj.key, adj.param, adj.default)
+                  }
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-sm">{adj.label}</span>
-                    <span className={`w-4 h-4 rounded border ${active ? "bg-[var(--primary)] border-[var(--primary)]" : "border-gray-600"}`} />
+                    <span
+                      className={`w-4 h-4 rounded border ${active ? "bg-[var(--primary)] border-[var(--primary)]" : "border-gray-600"}`}
+                    />
                   </div>
-                  <p className="text-xs text-[var(--muted)]">{adj.description}</p>
+                  <p className="text-xs text-[var(--muted)]">
+                    {adj.description}
+                  </p>
                   {active && (
                     <div className="mt-3" onClick={(e) => e.stopPropagation()}>
-                      <label className="text-xs text-[var(--muted)]">{adj.paramLabel}: {adjustments[adj.key]?.[adj.param] ?? adj.default}%</label>
+                      <label className="text-xs text-[var(--muted)]">
+                        {adj.paramLabel}:{" "}
+                        {adjustments[adj.key]?.[adj.param] ?? adj.default}%
+                      </label>
                       <input
                         type="range"
                         min={adj.min}
                         max={adj.max}
                         value={adjustments[adj.key]?.[adj.param] ?? adj.default}
-                        onChange={(e) => updateAdjustmentValue(adj.key, adj.param, Number(e.target.value))}
+                        onChange={(e) =>
+                          updateAdjustmentValue(
+                            adj.key,
+                            adj.param,
+                            Number(e.target.value),
+                          )
+                        }
                         className="w-full mt-1 accent-[var(--primary)]"
                       />
                     </div>
@@ -289,7 +323,9 @@ export default function ScenariosPage() {
                   <div>
                     <h3 className="font-semibold">{s.name}</h3>
                     {s.description && (
-                      <p className="text-sm text-[var(--muted)]">{s.description}</p>
+                      <p className="text-sm text-[var(--muted)]">
+                        {s.description}
+                      </p>
                     )}
                   </div>
                   <span
@@ -307,18 +343,23 @@ export default function ScenariosPage() {
                   <div className="grid grid-cols-3 gap-4 mb-3">
                     <div className="text-center">
                       <p className="text-xs text-[var(--muted)]">Baseline</p>
-                      <p className="text-lg font-bold">{totalBaseline.toLocaleString()}</p>
+                      <p className="text-lg font-bold">
+                        {totalBaseline.toLocaleString()}
+                      </p>
                       <p className="text-xs text-[var(--muted)]">tCO2e</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-[var(--muted)]">Adjusted</p>
-                      <p className="text-lg font-bold text-blue-400">{totalAdjusted.toLocaleString()}</p>
+                      <p className="text-lg font-bold text-blue-400">
+                        {totalAdjusted.toLocaleString()}
+                      </p>
                       <p className="text-xs text-[var(--muted)]">tCO2e</p>
                     </div>
                     <div className="text-center">
                       <p className="text-xs text-[var(--muted)]">Reduction</p>
                       <p className="text-lg font-bold text-green-400">
-                        -{totalReduction.toLocaleString()} ({reductionPct.toFixed(1)}%)
+                        -{totalReduction.toLocaleString()} (
+                        {reductionPct.toFixed(1)}%)
                       </p>
                     </div>
                   </div>

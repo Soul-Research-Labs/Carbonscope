@@ -17,6 +17,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     event,
+    Enum,
 )
 from sqlalchemy.dialects.sqlite import JSON
 from sqlalchemy.orm import relationship
@@ -257,3 +258,96 @@ class Scenario(Base):
     updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     company = relationship("Company")
+
+
+# ── Subscription & Billing ──────────────────────────────────────────
+
+
+class Subscription(Base):
+    """Company subscription for tiered access."""
+    __tablename__ = "subscriptions"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
+    plan: str = Column(String(50), nullable=False, default="free")  # free | pro | enterprise
+    status: str = Column(String(50), nullable=False, default="active")  # active | cancelled | past_due
+    stripe_customer_id: str | None = Column(String(255), nullable=True)
+    stripe_subscription_id: str | None = Column(String(255), nullable=True)
+    current_period_start: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    current_period_end: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    company = relationship("Company")
+
+
+class CreditLedger(Base):
+    """Credit transactions for API usage metering."""
+    __tablename__ = "credit_ledger"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
+    amount: int = Column(Integer, nullable=False)  # positive = add, negative = deduct
+    reason: str = Column(String(255), nullable=False)  # subscription_grant | estimate_usage | export_usage | manual
+    balance_after: int = Column(Integer, nullable=False)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+    company = relationship("Company")
+
+
+# ── Alerts ──────────────────────────────────────────────────────────
+
+
+class Alert(Base):
+    """Automated alert when emissions change significantly."""
+    __tablename__ = "alerts"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
+    alert_type: str = Column(String(100), nullable=False)  # emission_increase | confidence_drop | target_exceeded
+    severity: str = Column(String(50), nullable=False, default="info")  # info | warning | critical
+    title: str = Column(String(500), nullable=False)
+    message: str = Column(Text, nullable=False)
+    is_read: bool = Column(Boolean, nullable=False, default=False)
+    acknowledged_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    metadata_json: dict | None = Column(JSON, nullable=True)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+    company = relationship("Company")
+
+
+# ── Data Marketplace ────────────────────────────────────────────────
+
+
+class DataListing(Base):
+    """Anonymized emissions data listed on the marketplace."""
+    __tablename__ = "data_listings"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    seller_company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
+    title: str = Column(String(500), nullable=False)
+    description: str | None = Column(Text, nullable=True)
+    data_type: str = Column(String(100), nullable=False)  # emission_report | benchmark | supply_chain
+    industry: str = Column(String(100), nullable=False)
+    region: str = Column(String(10), nullable=False)
+    year: int = Column(Integer, nullable=False)
+    price_credits: int = Column(Integer, nullable=False, default=0)  # 0 = free
+    anonymized_data: dict = Column(JSON, nullable=False, default=dict)
+    status: str = Column(String(50), default="active")  # active | sold | withdrawn
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+    seller = relationship("Company")
+
+
+class DataPurchase(Base):
+    """Record of a marketplace data purchase."""
+    __tablename__ = "data_purchases"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    listing_id: str = Column(String(32), ForeignKey("data_listings.id"), nullable=False, index=True)
+    buyer_company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
+    price_credits: int = Column(Integer, nullable=False)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+    listing = relationship("DataListing")
+    buyer = relationship("Company")

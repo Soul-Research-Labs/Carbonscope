@@ -718,10 +718,9 @@ export async function getScenario(id: string): Promise<ScenarioOut> {
 }
 
 export async function computeScenario(id: string): Promise<ScenarioOut> {
-  return request<ScenarioOut>(
-    `/scenarios/${encodeURIComponent(id)}/compute`,
-    { method: "POST" },
-  );
+  return request<ScenarioOut>(`/scenarios/${encodeURIComponent(id)}/compute`, {
+    method: "POST",
+  });
 }
 
 export async function deleteScenario(id: string): Promise<void> {
