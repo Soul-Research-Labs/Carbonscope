@@ -45,11 +45,12 @@ carbonscope/
 │   ├── database.py                # SQLAlchemy async (SQLite + PostgreSQL)
 │   ├── models.py                  # 16 models (see Data Models below)
 │   ├── schemas.py                 # Pydantic request/response schemas
-│   ├── auth.py                    # JWT + password hashing (bcrypt)
-│   ├── deps.py                    # Dependencies: auth, plan gates, credit checks
+│   ├── auth.py                    # JWT + bcrypt + refresh/reset tokens
+│   ├── deps.py                    # Dependencies: auth, plan gates, credits, admin
+│   ├── middleware.py               # Request ID, security headers, error handler
 │   ├── limiter.py                 # Shared rate limiter
 │   ├── routes/
-│   │   ├── auth_routes.py         # Register, login, profile, password, refresh
+│   │   ├── auth_routes.py         # Register, login, refresh, password reset
 │   │   ├── company_routes.py      # Company CRUD, data upload CRUD
 │   │   ├── carbon_routes.py       # Estimation (local/subnet), reports, dashboard
 │   │   ├── ai_routes.py           # LLM parsing, prediction, recommendations
@@ -78,17 +79,19 @@ carbonscope/
 │       ├── subscriptions.py       # Plan tiers, credits, billing
 │       ├── alerts.py              # Emission monitoring + alert generation
 │       ├── marketplace.py         # Data anonymization + marketplace logic
-│       ├── email.py               # SMTP email notifications
-│       └── scheduler.py           # Background periodic alert checks
+│       ├── email.py               # SMTP email notifications (sync)
+│       ├── email_async.py         # Async email via aiosmtplib
+│       ├── url_validator.py       # SSRF protection for webhook URLs
+│       └── scheduler.py           # Alert checks + monthly credit reset
 ├── alembic/                       # Database migrations
 │   ├── env.py                     # Async migration runner
 │   └── versions/                  # Migration scripts
 ├── frontend/                      # Next.js 15 + React 19 dashboard
 │   └── src/
-│       ├── lib/api.ts             # Typed API client (50+ functions)
+│       ├── lib/api.ts             # Typed API client (55+ functions)
 │       ├── lib/auth-context.tsx   # JWT auth context provider
-│       ├── components/            # Navbar, ScopeChart
-│       └── app/                   # App Router pages (11 routes)
+│       ├── components/            # Navbar, ScopeChart, Toast, ConfirmDialog, Skeleton
+│       └── app/                   # App Router pages (20 routes)
 ├── data/emission_factors/         # EPA, eGRID, IEA, DEFRA JSON datasets
 ├── .github/workflows/ci.yml      # GitHub Actions CI/CD pipeline
 ├── alembic.ini                    # Alembic configuration
@@ -224,9 +227,10 @@ WALLET_NAME=validator ./scripts/register.sh
 ## Running Tests
 
 ```bash
-pytest tests/ -v               # All tests
+pytest tests/ -v               # All 307 tests
 pytest tests/test_carbon_api.py -v  # Specific file
 pytest tests/ -q --tb=short    # Short output
+pytest tests/ --cov=api --cov-report=term-missing  # With coverage
 ```
 
 ### Test Coverage
@@ -245,6 +249,9 @@ pytest tests/ -q --tb=short    # Short output
 | `test_generator.py`        | Test case generation (curated + synthetic)                 |
 | `test_utils.py`            | Unit conversion utilities                                  |
 | `test_e2e_security.py`     | Cross-tenant isolation, rate limiting, auth flows          |
+| `test_billing_alerts_marketplace.py` | Subscriptions, credits, alerts, marketplace, scheduler |
+| `test_coverage_gaps.py`    | Refresh tokens, soft deletes, pagination, webhook toggle   |
+| `test_v060_features.py`    | SSRF, refresh rotation, password reset, middleware, admin  |
 
 ## Docker Deployment
 
@@ -259,7 +266,7 @@ export ENV=production
 docker compose up --build -d
 ```
 
-## Platform API (v0.5.0)
+## Platform API (v0.6.0)
 
 ### Start the API server
 
@@ -271,16 +278,18 @@ Interactive docs: `http://localhost:8000/docs`
 
 ### API Endpoints (75+)
 
-#### Auth (6 endpoints)
+#### Auth (8 endpoints)
 
-| Method | Endpoint                       | Description              |
-| ------ | ------------------------------ | ------------------------ |
-| POST   | `/api/v1/auth/register`        | Register user + company  |
-| POST   | `/api/v1/auth/login`           | Get JWT token            |
-| GET    | `/api/v1/auth/me`              | Get current user profile |
-| PATCH  | `/api/v1/auth/me`              | Update name / email      |
-| POST   | `/api/v1/auth/change-password` | Change password          |
-| POST   | `/api/v1/auth/refresh`         | Refresh JWT token        |
+| Method | Endpoint                       | Description                          |
+| ------ | ------------------------------ | ------------------------------------ |
+| POST   | `/api/v1/auth/register`        | Register user + company              |
+| POST   | `/api/v1/auth/login`           | Get JWT access + refresh tokens      |
+| GET    | `/api/v1/auth/me`              | Get current user profile             |
+| PATCH  | `/api/v1/auth/me`              | Update name / email                  |
+| POST   | `/api/v1/auth/change-password` | Change password                      |
+| POST   | `/api/v1/auth/refresh`         | Rotate refresh token for new pair    |
+| POST   | `/api/v1/auth/forgot-password` | Request password reset email         |
+| POST   | `/api/v1/auth/reset-password`  | Reset password with token            |
 
 #### Company & Data (7)
 
@@ -374,13 +383,15 @@ Interactive docs: `http://localhost:8000/docs`
 | POST   | `/api/v1/alerts/{id}/acknowledge` | Acknowledge alert                  |
 | POST   | `/api/v1/alerts/check`            | Trigger alert check manually       |
 
-#### Data Marketplace (3)
+#### Data Marketplace (5)
 
 | Method | Endpoint                                     | Description                                    |
 | ------ | -------------------------------------------- | ---------------------------------------------- |
 | POST   | `/api/v1/marketplace/listings`               | Create anonymized data listing (Pro+)          |
 | GET    | `/api/v1/marketplace/listings`               | Browse marketplace (filter by industry/region) |
 | POST   | `/api/v1/marketplace/listings/{id}/purchase` | Purchase listing with credits (Pro+)           |
+| GET    | `/api/v1/marketplace/my-listings`            | List your own marketplace listings             |
+| POST   | `/api/v1/marketplace/listings/{id}/withdraw` | Withdraw a listing from the marketplace        |
 
 #### Webhooks (5)
 
@@ -396,7 +407,7 @@ Interactive docs: `http://localhost:8000/docs`
 
 | Method | Endpoint              | Description                    |
 | ------ | --------------------- | ------------------------------ |
-| GET    | `/api/v1/audit-trail` | List audit logs                |
+| GET    | `/api/v1/audit-logs/` | List audit logs (paginated)    |
 | GET    | `/health`             | Health check (DB connectivity) |
 
 ### Subscription Plans
@@ -460,7 +471,15 @@ The Next.js 15 dashboard provides:
 - **Scenarios** — Interactive what-if builder with visual results
 - **Supply Chain** — Supplier network management, Scope 3 propagation
 - **Compliance** — Generate GHG Protocol / CDP / TCFD / SBTi reports
+- **Marketplace** — Browse, purchase, create, and withdraw data listings
+- **Alerts** — Emission threshold alerts with acknowledgement
+- **Billing** — Subscription plans, credit balance, plan management
+- **Audit Log** — Activity trail viewer with pagination
 - **Settings** — User profile, password change, company profile, webhooks
+- **Forgot / Reset Password** — Email-based password recovery flow
+- **Mobile Responsive** — Hamburger menu navigation on small screens
+- **Toast Notifications** — Success/error/info feedback system
+- **Accessibility** — Skip-to-content, focus indicators, reduced motion support
 
 ```bash
 cd frontend && npm install && npm run dev   # http://localhost:3000
