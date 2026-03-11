@@ -17,6 +17,19 @@ const INDUSTRIES = [
   "Other",
 ];
 
+const REGIONS = [
+  { value: "US", label: "United States" },
+  { value: "EU", label: "European Union" },
+  { value: "UK", label: "United Kingdom" },
+  { value: "CN", label: "China" },
+  { value: "IN", label: "India" },
+  { value: "JP", label: "Japan" },
+  { value: "AU", label: "Australia" },
+  { value: "BR", label: "Brazil" },
+  { value: "CA", label: "Canada" },
+  { value: "OTHER", label: "Other" },
+];
+
 export default function RegisterPage() {
   const { register } = useAuth();
   const [form, setForm] = useState({
@@ -26,6 +39,7 @@ export default function RegisterPage() {
     fullName: "",
     companyName: "",
     industry: "Technology",
+    region: "US",
   });
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -59,6 +73,7 @@ export default function RegisterPage() {
         full_name: form.fullName,
         company_name: form.companyName,
         industry: form.industry,
+        region: form.region,
       });
     } catch (err: unknown) {
       if (err instanceof Error && "status" in err) {
@@ -123,6 +138,20 @@ export default function RegisterPage() {
               {INDUSTRIES.map((ind) => (
                 <option key={ind} value={ind.toLowerCase()}>
                   {ind}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="label">Region</label>
+            <select
+              className="input"
+              value={form.region}
+              onChange={(e) => update("region", e.target.value)}
+            >
+              {REGIONS.map((r) => (
+                <option key={r.value} value={r.value}>
+                  {r.label}
                 </option>
               ))}
             </select>
