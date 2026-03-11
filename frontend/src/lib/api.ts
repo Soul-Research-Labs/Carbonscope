@@ -104,6 +104,10 @@ export async function changePassword(
   });
 }
 
+export async function refreshToken(): Promise<Token> {
+  return request<Token>("/auth/refresh", { method: "POST" });
+}
+
 // ── Company ─────────────────────────────────────────────────────────
 
 export interface Company {
@@ -384,27 +388,56 @@ export async function addSupplier(data: {
   });
 }
 
-export async function listSuppliers(): Promise<
-  Array<{
-    link_id: string;
-    company_id: string;
-    company_name: string;
-    industry: string;
-    region: string;
-    spend_usd: number | null;
-    category: string;
-    status: string;
-    emissions: {
-      scope1: number | null;
-      scope2: number | null;
-      total: number | null;
-      confidence: number | null;
-      year: number | null;
-    } | null;
-    created_at: string;
-  }>
-> {
-  return request("/supply-chain/suppliers");
+export interface SupplierEntry {
+  link_id: string;
+  company_id: string;
+  company_name: string;
+  industry: string;
+  region: string;
+  spend_usd: number | null;
+  category: string;
+  status: string;
+  emissions: {
+    scope1: number | null;
+    scope2: number | null;
+    total: number | null;
+    confidence: number | null;
+    year: number | null;
+  } | null;
+  created_at: string;
+}
+
+export async function listSuppliers(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<SupplierEntry>> {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request(`/supply-chain/suppliers${qs ? `?${qs}` : ""}`);
+}
+
+export interface BuyerEntry {
+  link_id: string;
+  company_id: string;
+  company_name: string;
+  industry: string;
+  spend_usd: number | null;
+  category: string;
+  status: string;
+  created_at: string;
+}
+
+export async function listBuyers(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<BuyerEntry>> {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request(`/supply-chain/buyers${qs ? `?${qs}` : ""}`);
 }
 
 export async function getScope3FromSuppliers(year?: number): Promise<{
@@ -453,16 +486,19 @@ export interface WebhookConfig {
   company_id: string;
   url: string;
   event_types: string[];
-  secret: string;
   active: boolean;
   created_at: string;
+}
+
+export interface WebhookCreateResponse extends WebhookConfig {
+  secret: string;
 }
 
 export async function createWebhook(data: {
   url: string;
   event_types: string[];
-}): Promise<WebhookConfig> {
-  return request<WebhookConfig>("/webhooks/", {
+}): Promise<WebhookCreateResponse> {
+  return request<WebhookCreateResponse>("/webhooks/", {
     method: "POST",
     body: JSON.stringify(data),
   });
@@ -470,6 +506,16 @@ export async function createWebhook(data: {
 
 export async function listWebhooks(): Promise<WebhookConfig[]> {
   return request<WebhookConfig[]>("/webhooks/");
+}
+
+export async function toggleWebhook(
+  id: string,
+  active: boolean,
+): Promise<WebhookConfig> {
+  return request<WebhookConfig>(
+    `/webhooks/${encodeURIComponent(id)}`,
+    { method: "PATCH", body: JSON.stringify({ active }) },
+  );
 }
 
 export async function deleteWebhook(id: string): Promise<void> {

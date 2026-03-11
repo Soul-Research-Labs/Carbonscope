@@ -56,7 +56,7 @@ export default function SupplyChainPage() {
         listSuppliers(),
         getScope3FromSuppliers(),
       ]);
-      setSuppliers(s);
+      setSuppliers(s.items);
       setScope3(sc);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load");

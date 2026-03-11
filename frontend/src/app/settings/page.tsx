@@ -12,6 +12,7 @@ import {
   listWebhooks,
   createWebhook,
   deleteWebhook,
+  toggleWebhook,
   type Company,
   type User,
   type WebhookConfig,
@@ -428,13 +429,15 @@ export default function SettingsPage() {
                       {wh.event_types.join(", ")}
                     </td>
                     <td className="py-2">
-                      <span
-                        className={`text-xs ${
-                          wh.active ? "text-green-400" : "text-[var(--muted)]"
-                        }`}
+                      <button
+                        onClick={async () => {
+                          const updated = await toggleWebhook(wh.id, !wh.active);
+                          setWebhooks(webhooks.map((w) => w.id === wh.id ? updated : w));
+                        }}
+                        className={`text-xs ${wh.active ? "text-green-400" : "text-[var(--muted)]"} hover:underline`}
                       >
                         {wh.active ? "Active" : "Disabled"}
-                      </span>
+                      </button>
                     </td>
                     <td className="py-2">
                       <button
