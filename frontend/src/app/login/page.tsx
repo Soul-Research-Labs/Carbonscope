@@ -18,7 +18,14 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Login failed");
+      if (err instanceof Error && "status" in err) {
+        const status = (err as { status: number }).status;
+        if (status === 429) { setError("Too many requests. Please wait and try again."); }
+        else if (status === 401) { setError("Invalid email or password."); }
+        else { setError(err.message); }
+      } else {
+        setError(err instanceof Error ? err.message : "Login failed");
+      }
     } finally {
       setSubmitting(false);
     }

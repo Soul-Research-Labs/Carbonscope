@@ -45,6 +45,10 @@ export default function RegisterPage() {
       setError("Password must be at least 8 characters");
       return;
     }
+    if (!/[A-Z]/.test(form.password) || !/\d/.test(form.password)) {
+      setError("Password must contain at least one uppercase letter and one digit");
+      return;
+    }
     setSubmitting(true);
     try {
       await register({
@@ -55,7 +59,14 @@ export default function RegisterPage() {
         industry: form.industry,
       });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Registration failed");
+      if (err instanceof Error && "status" in err) {
+        const status = (err as { status: number }).status;
+        if (status === 429) { setError("Too many requests. Please wait and try again."); }
+        else if (status === 409) { setError("An account with this email already exists."); }
+        else { setError(err.message); }
+      } else {
+        setError(err instanceof Error ? err.message : "Registration failed");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -132,6 +143,9 @@ export default function RegisterPage() {
               minLength={8}
               autoComplete="new-password"
             />
+            <p className="text-xs text-[var(--muted)] mt-1">
+              Min 8 characters, must include an uppercase letter and a digit.
+            </p>
           </div>
           <div>
             <label className="label">Confirm Password</label>
