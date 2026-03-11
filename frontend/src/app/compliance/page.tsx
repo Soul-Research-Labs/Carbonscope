@@ -52,8 +52,8 @@ export default function CompliancePage() {
     }
     if (user) {
       listReports().then((r) => {
-        setReports(r);
-        if (r.length > 0) setSelectedReport(r[0].id);
+        setReports(r.items);
+        if (r.items.length > 0) setSelectedReport(r.items[0].id);
       });
     }
   }, [user, loading, router]);

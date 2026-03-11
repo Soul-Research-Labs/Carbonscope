@@ -728,3 +728,154 @@ export async function deleteScenario(id: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+// ── Billing & Subscriptions ─────────────────────────────────────────
+
+export interface SubscriptionOut {
+  id: string;
+  company_id: string;
+  plan: string;
+  status: string;
+  current_period_start: string | null;
+  current_period_end: string | null;
+  created_at: string;
+}
+
+export interface CreditBalanceOut {
+  company_id: string;
+  balance: number;
+  plan: string;
+}
+
+export interface PlanLimits {
+  monthly_credits: number;
+  max_reports_per_month: number;
+  max_scenarios: number;
+  max_questionnaires: number;
+  pdf_export: boolean;
+  supply_chain: boolean;
+  webhooks: boolean;
+  marketplace: boolean;
+  price_usd: number;
+}
+
+export async function getSubscription(): Promise<SubscriptionOut> {
+  return request<SubscriptionOut>("/billing/subscription");
+}
+
+export async function changePlan(plan: string): Promise<SubscriptionOut> {
+  return request<SubscriptionOut>("/billing/subscription", {
+    method: "POST",
+    body: JSON.stringify({ plan }),
+  });
+}
+
+export async function getCredits(): Promise<CreditBalanceOut> {
+  return request<CreditBalanceOut>("/billing/credits");
+}
+
+export async function listPlans(): Promise<Record<string, PlanLimits>> {
+  return request<Record<string, PlanLimits>>("/billing/plans");
+}
+
+// ── Alerts ──────────────────────────────────────────────────────────
+
+export interface AlertOut {
+  id: string;
+  company_id: string;
+  alert_type: string;
+  severity: string;
+  title: string;
+  message: string;
+  is_read: boolean;
+  acknowledged_at: string | null;
+  metadata_json: Record<string, unknown> | null;
+  created_at: string;
+}
+
+export async function listAlerts(params?: {
+  unread_only?: boolean;
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<AlertOut>> {
+  const q = new URLSearchParams();
+  if (params?.unread_only != null)
+    q.set("unread_only", String(params.unread_only));
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request(`/alerts${qs ? `?${qs}` : ""}`);
+}
+
+export async function acknowledgeAlert(id: string): Promise<AlertOut> {
+  return request<AlertOut>(`/alerts/${encodeURIComponent(id)}/acknowledge`, {
+    method: "POST",
+  });
+}
+
+export async function triggerAlertCheck(): Promise<AlertOut[]> {
+  return request<AlertOut[]>("/alerts/check", { method: "POST" });
+}
+
+// ── Marketplace ─────────────────────────────────────────────────────
+
+export interface DataListingOut {
+  id: string;
+  seller_company_id: string;
+  title: string;
+  description: string | null;
+  data_type: string;
+  industry: string;
+  region: string;
+  year: number;
+  price_credits: number;
+  anonymized_data: Record<string, unknown>;
+  status: string;
+  created_at: string;
+}
+
+export interface DataPurchaseOut {
+  id: string;
+  listing_id: string;
+  buyer_company_id: string;
+  price_credits: number;
+  listing: DataListingOut;
+  created_at: string;
+}
+
+export async function createListing(data: {
+  title: string;
+  description?: string;
+  data_type: string;
+  report_id: string;
+  price_credits: number;
+}): Promise<DataListingOut> {
+  return request<DataListingOut>("/marketplace/listings", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function browseListings(params?: {
+  industry?: string;
+  region?: string;
+  data_type?: string;
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<DataListingOut>> {
+  const q = new URLSearchParams();
+  if (params?.industry) q.set("industry", params.industry);
+  if (params?.region) q.set("region", params.region);
+  if (params?.data_type) q.set("data_type", params.data_type);
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request(`/marketplace/listings${qs ? `?${qs}` : ""}`);
+}
+
+export async function purchaseListing(id: string): Promise<DataPurchaseOut> {
+  return request<DataPurchaseOut>(
+    `/marketplace/listings/${encodeURIComponent(id)}/purchase`,
+    { method: "POST" },
+  );
+}

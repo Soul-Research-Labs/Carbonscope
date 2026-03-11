@@ -100,24 +100,24 @@ carbonscope/
 
 ## Data Models (16)
 
-| Model | Description |
-|-------|-------------|
-| Company | Organization profile (industry, region, revenue, employees) |
-| User | Authenticated member (email, role: admin/member) |
-| DataUpload | Raw operational data (year, JSON provided_data) |
-| EmissionReport | Calculated emissions (S1/S2/S3, breakdown, confidence, miner scores) |
-| SupplyChainLink | Buyer↔supplier relationship (spend, category, status) |
-| Webhook | HTTP webhook endpoint (URL, events, HMAC secret) |
-| WebhookDelivery | Webhook delivery log (status code, duration, response) |
-| AuditLog | Action audit trail (user, action, resource) |
-| Questionnaire | Uploaded document (PDF/DOCX/XLSX/CSV, extracted text) |
-| QuestionnaireQuestion | Extracted question with AI draft + human answer |
-| Scenario | What-if analysis (parameters, computed results) |
-| Subscription | Company plan tier (free/pro/enterprise, Stripe IDs) |
-| CreditLedger | Credit transactions (grants, deductions, balance) |
-| Alert | Automated alerts (emission increase, confidence drop) |
-| DataListing | Marketplace listing (anonymized data, price in credits) |
-| DataPurchase | Marketplace purchase record |
+| Model                 | Description                                                          |
+| --------------------- | -------------------------------------------------------------------- |
+| Company               | Organization profile (industry, region, revenue, employees)          |
+| User                  | Authenticated member (email, role: admin/member)                     |
+| DataUpload            | Raw operational data (year, JSON provided_data)                      |
+| EmissionReport        | Calculated emissions (S1/S2/S3, breakdown, confidence, miner scores) |
+| SupplyChainLink       | Buyer↔supplier relationship (spend, category, status)                |
+| Webhook               | HTTP webhook endpoint (URL, events, HMAC secret)                     |
+| WebhookDelivery       | Webhook delivery log (status code, duration, response)               |
+| AuditLog              | Action audit trail (user, action, resource)                          |
+| Questionnaire         | Uploaded document (PDF/DOCX/XLSX/CSV, extracted text)                |
+| QuestionnaireQuestion | Extracted question with AI draft + human answer                      |
+| Scenario              | What-if analysis (parameters, computed results)                      |
+| Subscription          | Company plan tier (free/pro/enterprise, Stripe IDs)                  |
+| CreditLedger          | Credit transactions (grants, deductions, balance)                    |
+| Alert                 | Automated alerts (emission increase, confidence drop)                |
+| DataListing           | Marketplace listing (anonymized data, price in credits)              |
+| DataPurchase          | Marketplace purchase record                                          |
 
 ## Prerequisites
 
@@ -128,29 +128,29 @@ carbonscope/
 
 ## Environment Variables
 
-| Variable | Default | Description |
-|----------|---------|-------------|
-| `ENV` | `development` | Environment mode (development/production/test) |
-| `DATABASE_URL` | `sqlite+aiosqlite:///carbonscope.db` | Async DB URL (SQLite or PostgreSQL) |
-| `SECRET_KEY` | `change-me-in-production` | JWT signing key (**enforced** in production) |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | JWT token lifetime |
-| `ALLOWED_ORIGINS` | `http://localhost:3000` | Comma-separated CORS origins |
-| `RATE_LIMIT_AUTH` | `10/minute` | Rate limit for auth endpoints |
-| `RATE_LIMIT_DEFAULT` | `60/minute` | Rate limit for general endpoints |
-| `LOG_LEVEL` | `INFO` | Logging level |
-| `ESTIMATION_MODE` | `local` | `local` (dev) or `subnet` (Bittensor network) |
-| `BT_NETWORK` | `test` | Bittensor network (test, finney) |
-| `BT_NETUID` | `1` | Bittensor subnet UID |
-| `BT_WALLET_NAME` | `api_client` | Bittensor wallet name |
-| `BT_WALLET_HOTKEY` | `default` | Bittensor wallet hotkey |
-| `BT_QUERY_TIMEOUT` | `30.0` | Bittensor query timeout (seconds) |
-| `SMTP_HOST` | — | SMTP server (set to enable email) |
-| `SMTP_PORT` | `587` | SMTP port |
-| `SMTP_USER` | — | SMTP username |
-| `SMTP_PASSWORD` | — | SMTP password |
-| `EMAIL_FROM` | `noreply@carbonscope.io` | Sender email address |
-| `OPENAI_API_KEY` | — | OpenAI API key (optional, LLM parsing) |
-| `ANTHROPIC_API_KEY` | — | Anthropic API key (optional, LLM parsing) |
+| Variable                      | Default                              | Description                                    |
+| ----------------------------- | ------------------------------------ | ---------------------------------------------- |
+| `ENV`                         | `development`                        | Environment mode (development/production/test) |
+| `DATABASE_URL`                | `sqlite+aiosqlite:///carbonscope.db` | Async DB URL (SQLite or PostgreSQL)            |
+| `SECRET_KEY`                  | `change-me-in-production`            | JWT signing key (**enforced** in production)   |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `60`                                 | JWT token lifetime                             |
+| `ALLOWED_ORIGINS`             | `http://localhost:3000`              | Comma-separated CORS origins                   |
+| `RATE_LIMIT_AUTH`             | `10/minute`                          | Rate limit for auth endpoints                  |
+| `RATE_LIMIT_DEFAULT`          | `60/minute`                          | Rate limit for general endpoints               |
+| `LOG_LEVEL`                   | `INFO`                               | Logging level                                  |
+| `ESTIMATION_MODE`             | `local`                              | `local` (dev) or `subnet` (Bittensor network)  |
+| `BT_NETWORK`                  | `test`                               | Bittensor network (test, finney)               |
+| `BT_NETUID`                   | `1`                                  | Bittensor subnet UID                           |
+| `BT_WALLET_NAME`              | `api_client`                         | Bittensor wallet name                          |
+| `BT_WALLET_HOTKEY`            | `default`                            | Bittensor wallet hotkey                        |
+| `BT_QUERY_TIMEOUT`            | `30.0`                               | Bittensor query timeout (seconds)              |
+| `SMTP_HOST`                   | —                                    | SMTP server (set to enable email)              |
+| `SMTP_PORT`                   | `587`                                | SMTP port                                      |
+| `SMTP_USER`                   | —                                    | SMTP username                                  |
+| `SMTP_PASSWORD`               | —                                    | SMTP password                                  |
+| `EMAIL_FROM`                  | `noreply@carbonscope.io`             | Sender email address                           |
+| `OPENAI_API_KEY`              | —                                    | OpenAI API key (optional, LLM parsing)         |
+| `ANTHROPIC_API_KEY`           | —                                    | Anthropic API key (optional, LLM parsing)      |
 
 ## Setup
 
@@ -231,20 +231,20 @@ pytest tests/ -q --tb=short    # Short output
 
 ### Test Coverage
 
-| File | Coverage |
-|------|----------|
-| `test_auth_api.py` | Registration, login, profile CRUD, password change |
-| `test_company_api.py` | Company CRUD, data upload pagination, PATCH, soft delete |
-| `test_carbon_api.py` | Estimation, report listing, pagination, soft delete |
-| `test_new_routes.py` | Webhooks CRUD, delivery logs, report export (CSV/JSON) |
-| `test_new_features.py` | Questionnaire upload, AI extraction, scenarios, PDF export |
-| `test_compliance.py` | GHG Protocol, CDP, TCFD, SBTi report generation |
-| `test_ai_services.py` | LLM parser, prediction engine, recommendations |
-| `test_emission_factors.py` | Scope 1/2/3 emission factor calculations |
-| `test_scoring.py` | Validator composite scoring engine |
-| `test_generator.py` | Test case generation (curated + synthetic) |
-| `test_utils.py` | Unit conversion utilities |
-| `test_e2e_security.py` | Cross-tenant isolation, rate limiting, auth flows |
+| File                       | Coverage                                                   |
+| -------------------------- | ---------------------------------------------------------- |
+| `test_auth_api.py`         | Registration, login, profile CRUD, password change         |
+| `test_company_api.py`      | Company CRUD, data upload pagination, PATCH, soft delete   |
+| `test_carbon_api.py`       | Estimation, report listing, pagination, soft delete        |
+| `test_new_routes.py`       | Webhooks CRUD, delivery logs, report export (CSV/JSON)     |
+| `test_new_features.py`     | Questionnaire upload, AI extraction, scenarios, PDF export |
+| `test_compliance.py`       | GHG Protocol, CDP, TCFD, SBTi report generation            |
+| `test_ai_services.py`      | LLM parser, prediction engine, recommendations             |
+| `test_emission_factors.py` | Scope 1/2/3 emission factor calculations                   |
+| `test_scoring.py`          | Validator composite scoring engine                         |
+| `test_generator.py`        | Test case generation (curated + synthetic)                 |
+| `test_utils.py`            | Unit conversion utilities                                  |
+| `test_e2e_security.py`     | Cross-tenant isolation, rate limiting, auth flows          |
 
 ## Docker Deployment
 
@@ -273,157 +273,157 @@ Interactive docs: `http://localhost:8000/docs`
 
 #### Auth (6 endpoints)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/auth/register` | Register user + company |
-| POST | `/api/v1/auth/login` | Get JWT token |
-| GET | `/api/v1/auth/me` | Get current user profile |
-| PATCH | `/api/v1/auth/me` | Update name / email |
-| POST | `/api/v1/auth/change-password` | Change password |
-| POST | `/api/v1/auth/refresh` | Refresh JWT token |
+| Method | Endpoint                       | Description              |
+| ------ | ------------------------------ | ------------------------ |
+| POST   | `/api/v1/auth/register`        | Register user + company  |
+| POST   | `/api/v1/auth/login`           | Get JWT token            |
+| GET    | `/api/v1/auth/me`              | Get current user profile |
+| PATCH  | `/api/v1/auth/me`              | Update name / email      |
+| POST   | `/api/v1/auth/change-password` | Change password          |
+| POST   | `/api/v1/auth/refresh`         | Refresh JWT token        |
 
 #### Company & Data (7)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/company` | Get company profile |
-| PATCH | `/api/v1/company` | Update company profile |
-| POST | `/api/v1/data` | Upload operational data |
-| GET | `/api/v1/data` | List data uploads (paginated) |
-| GET | `/api/v1/data/{id}` | Get specific upload |
-| PATCH | `/api/v1/data/{id}` | Update upload |
-| DELETE | `/api/v1/data/{id}` | Soft-delete upload |
+| Method | Endpoint            | Description                   |
+| ------ | ------------------- | ----------------------------- |
+| GET    | `/api/v1/company`   | Get company profile           |
+| PATCH  | `/api/v1/company`   | Update company profile        |
+| POST   | `/api/v1/data`      | Upload operational data       |
+| GET    | `/api/v1/data`      | List data uploads (paginated) |
+| GET    | `/api/v1/data/{id}` | Get specific upload           |
+| PATCH  | `/api/v1/data/{id}` | Update upload                 |
+| DELETE | `/api/v1/data/{id}` | Soft-delete upload            |
 
 #### Carbon Estimation & Reports (6)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/estimate` | Run emission estimation (local or subnet) |
-| GET | `/api/v1/reports` | List reports (paginated, sortable, filterable) |
-| GET | `/api/v1/reports/{id}` | Get specific report |
-| DELETE | `/api/v1/reports/{id}` | Soft-delete report |
-| GET | `/api/v1/reports/export` | Export reports as CSV or JSON |
-| GET | `/api/v1/dashboard` | Company dashboard summary |
+| Method | Endpoint                 | Description                                    |
+| ------ | ------------------------ | ---------------------------------------------- |
+| POST   | `/api/v1/estimate`       | Run emission estimation (local or subnet)      |
+| GET    | `/api/v1/reports`        | List reports (paginated, sortable, filterable) |
+| GET    | `/api/v1/reports/{id}`   | Get specific report                            |
+| DELETE | `/api/v1/reports/{id}`   | Soft-delete report                             |
+| GET    | `/api/v1/reports/export` | Export reports as CSV or JSON                  |
+| GET    | `/api/v1/dashboard`      | Company dashboard summary                      |
 
 #### AI Enhancement (4)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/ai/parse-text` | Extract emissions data from free text |
-| POST | `/api/v1/ai/predict` | Predict missing emission categories |
-| POST | `/api/v1/ai/audit-trail` | Generate audit trail for a report |
-| GET | `/api/v1/ai/recommendations/{id}` | Get reduction recommendations |
+| Method | Endpoint                          | Description                           |
+| ------ | --------------------------------- | ------------------------------------- |
+| POST   | `/api/v1/ai/parse-text`           | Extract emissions data from free text |
+| POST   | `/api/v1/ai/predict`              | Predict missing emission categories   |
+| POST   | `/api/v1/ai/audit-trail`          | Generate audit trail for a report     |
+| GET    | `/api/v1/ai/recommendations/{id}` | Get reduction recommendations         |
 
 #### Questionnaires (10)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/questionnaires/upload` | Upload PDF/DOCX/XLSX/CSV document |
-| GET | `/api/v1/questionnaires` | List uploaded questionnaires |
-| GET | `/api/v1/questionnaires/{id}` | Get questionnaire with questions |
-| POST | `/api/v1/questionnaires/{id}/extract` | AI-extract questions from document |
-| PATCH | `/api/v1/questionnaires/{qid}/questions/{qnid}` | Update question answer/status |
-| DELETE | `/api/v1/questionnaires/{id}` | Delete questionnaire |
-| GET | `/api/v1/questionnaires/{id}/export/pdf` | Export questionnaire as PDF |
-| GET | `/api/v1/questionnaires/templates` | List template library |
-| GET | `/api/v1/questionnaires/templates/{id}` | Get template details |
-| POST | `/api/v1/questionnaires/templates/{id}/apply` | Create questionnaire from template |
+| Method | Endpoint                                        | Description                        |
+| ------ | ----------------------------------------------- | ---------------------------------- |
+| POST   | `/api/v1/questionnaires/upload`                 | Upload PDF/DOCX/XLSX/CSV document  |
+| GET    | `/api/v1/questionnaires`                        | List uploaded questionnaires       |
+| GET    | `/api/v1/questionnaires/{id}`                   | Get questionnaire with questions   |
+| POST   | `/api/v1/questionnaires/{id}/extract`           | AI-extract questions from document |
+| PATCH  | `/api/v1/questionnaires/{qid}/questions/{qnid}` | Update question answer/status      |
+| DELETE | `/api/v1/questionnaires/{id}`                   | Delete questionnaire               |
+| GET    | `/api/v1/questionnaires/{id}/export/pdf`        | Export questionnaire as PDF        |
+| GET    | `/api/v1/questionnaires/templates`              | List template library              |
+| GET    | `/api/v1/questionnaires/templates/{id}`         | Get template details               |
+| POST   | `/api/v1/questionnaires/templates/{id}/apply`   | Create questionnaire from template |
 
 #### Scenarios (5)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/scenarios` | Create what-if scenario |
-| GET | `/api/v1/scenarios` | List scenarios |
-| GET | `/api/v1/scenarios/{id}` | Get scenario details |
-| POST | `/api/v1/scenarios/{id}/compute` | Compute scenario results |
-| DELETE | `/api/v1/scenarios/{id}` | Delete scenario |
+| Method | Endpoint                         | Description              |
+| ------ | -------------------------------- | ------------------------ |
+| POST   | `/api/v1/scenarios`              | Create what-if scenario  |
+| GET    | `/api/v1/scenarios`              | List scenarios           |
+| GET    | `/api/v1/scenarios/{id}`         | Get scenario details     |
+| POST   | `/api/v1/scenarios/{id}/compute` | Compute scenario results |
+| DELETE | `/api/v1/scenarios/{id}`         | Delete scenario          |
 
 #### Supply Chain (6)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/supply-chain/links` | Link a supplier |
-| GET | `/api/v1/supply-chain/suppliers` | List your suppliers |
-| GET | `/api/v1/supply-chain/buyers` | List companies buying from you |
-| GET | `/api/v1/supply-chain/scope3-from-suppliers` | Scope 3 Cat 1 from verified suppliers |
-| PATCH | `/api/v1/supply-chain/links/{id}` | Update link status |
-| DELETE | `/api/v1/supply-chain/links/{id}` | Remove supplier link |
+| Method | Endpoint                                     | Description                           |
+| ------ | -------------------------------------------- | ------------------------------------- |
+| POST   | `/api/v1/supply-chain/links`                 | Link a supplier                       |
+| GET    | `/api/v1/supply-chain/suppliers`             | List your suppliers                   |
+| GET    | `/api/v1/supply-chain/buyers`                | List companies buying from you        |
+| GET    | `/api/v1/supply-chain/scope3-from-suppliers` | Scope 3 Cat 1 from verified suppliers |
+| PATCH  | `/api/v1/supply-chain/links/{id}`            | Update link status                    |
+| DELETE | `/api/v1/supply-chain/links/{id}`            | Remove supplier link                  |
 
 #### Compliance (1)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/compliance/report` | Generate compliance report (GHG/CDP/TCFD/SBTi) |
+| Method | Endpoint                    | Description                                    |
+| ------ | --------------------------- | ---------------------------------------------- |
+| POST   | `/api/v1/compliance/report` | Generate compliance report (GHG/CDP/TCFD/SBTi) |
 
 #### Billing & Subscriptions (5)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/billing/subscription` | Get current subscription |
-| POST | `/api/v1/billing/subscription` | Change plan (free/pro/enterprise) |
-| GET | `/api/v1/billing/credits` | Get credit balance |
-| GET | `/api/v1/billing/plans` | List available plans + limits |
-| POST | `/api/v1/billing/credits/grant` | Admin: grant credits manually |
+| Method | Endpoint                        | Description                       |
+| ------ | ------------------------------- | --------------------------------- |
+| GET    | `/api/v1/billing/subscription`  | Get current subscription          |
+| POST   | `/api/v1/billing/subscription`  | Change plan (free/pro/enterprise) |
+| GET    | `/api/v1/billing/credits`       | Get credit balance                |
+| GET    | `/api/v1/billing/plans`         | List available plans + limits     |
+| POST   | `/api/v1/billing/credits/grant` | Admin: grant credits manually     |
 
 #### Alerts (3)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/alerts` | List alerts (filterable by unread) |
-| POST | `/api/v1/alerts/{id}/acknowledge` | Acknowledge alert |
-| POST | `/api/v1/alerts/check` | Trigger alert check manually |
+| Method | Endpoint                          | Description                        |
+| ------ | --------------------------------- | ---------------------------------- |
+| GET    | `/api/v1/alerts`                  | List alerts (filterable by unread) |
+| POST   | `/api/v1/alerts/{id}/acknowledge` | Acknowledge alert                  |
+| POST   | `/api/v1/alerts/check`            | Trigger alert check manually       |
 
 #### Data Marketplace (3)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/marketplace/listings` | Create anonymized data listing (Pro+) |
-| GET | `/api/v1/marketplace/listings` | Browse marketplace (filter by industry/region) |
-| POST | `/api/v1/marketplace/listings/{id}/purchase` | Purchase listing with credits (Pro+) |
+| Method | Endpoint                                     | Description                                    |
+| ------ | -------------------------------------------- | ---------------------------------------------- |
+| POST   | `/api/v1/marketplace/listings`               | Create anonymized data listing (Pro+)          |
+| GET    | `/api/v1/marketplace/listings`               | Browse marketplace (filter by industry/region) |
+| POST   | `/api/v1/marketplace/listings/{id}/purchase` | Purchase listing with credits (Pro+)           |
 
 #### Webhooks (5)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/v1/webhooks/` | Register webhook endpoint |
-| GET | `/api/v1/webhooks/` | List webhooks |
-| PATCH | `/api/v1/webhooks/{id}` | Toggle webhook active state |
-| DELETE | `/api/v1/webhooks/{id}` | Remove webhook |
-| GET | `/api/v1/webhooks/{id}/deliveries` | List delivery logs |
+| Method | Endpoint                           | Description                 |
+| ------ | ---------------------------------- | --------------------------- |
+| POST   | `/api/v1/webhooks/`                | Register webhook endpoint   |
+| GET    | `/api/v1/webhooks/`                | List webhooks               |
+| PATCH  | `/api/v1/webhooks/{id}`            | Toggle webhook active state |
+| DELETE | `/api/v1/webhooks/{id}`            | Remove webhook              |
+| GET    | `/api/v1/webhooks/{id}/deliveries` | List delivery logs          |
 
 #### Audit & Health (2)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/v1/audit-trail` | List audit logs |
-| GET | `/health` | Health check (DB connectivity) |
+| Method | Endpoint              | Description                    |
+| ------ | --------------------- | ------------------------------ |
+| GET    | `/api/v1/audit-trail` | List audit logs                |
+| GET    | `/health`             | Health check (DB connectivity) |
 
 ### Subscription Plans
 
-| Feature | Free | Pro ($99/mo) | Enterprise ($499/mo) |
-|---------|------|------|------------|
-| Monthly Credits | 100 | 1,000 | 10,000 |
-| Reports/month | 3 | Unlimited | Unlimited |
-| Scenarios | 5 | Unlimited | Unlimited |
-| Questionnaires | 3 | Unlimited | Unlimited |
-| PDF Export | ✗ | ✓ | ✓ |
-| Supply Chain | ✗ | ✓ | ✓ |
-| Webhooks | ✗ | ✓ | ✓ |
-| Data Marketplace | ✗ | ✓ | ✓ |
+| Feature          | Free | Pro ($99/mo) | Enterprise ($499/mo) |
+| ---------------- | ---- | ------------ | -------------------- |
+| Monthly Credits  | 100  | 1,000        | 10,000               |
+| Reports/month    | 3    | Unlimited    | Unlimited            |
+| Scenarios        | 5    | Unlimited    | Unlimited            |
+| Questionnaires   | 3    | Unlimited    | Unlimited            |
+| PDF Export       | ✗    | ✓            | ✓                    |
+| Supply Chain     | ✗    | ✓            | ✓                    |
+| Webhooks         | ✗    | ✓            | ✓                    |
+| Data Marketplace | ✗    | ✓            | ✓                    |
 
 ## Emission Factor Datasets
 
-| Dataset | Source | Coverage |
-|---------|--------|----------|
-| EPA Stationary Combustion | US EPA | 10 fuel types |
-| EPA Mobile Combustion | US EPA | 8 vehicle types |
-| eGRID Subregions | US EPA | 27 US subregions + state mapping |
-| IEA Grid Factors | IEA | 68 countries + regional averages |
-| DEFRA | UK BEIS | UK-specific factors |
-| Transport | GLEC Framework | Freight + passenger modes |
-| Industry Averages | Multiple | 9 industries with scope splits |
-| GWP AR6 | IPCC | CO2, CH4, N2O, SF6 + 9 refrigerants |
+| Dataset                   | Source         | Coverage                            |
+| ------------------------- | -------------- | ----------------------------------- |
+| EPA Stationary Combustion | US EPA         | 10 fuel types                       |
+| EPA Mobile Combustion     | US EPA         | 8 vehicle types                     |
+| eGRID Subregions          | US EPA         | 27 US subregions + state mapping    |
+| IEA Grid Factors          | IEA            | 68 countries + regional averages    |
+| DEFRA                     | UK BEIS        | UK-specific factors                 |
+| Transport                 | GLEC Framework | Freight + passenger modes           |
+| Industry Averages         | Multiple       | 9 industries with scope splits      |
+| GWP AR6                   | IPCC           | CO2, CH4, N2O, SF6 + 9 refrigerants |
 
 ## GHG Protocol Coverage
 
@@ -441,6 +441,7 @@ Interactive docs: `http://localhost:8000/docs`
 ## Questionnaire Templates
 
 5 pre-built templates for major sustainability frameworks:
+
 - **CDP Climate Change** — 30 questions covering governance, risk management, emissions
 - **EcoVadis Assessment** — 20 questions on environment, labor, supply chain
 - **TCFD Disclosure** — 15 questions across 4 pillars
@@ -467,15 +468,15 @@ cd frontend && npm install && npm run dev   # http://localhost:3000
 
 ## Troubleshooting
 
-| Issue | Solution |
-|-------|----------|
+| Issue                                   | Solution                                                            |
+| --------------------------------------- | ------------------------------------------------------------------- |
 | `SECRET_KEY is using the default value` | Set `SECRET_KEY` env var (required in production: `ENV=production`) |
-| `RuntimeError: SECRET_KEY must be set` | Production mode enforces a real secret key |
-| CORS errors | Add frontend URL to `ALLOWED_ORIGINS` |
-| 429 Too Many Requests | Adjust `RATE_LIMIT_AUTH`/`RATE_LIMIT_DEFAULT` |
-| Frontend can't reach backend | Ensure backend on port 8000, check Next.js rewrites |
-| SQLite locked under load | Switch `DATABASE_URL` to PostgreSQL |
-| Bittensor timeout | Check wallet registration and `BT_QUERY_TIMEOUT` |
+| `RuntimeError: SECRET_KEY must be set`  | Production mode enforces a real secret key                          |
+| CORS errors                             | Add frontend URL to `ALLOWED_ORIGINS`                               |
+| 429 Too Many Requests                   | Adjust `RATE_LIMIT_AUTH`/`RATE_LIMIT_DEFAULT`                       |
+| Frontend can't reach backend            | Ensure backend on port 8000, check Next.js rewrites                 |
+| SQLite locked under load                | Switch `DATABASE_URL` to PostgreSQL                                 |
+| Bittensor timeout                       | Check wallet registration and `BT_QUERY_TIMEOUT`                    |
 
 ## License
 

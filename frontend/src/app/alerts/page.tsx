@@ -1,0 +1,184 @@
+"use client";
+
+import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import {
+  listAlerts,
+  acknowledgeAlert,
+  triggerAlertCheck,
+  type AlertOut,
+  type PaginatedResponse,
+} from "@/lib/api";
+
+const SEVERITY_STYLES: Record<string, string> = {
+  critical: "border-l-4 border-red-500 bg-red-500/10",
+  warning: "border-l-4 border-yellow-500 bg-yellow-500/10",
+  info: "border-l-4 border-blue-500 bg-blue-500/10",
+};
+
+const SEVERITY_BADGES: Record<string, string> = {
+  critical: "bg-red-500/20 text-red-400",
+  warning: "bg-yellow-500/20 text-yellow-400",
+  info: "bg-blue-500/20 text-blue-400",
+};
+
+export default function AlertsPage() {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const [data, setData] = useState<PaginatedResponse<AlertOut> | null>(null);
+  const [error, setError] = useState("");
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const [checking, setChecking] = useState(false);
+
+  const fetchAlerts = useCallback(async () => {
+    try {
+      const res = await listAlerts({ unread_only: unreadOnly, limit: 50 });
+      setData(res);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to load alerts");
+    }
+  }, [unreadOnly]);
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.replace("/login");
+      return;
+    }
+    if (user) fetchAlerts();
+  }, [user, loading, router, fetchAlerts]);
+
+  async function handleAcknowledge(id: string) {
+    try {
+      await acknowledgeAlert(id);
+      await fetchAlerts();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Failed to acknowledge");
+    }
+  }
+
+  async function handleCheck() {
+    setChecking(true);
+    try {
+      await triggerAlertCheck();
+      await fetchAlerts();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Check failed");
+    } finally {
+      setChecking(false);
+    }
+  }
+
+  if (loading || (!data && !error)) {
+    return <div className="p-8 text-[var(--muted)]">Loading alerts...</div>;
+  }
+
+  if (error && !data) {
+    return <div className="p-8 text-[var(--danger)]">Error: {error}</div>;
+  }
+
+  const alerts = data?.items ?? [];
+
+  return (
+    <div className="max-w-5xl mx-auto p-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Alerts</h1>
+          <p className="text-[var(--muted)]">
+            Automated monitoring for emission changes and data quality.
+          </p>
+        </div>
+        <div className="flex gap-3">
+          <button
+            className="btn-primary text-sm px-4 py-2"
+            onClick={handleCheck}
+            disabled={checking}
+          >
+            {checking ? "Checking..." : "Run Check"}
+          </button>
+        </div>
+      </div>
+
+      {error && (
+        <div className="p-3 rounded-md bg-[var(--danger)]/10 text-[var(--danger)] text-sm">
+          {error}
+        </div>
+      )}
+
+      {/* Filter */}
+      <div className="flex gap-3 items-center">
+        <label className="flex items-center gap-2 text-sm cursor-pointer">
+          <input
+            type="checkbox"
+            checked={unreadOnly}
+            onChange={(e) => setUnreadOnly(e.target.checked)}
+            className="accent-[var(--primary)]"
+          />
+          Unread only
+        </label>
+        <span className="text-sm text-[var(--muted)]">
+          {data?.total ?? 0} alert{data?.total !== 1 ? "s" : ""}
+        </span>
+      </div>
+
+      {/* Alert list */}
+      {alerts.length === 0 ? (
+        <div className="card p-12 text-center text-[var(--muted)]">
+          <p className="text-4xl mb-3">🔔</p>
+          <p>No alerts to display.</p>
+          <p className="text-sm mt-1">
+            Click &ldquo;Run Check&rdquo; to scan for emission changes.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {alerts.map((alert) => (
+            <div
+              key={alert.id}
+              className={`card p-4 ${SEVERITY_STYLES[alert.severity] ?? ""} ${
+                alert.is_read ? "opacity-60" : ""
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span
+                      className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        SEVERITY_BADGES[alert.severity] ?? ""
+                      }`}
+                    >
+                      {alert.severity}
+                    </span>
+                    <span className="text-xs text-[var(--muted)]">
+                      {alert.alert_type.replace(/_/g, " ")}
+                    </span>
+                    {alert.is_read && (
+                      <span className="text-xs text-[var(--muted)]">
+                        ✓ acknowledged
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="font-semibold">{alert.title}</h3>
+                  <p className="text-sm text-[var(--muted)] mt-1">
+                    {alert.message}
+                  </p>
+                  <p className="text-xs text-[var(--muted)] mt-2">
+                    {new Date(alert.created_at).toLocaleString()}
+                  </p>
+                </div>
+                {!alert.is_read && (
+                  <button
+                    className="text-xs px-3 py-1.5 rounded-md bg-[var(--card-border)] hover:bg-[var(--primary)] hover:text-black transition-colors shrink-0"
+                    onClick={() => handleAcknowledge(alert.id)}
+                  >
+                    Acknowledge
+                  </button>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
