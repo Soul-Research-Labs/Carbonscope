@@ -17,6 +17,8 @@ import {
   type User,
   type WebhookConfig,
 } from "@/lib/api";
+import ConfirmDialog from "@/components/ConfirmDialog";
+import { FormField } from "@/components/FormField";
 
 const INDUSTRIES = [
   "energy",
@@ -66,6 +68,7 @@ export default function SettingsPage() {
   const [whUrl, setWhUrl] = useState("");
   const [whEvents, setWhEvents] = useState<string[]>(["report.created"]);
   const [addingWh, setAddingWh] = useState(false);
+  const [deleteWhTarget, setDeleteWhTarget] = useState<string | null>(null);
 
   const ALL_EVENTS = [
     "report.created",
@@ -98,7 +101,7 @@ export default function SettingsPage() {
         setRevenueUsd(c.revenue_usd?.toString() ?? "");
       });
       listWebhooks()
-        .then(setWebhooks)
+        .then((res) => setWebhooks(res.items))
         .catch(() => {});
     }
   }, [user, loading, router]);
@@ -183,28 +186,24 @@ export default function SettingsPage() {
               {profileMsg}
             </div>
           )}
-          <div>
-            <label className="label">Full Name</label>
-            <input
-              type="text"
-              className="input"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              required
-              minLength={1}
-              maxLength={255}
-            />
-          </div>
-          <div>
-            <label className="label">Email</label>
-            <input
-              type="email"
-              className="input"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
+          <FormField
+            label="Full Name"
+            type="text"
+            className="input"
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            required
+            minLength={1}
+            maxLength={255}
+          />
+          <FormField
+            label="Email"
+            type="email"
+            className="input"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
           <button
             type="submit"
             className="btn-primary"
@@ -228,31 +227,25 @@ export default function SettingsPage() {
             {pwMsg}
           </div>
         )}
-        <div>
-          <label className="label">Current Password</label>
-          <input
-            type="password"
-            className="input"
-            value={currentPw}
-            onChange={(e) => setCurrentPw(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="label">New Password</label>
-          <input
-            type="password"
-            className="input"
-            value={newPw}
-            onChange={(e) => setNewPw(e.target.value)}
-            required
-            minLength={8}
-            maxLength={128}
-          />
-          <p className="text-xs text-[var(--muted)] mt-1">
-            Min 8 characters, must include an uppercase letter and a digit.
-          </p>
-        </div>
+        <FormField
+          label="Current Password"
+          type="password"
+          className="input"
+          value={currentPw}
+          onChange={(e) => setCurrentPw(e.target.value)}
+          required
+        />
+        <FormField
+          label="New Password"
+          type="password"
+          className="input"
+          value={newPw}
+          onChange={(e) => setNewPw(e.target.value)}
+          required
+          minLength={8}
+          maxLength={128}
+          hint="Min 8 characters, must include an uppercase letter and a digit."
+        />
         <button
           type="submit"
           className="btn-primary"
@@ -276,18 +269,15 @@ export default function SettingsPage() {
           </div>
         )}
 
-        <div>
-          <label className="label">Company Name</label>
-          <input
-            type="text"
-            className="input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </div>
-        <div>
-          <label className="label">Industry</label>
+        <FormField
+          label="Company Name"
+          type="text"
+          className="input"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          required
+        />
+        <FormField label="Industry">
           <select
             className="input"
             value={industry}
@@ -299,39 +289,33 @@ export default function SettingsPage() {
               </option>
             ))}
           </select>
-        </div>
-        <div>
-          <label className="label">Region</label>
-          <input
-            type="text"
-            className="input"
-            value={region}
-            onChange={(e) => setRegion(e.target.value)}
-            placeholder="e.g. US, EU, GB"
-          />
-        </div>
+        </FormField>
+        <FormField
+          label="Region"
+          type="text"
+          className="input"
+          value={region}
+          onChange={(e) => setRegion(e.target.value)}
+          placeholder="e.g. US, EU, GB"
+        />
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="label">Employee Count</label>
-            <input
-              type="number"
-              className="input"
-              value={employeeCount}
-              onChange={(e) => setEmployeeCount(e.target.value)}
-              min={0}
-            />
-          </div>
-          <div>
-            <label className="label">Annual Revenue (USD)</label>
-            <input
-              type="number"
-              className="input"
-              value={revenueUsd}
-              onChange={(e) => setRevenueUsd(e.target.value)}
-              min={0}
-              step="any"
-            />
-          </div>
+          <FormField
+            label="Employee Count"
+            type="number"
+            className="input"
+            value={employeeCount}
+            onChange={(e) => setEmployeeCount(e.target.value)}
+            min={0}
+          />
+          <FormField
+            label="Annual Revenue (USD)"
+            type="number"
+            className="input"
+            value={revenueUsd}
+            onChange={(e) => setRevenueUsd(e.target.value)}
+            min={0}
+            step="any"
+          />
         </div>
 
         <button type="submit" className="btn-primary" disabled={saving}>
@@ -446,10 +430,7 @@ export default function SettingsPage() {
                     </td>
                     <td className="py-2">
                       <button
-                        onClick={async () => {
-                          await deleteWebhook(wh.id);
-                          setWebhooks(webhooks.filter((w) => w.id !== wh.id));
-                        }}
+                        onClick={() => setDeleteWhTarget(wh.id)}
                         className="text-xs text-[var(--danger)] hover:underline"
                       >
                         Delete
@@ -462,6 +443,22 @@ export default function SettingsPage() {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteWhTarget}
+        title="Delete Webhook"
+        message="Are you sure you want to delete this webhook?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={async () => {
+          if (deleteWhTarget) {
+            await deleteWebhook(deleteWhTarget);
+            setWebhooks(webhooks.filter((w) => w.id !== deleteWhTarget));
+          }
+          setDeleteWhTarget(null);
+        }}
+        onCancel={() => setDeleteWhTarget(null)}
+      />
     </div>
   );
 }

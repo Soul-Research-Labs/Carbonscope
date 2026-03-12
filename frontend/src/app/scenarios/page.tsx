@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   listReports,
   listScenarios,
@@ -73,6 +74,7 @@ export default function ScenariosPage() {
     Record<string, Record<string, number>>
   >({});
   const [creating, setCreating] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -164,6 +166,8 @@ export default function ScenariosPage() {
       setScenarios((prev) => prev.filter((s) => s.id !== id));
     } catch {
       setError("Failed to delete");
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -375,7 +379,7 @@ export default function ScenariosPage() {
                     </button>
                   )}
                   <button
-                    onClick={() => handleDelete(s.id)}
+                    onClick={() => setDeleteTarget(s.id)}
                     className="px-3 py-1.5 rounded border border-[var(--card-border)] text-sm text-[var(--muted)] hover:text-[var(--danger)]"
                   >
                     Delete
@@ -386,6 +390,16 @@ export default function ScenariosPage() {
           })
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Scenario"
+        message="This scenario and its results will be permanently removed. Continue?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

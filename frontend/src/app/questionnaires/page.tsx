@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   listQuestionnaires,
   uploadQuestionnaire,
@@ -24,6 +25,7 @@ export default function QuestionnairesPage() {
   const [activeTab, setActiveTab] = useState<"list" | "upload" | "templates">(
     "list",
   );
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -81,6 +83,8 @@ export default function QuestionnairesPage() {
       setQuestionnaires((prev) => prev.filter((q) => q.id !== id));
     } catch {
       setError("Failed to delete questionnaire");
+    } finally {
+      setDeleteTarget(null);
     }
   }
 
@@ -225,7 +229,7 @@ export default function QuestionnairesPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => handleDelete(q.id)}
+                  onClick={() => setDeleteTarget(q.id)}
                   className="text-[var(--muted)] hover:text-[var(--danger)] text-sm ml-4"
                 >
                   Delete
@@ -235,6 +239,16 @@ export default function QuestionnairesPage() {
           )}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Delete Questionnaire"
+        message="This questionnaire and all its questions will be permanently removed. Continue?"
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => deleteTarget && handleDelete(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

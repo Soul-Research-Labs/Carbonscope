@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   listSuppliers,
   addSupplier,
@@ -49,6 +50,7 @@ export default function SupplyChainPage() {
   const [spend, setSpend] = useState("");
   const [category, setCategory] = useState("general");
   const [adding, setAdding] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -99,6 +101,7 @@ export default function SupplyChainPage() {
   async function handleRemove(linkId: string) {
     await deleteSupplyChainLink(linkId);
     await refresh();
+    setDeleteTarget(null);
   }
 
   if (loading) return <div className="p-8 text-[var(--muted)]">Loading...</div>;
@@ -251,7 +254,7 @@ export default function SupplyChainPage() {
                       </button>
                     )}
                     <button
-                      onClick={() => handleRemove(s.link_id)}
+                      onClick={() => setDeleteTarget(s.link_id)}
                       className="text-xs text-[var(--danger)] hover:underline"
                     >
                       Remove
@@ -263,6 +266,16 @@ export default function SupplyChainPage() {
           </table>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title="Remove Supplier"
+        message="This will remove the supply chain link. Continue?"
+        confirmLabel="Remove"
+        variant="danger"
+        onConfirm={() => deleteTarget && handleRemove(deleteTarget)}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 }

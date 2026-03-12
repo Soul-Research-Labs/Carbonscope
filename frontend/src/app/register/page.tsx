@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { FormField } from "@/components/FormField";
 
 const INDUSTRIES = [
   "Energy",
@@ -108,28 +109,23 @@ export default function RegisterPage() {
               {error}
             </div>
           )}
-          <div>
-            <label className="label">Full Name</label>
-            <input
-              type="text"
-              className="input"
-              value={form.fullName}
-              onChange={(e) => update("fullName", e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="label">Company Name</label>
-            <input
-              type="text"
-              className="input"
-              value={form.companyName}
-              onChange={(e) => update("companyName", e.target.value)}
-              required
-            />
-          </div>
-          <div>
-            <label className="label">Industry</label>
+          <FormField
+            label="Full Name"
+            type="text"
+            className="input"
+            value={form.fullName}
+            onChange={(e) => update("fullName", e.target.value)}
+            required
+          />
+          <FormField
+            label="Company Name"
+            type="text"
+            className="input"
+            value={form.companyName}
+            onChange={(e) => update("companyName", e.target.value)}
+            required
+          />
+          <FormField label="Industry">
             <select
               className="input"
               value={form.industry}
@@ -141,9 +137,8 @@ export default function RegisterPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="label">Region</label>
+          </FormField>
+          <FormField label="Region">
             <select
               className="input"
               value={form.region}
@@ -155,44 +150,36 @@ export default function RegisterPage() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label className="label">Email</label>
-            <input
-              type="email"
-              className="input"
-              value={form.email}
-              onChange={(e) => update("email", e.target.value)}
-              required
-              autoComplete="email"
-            />
-          </div>
-          <div>
-            <label className="label">Password</label>
-            <input
-              type="password"
-              className="input"
-              value={form.password}
-              onChange={(e) => update("password", e.target.value)}
-              required
-              minLength={8}
-              autoComplete="new-password"
-            />
-            <p className="text-xs text-[var(--muted)] mt-1">
-              Min 8 characters, must include an uppercase letter and a digit.
-            </p>
-          </div>
-          <div>
-            <label className="label">Confirm Password</label>
-            <input
-              type="password"
-              className="input"
-              value={form.confirmPassword}
-              onChange={(e) => update("confirmPassword", e.target.value)}
-              required
-              autoComplete="new-password"
-            />
-          </div>
+          </FormField>
+          <FormField
+            label="Email"
+            type="email"
+            className="input"
+            value={form.email}
+            onChange={(e) => update("email", e.target.value)}
+            required
+            autoComplete="email"
+          />
+          <FormField
+            label="Password"
+            type="password"
+            className="input"
+            value={form.password}
+            onChange={(e) => update("password", e.target.value)}
+            required
+            minLength={8}
+            autoComplete="new-password"
+            hint="Min 8 characters, must include an uppercase letter and a digit."
+          />
+          <FormField
+            label="Confirm Password"
+            type="password"
+            className="input"
+            value={form.confirmPassword}
+            onChange={(e) => update("confirmPassword", e.target.value)}
+            required
+            autoComplete="new-password"
+          />
           <button
             type="submit"
             className="btn-primary w-full"

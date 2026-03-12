@@ -10,6 +10,7 @@ import {
   type QuestionnaireDetail,
   type QuestionOut,
 } from "@/lib/api";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export default function QuestionnaireDetailPage() {
   const { user, loading } = useAuth();
@@ -117,15 +118,16 @@ export default function QuestionnaireDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-8">
+      <Breadcrumbs
+        items={[
+          { label: "Questionnaires", href: "/questionnaires" },
+          { label: detail.questionnaire.title },
+        ]}
+      />
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <button
-            onClick={() => router.push("/questionnaires")}
-            className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] mb-2 inline-block"
-          >
-            ← Back to questionnaires
-          </button>
           <h1 className="text-2xl font-bold">{detail.questionnaire.title}</h1>
           <p className="text-sm text-[var(--muted)] mt-1">
             {approvedCount}/{totalCount} questions approved

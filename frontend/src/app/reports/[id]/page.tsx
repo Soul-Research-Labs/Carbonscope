@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { getReport, type EmissionReport } from "@/lib/api";
 import ScopeChart from "@/components/ScopeChart";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 export default function ReportDetailPage() {
   const { user, loading } = useAuth();
@@ -39,6 +40,13 @@ export default function ReportDetailPage() {
 
   return (
     <div className="max-w-4xl mx-auto p-8 space-y-8">
+      <Breadcrumbs
+        items={[
+          { label: "Reports", href: "/reports" },
+          { label: `Report — ${report.year}` },
+        ]}
+      />
+
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold">
@@ -49,12 +57,6 @@ export default function ReportDetailPage() {
             {report.methodology_version}
           </p>
         </div>
-        <button
-          onClick={() => router.back()}
-          className="text-sm text-[var(--muted)] hover:text-[var(--foreground)]"
-        >
-          ← Back
-        </button>
       </div>
 
       {/* Totals */}

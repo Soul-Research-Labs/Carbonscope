@@ -205,10 +205,16 @@ export interface AuditLogEntry {
 export async function listAuditLogs(params?: {
   limit?: number;
   offset?: number;
+  action?: string;
+  resource_type?: string;
+  user_id?: string;
 }): Promise<PaginatedResponse<AuditLogEntry>> {
   const q = new URLSearchParams();
   if (params?.limit != null) q.set("limit", String(params.limit));
   if (params?.offset != null) q.set("offset", String(params.offset));
+  if (params?.action) q.set("action", params.action);
+  if (params?.resource_type) q.set("resource_type", params.resource_type);
+  if (params?.user_id) q.set("user_id", params.user_id);
   const qs = q.toString();
   return request(`/audit-logs/${qs ? `?${qs}` : ""}`);
 }
@@ -609,8 +615,15 @@ export async function createWebhook(data: {
   });
 }
 
-export async function listWebhooks(): Promise<WebhookConfig[]> {
-  return request<WebhookConfig[]>("/webhooks/");
+export async function listWebhooks(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<WebhookConfig>> {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request(`/webhooks/${qs ? `?${qs}` : ""}`);
 }
 
 export async function toggleWebhook(
@@ -879,6 +892,25 @@ export async function getCredits(): Promise<CreditBalanceOut> {
   return request<CreditBalanceOut>("/billing/credits");
 }
 
+export interface CreditLedgerEntry {
+  id: string;
+  amount: number;
+  reason: string;
+  balance_after: number;
+  created_at: string;
+}
+
+export async function getCreditLedger(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<CreditLedgerEntry>> {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request(`/billing/credits/ledger${qs ? `?${qs}` : ""}`);
+}
+
 export async function listPlans(): Promise<Record<string, PlanLimits>> {
   return request<Record<string, PlanLimits>>("/billing/plans");
 }
@@ -978,9 +1010,27 @@ export async function browseListings(params?: {
   return request(`/marketplace/listings${qs ? `?${qs}` : ""}`);
 }
 
+export async function getListing(id: string): Promise<DataListingOut> {
+  return request<DataListingOut>(
+    `/marketplace/listings/${encodeURIComponent(id)}`,
+  );
+}
+
 export async function purchaseListing(id: string): Promise<DataPurchaseOut> {
   return request<DataPurchaseOut>(
     `/marketplace/listings/${encodeURIComponent(id)}/purchase`,
     { method: "POST" },
+  );
+}
+
+export async function deleteAccount(): Promise<void> {
+  return request("/auth/me", { method: "DELETE" });
+}
+
+export async function getSupplyChainLink(
+  linkId: string,
+): Promise<SupplyChainLink> {
+  return request<SupplyChainLink>(
+    `/supply-chain/links/${encodeURIComponent(linkId)}`,
   );
 }
