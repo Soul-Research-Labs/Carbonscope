@@ -227,7 +227,7 @@ WALLET_NAME=validator ./scripts/register.sh
 ## Running Tests
 
 ```bash
-pytest tests/ -v               # All 307 tests
+pytest tests/ -v               # All 491+ backend tests
 pytest tests/test_carbon_api.py -v  # Specific file
 pytest tests/ -q --tb=short    # Short output
 pytest tests/ --cov=api --cov-report=term-missing  # With coverage
@@ -252,6 +252,32 @@ pytest tests/ --cov=api --cov-report=term-missing  # With coverage
 | `test_billing_alerts_marketplace.py` | Subscriptions, credits, alerts, marketplace, scheduler     |
 | `test_coverage_gaps.py`              | Refresh tokens, soft deletes, pagination, webhook toggle   |
 | `test_v060_features.py`              | SSRF, refresh rotation, password reset, middleware, admin  |
+| `test_ai_routes.py`                  | AI endpoints: parse-text, predict, audit-trail             |
+| `test_audit_routes.py`               | Audit log listing, filtering by action/resource/user       |
+| `test_concurrency.py`                | Concurrent credit deduction race conditions                |
+| `test_middleware_and_crud.py`        | Request logging, security headers, CRUD operations         |
+| `test_phase1_security.py`            | Token revocation, brute force lockout, CSRF                |
+| `test_phase5_security.py`            | Admin RBAC, cookie auth, rate limiter proxy                |
+| `test_phase6_business_logic.py`      | Credit gating, pagination, GDPR delete, ledger             |
+| `test_questionnaire_routes.py`       | Questionnaire CRUD, questions, templates, extraction       |
+| `test_scenario_routes.py`            | Scenario CRUD, compute, pagination                         |
+| `test_supply_chain_routes.py`        | Supply chain links, Scope 3 calculation, verification      |
+| `test_webhook_routes.py`             | Webhook CRUD, toggle, delivery logs, pagination            |
+
+**Frontend tests** (65 tests in `frontend/src/__tests__/`):
+
+| File                          | Coverage                                            |
+| ----------------------------- | --------------------------------------------------- |
+| `Breadcrumbs.test.tsx`        | Rendering, links, accessibility, separators         |
+| `ConfirmDialog.test.tsx`      | Open/close, confirm/cancel, variants, custom labels |
+| `DataTable.test.tsx`          | Sorting, pagination, empty states, rendering        |
+| `FormField.test.tsx`          | Labels, errors, hints, children, accessibility      |
+| `Navbar.test.tsx`             | Navigation links, active states, mobile menu        |
+| `Skeleton.test.tsx`           | Skeleton variants, animation, sizing                |
+| `Toast.test.tsx`              | Toast types, auto-dismiss, manual close             |
+| `api.test.ts`                 | ApiError, auth headers, error handling              |
+| `api-new-methods.test.ts`     | Credit ledger, delete account, supply chain, webhooks |
+| `auto-refresh.test.ts`        | Token refresh on 401, retry logic                   |
 
 ## Docker Deployment
 
@@ -266,7 +292,7 @@ export ENV=production
 docker compose up --build -d
 ```
 
-## Platform API (v0.7.0)
+## Platform API (v0.8.0)
 
 ### Start the API server
 
@@ -498,6 +524,36 @@ cd frontend && npm install && npm run dev   # http://localhost:3000
 | Bittensor timeout                       | Check wallet registration and `BT_QUERY_TIMEOUT`                    |
 
 ## Changelog
+
+### v0.8.0
+
+**Phase 7 — Frontend Quality**
+
+- Wire ConfirmDialog into all delete actions (scenarios, questionnaires, supply-chain, webhooks)
+- Add Breadcrumbs to report detail and questionnaire detail pages
+- Replace raw label/input pairs with FormField component (login, register, settings)
+- Add error.tsx boundaries for 5 missing routes (alerts, audit-logs, billing, marketplace, recommendations)
+- Add/fix API client methods: paginated webhooks, audit log filters, credit ledger, single listing, account delete, single supply chain link
+- 7 new frontend tests for API methods
+
+**Phase 6 — Business Logic Completeness**
+
+- Credit/plan gating on premium endpoints (estimate, PDF export, questionnaire extract, scenario compute, compliance report)
+- Paginated webhook list endpoint with limit/offset
+- Credit transaction history endpoint (GET /billing/credits/ledger)
+- User self-delete GDPR endpoint (DELETE /auth/me)
+- GET single supply chain link and GET single marketplace listing
+- Audit log filtering by action, resource_type, user_id
+- 17 new backend tests for business logic
+
+**Phase 5 — Security & Authorization Hardening**
+
+- Admin-only enforcement on subscription changes, credit grants, company updates
+- Cookie-based authentication with Secure/HttpOnly/SameSite flags
+- Rate limiter proxy for multi-instance deployments
+- CSRF double-submit cookie validation
+- Alembic migration for Phase 5 schema changes
+- 11 new security tests
 
 ### v0.7.0
 
