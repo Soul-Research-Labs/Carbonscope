@@ -16,6 +16,9 @@ router = APIRouter(prefix="/audit-logs", tags=["audit"])
 
 @router.get("/", response_model=PaginatedResponse[AuditLogOut])
 async def list_audit_logs(
+    action: str | None = Query(default=None),
+    resource_type: str | None = Query(default=None),
+    user_id: str | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     user: User = Depends(require_admin),
@@ -23,6 +26,12 @@ async def list_audit_logs(
 ):
     """List audit log entries for the current user's company."""
     base = select(AuditLog).where(AuditLog.company_id == user.company_id)
+    if action is not None:
+        base = base.where(AuditLog.action == action)
+    if resource_type is not None:
+        base = base.where(AuditLog.resource_type == resource_type)
+    if user_id is not None:
+        base = base.where(AuditLog.user_id == user_id)
 
     total_result = await db.execute(select(func.count()).select_from(base.subquery()))
     total = total_result.scalar() or 0

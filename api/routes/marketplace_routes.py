@@ -60,6 +60,28 @@ async def browse_marketplace(
     return PaginatedResponse(items=listings, total=total, limit=limit, offset=offset)
 
 
+@router.get("/listings/{listing_id}", response_model=DataListingOut)
+async def get_listing(
+    listing_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a specific marketplace listing."""
+    from sqlalchemy import select
+    from api.models import DataListing
+
+    result = await db.execute(
+        select(DataListing).where(
+            DataListing.id == listing_id,
+            DataListing.status == "active",
+        )
+    )
+    listing = result.scalar_one_or_none()
+    if not listing:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Listing not found")
+    return listing
+
+
 @router.post("/listings/{listing_id}/purchase", response_model=DataPurchaseOut)
 async def purchase_data(
     listing_id: str,

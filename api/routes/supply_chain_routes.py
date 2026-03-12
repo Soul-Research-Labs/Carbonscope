@@ -76,6 +76,29 @@ async def scope3_from_suppliers(
     return await calc_supplier_scope3(db, user.company_id, year)
 
 
+@router.get("/links/{link_id}", response_model=SupplyChainLinkOut)
+async def get_link(
+    link_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Get a specific supply chain link."""
+    from sqlalchemy import select as sa_select
+    from api.models import SupplyChainLink
+
+    result = await db.execute(
+        sa_select(SupplyChainLink).where(
+            SupplyChainLink.id == link_id,
+            SupplyChainLink.buyer_company_id == user.company_id,
+            SupplyChainLink.deleted_at.is_(None),
+        )
+    )
+    link = result.scalar_one_or_none()
+    if not link:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Link not found")
+    return link
+
+
 @router.patch("/links/{link_id}", response_model=SupplyChainLinkOut)
 async def update_link(
     link_id: str,

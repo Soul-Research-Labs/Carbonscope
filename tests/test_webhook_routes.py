@@ -47,9 +47,9 @@ class TestWebhookCRUD:
         resp = await auth_client.get("/api/v1/webhooks/")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) >= 1
+        assert data["total"] >= 1
         # Public view — no secret
-        assert "secret" not in data[0]
+        assert "secret" not in data["items"][0]
 
     async def test_toggle_webhook_off(self, auth_client: AsyncClient):
         wh = await _create_webhook(auth_client)

@@ -186,7 +186,7 @@ class TestWebhooks:
         })
         resp = await auth_client.get("/api/v1/webhooks/")
         assert resp.status_code == 200
-        assert len(resp.json()) >= 1
+        assert resp.json()["total"] >= 1
 
     @pytest.mark.asyncio
     async def test_toggle_webhook(self, auth_client):

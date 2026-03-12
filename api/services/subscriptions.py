@@ -187,6 +187,20 @@ async def check_feature_access(db: AsyncSession, company_id: str, feature: str) 
 
 async def check_credit_and_deduct(db: AsyncSession, company_id: str, operation: str) -> None:
     """Check credits and deduct for an operation. Raises ValueError if insufficient."""
+    # Ensure subscription exists (auto-grants initial credits on first access)
+    await get_or_create_subscription(db, company_id)
     cost = CREDIT_COSTS.get(operation, 0)
     if cost > 0:
         await deduct_credits(db, company_id, cost, f"{operation}_usage")
+
+
+async def get_credit_ledger(
+    db: AsyncSession, company_id: str, limit: int = 50, offset: int = 0,
+) -> tuple[list[CreditLedger], int]:
+    """Return paginated credit transaction history for a company."""
+    base = select(CreditLedger).where(CreditLedger.company_id == company_id)
+    total = (await db.execute(select(func.count()).select_from(base.subquery()))).scalar() or 0
+    result = await db.execute(
+        base.order_by(CreditLedger.created_at.desc()).limit(limit).offset(offset)
+    )
+    return result.scalars().all(), total

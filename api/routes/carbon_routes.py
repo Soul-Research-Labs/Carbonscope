@@ -12,7 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
-from api.deps import get_current_user
+from api.deps import get_current_user, require_credits, require_plan
 from api.limiter import limiter
 from api.models import Company, DataUpload, EmissionReport, User, _utcnow
 from api.schemas import (
@@ -38,7 +38,7 @@ router = APIRouter(tags=["carbon"])
 async def create_estimate(
     request: Request,
     body: EstimateRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_credits("estimate")),
     db: AsyncSession = Depends(get_db),
 ):
     """Run an emission estimation against a data upload.
@@ -266,7 +266,7 @@ async def update_report(
 @router.get("/reports/{report_id}/export/pdf")
 async def export_report_pdf(
     report_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_credits("pdf_export")),
     db: AsyncSession = Depends(get_db),
 ):
     """Export an emission report as a styled PDF."""

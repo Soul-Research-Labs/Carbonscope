@@ -127,8 +127,8 @@ class TestWebhookToggle:
         # List — secret should be hidden
         list_resp = await auth_client.get("/api/v1/webhooks/")
         listed = list_resp.json()
-        assert len(listed) >= 1
-        assert "secret" not in listed[0]
+        assert listed["total"] >= 1
+        assert "secret" not in listed["items"][0]
 
         # Toggle off
         toggle_resp = await auth_client.patch(f"/api/v1/webhooks/{wh['id']}", json={"active": False})

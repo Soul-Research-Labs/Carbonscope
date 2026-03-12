@@ -35,7 +35,7 @@ from api.config import (
 from api.database import get_db
 from api.deps import get_current_user
 from api.limiter import limiter
-from api.models import Company, User
+from api.models import Company, User, _utcnow
 from api.schemas import PasswordChange, Token, UserLogin, UserOut, UserProfileUpdate, UserRegister
 from api.services import audit
 
@@ -223,6 +223,23 @@ async def change_password(
     await audit.record(
         db, user_id=user.id, company_id=user.company_id,
         action="change_password", resource_type="user", resource_id=user.id,
+    )
+    await db.commit()
+
+
+@router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_account(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Soft-delete the current user's account (GDPR right to erasure)."""
+    user.is_active = False
+    user.deleted_at = _utcnow()
+    user.email = f"deleted_{user.id}@deleted.local"
+    user.full_name = "Deleted User"
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="delete", resource_type="user", resource_id=user.id,
     )
     await db.commit()
 

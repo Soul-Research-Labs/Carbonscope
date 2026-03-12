@@ -28,13 +28,18 @@ async def add_webhook(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
-@router.get("/", response_model=list[WebhookOutPublic])
+@router.get("/", response_model=PaginatedResponse[WebhookOutPublic])
 async def get_webhooks(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """List all webhooks for the current company."""
-    return await list_webhooks(db, user.company_id)
+    all_webhooks = await list_webhooks(db, user.company_id)
+    total = len(all_webhooks)
+    items = all_webhooks[offset : offset + limit]
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)
 
 
 @router.patch("/{webhook_id}", response_model=WebhookOutPublic)

@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_db
-from api.deps import get_current_user
+from api.deps import get_current_user, require_credits
 from api.models import EmissionReport, Scenario, User
 from api.schemas import PaginatedResponse, ScenarioCreate, ScenarioOut, ScenarioUpdate
 from api.services.scenarios import run_scenario
@@ -124,7 +124,7 @@ async def update_scenario(
 @router.post("/{scenario_id}/compute", response_model=ScenarioOut)
 async def compute_scenario(
     scenario_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_credits("scenario_compute")),
     db: AsyncSession = Depends(get_db),
 ):
     """Run the what-if computation for a scenario."""

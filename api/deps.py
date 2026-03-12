@@ -112,6 +112,7 @@ def require_credits(operation: str) -> Callable:
 
         try:
             await check_credit_and_deduct(db, user.company_id, operation)
+            await db.commit()
         except ValueError as e:
             raise HTTPException(
                 status_code=status.HTTP_402_PAYMENT_REQUIRED,

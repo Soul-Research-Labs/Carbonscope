@@ -11,7 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from api.database import get_db
-from api.deps import get_current_user
+from api.deps import get_current_user, require_credits
 from api.models import Questionnaire, QuestionnaireQuestion, User, _utcnow
 from api.schemas import (
     PaginatedResponse,
@@ -149,7 +149,7 @@ async def get_questionnaire(
 @router.post("/{questionnaire_id}/extract", response_model=QuestionnaireDetail)
 async def extract_questions(
     questionnaire_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_credits("questionnaire_extract")),
     db: AsyncSession = Depends(get_db),
 ):
     """Trigger AI extraction of questions + draft answer generation."""
@@ -278,7 +278,7 @@ async def update_questionnaire(
 @router.get("/{questionnaire_id}/export/pdf")
 async def export_questionnaire_pdf(
     questionnaire_id: str,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_credits("pdf_export")),
     db: AsyncSession = Depends(get_db),
 ):
     """Export questionnaire responses as a styled PDF."""

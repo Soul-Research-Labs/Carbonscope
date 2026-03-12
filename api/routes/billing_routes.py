@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_db
@@ -19,6 +19,7 @@ from api.services.subscriptions import (
     PLAN_LIMITS,
     change_plan,
     get_credit_balance,
+    get_credit_ledger,
     get_or_create_subscription,
     get_plan_limits,
     grant_credits,
@@ -106,3 +107,15 @@ async def admin_grant_credits(
         balance=balance,
         plan=sub.plan,
     )
+
+
+@router.get("/credits/ledger", response_model=PaginatedResponse[CreditLedgerOut])
+async def get_credit_history(
+    limit: int = Query(default=50, ge=1, le=200),
+    offset: int = Query(default=0, ge=0),
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """List credit transaction history for the current company."""
+    items, total = await get_credit_ledger(db, user.company_id, limit, offset)
+    return PaginatedResponse(items=items, total=total, limit=limit, offset=offset)

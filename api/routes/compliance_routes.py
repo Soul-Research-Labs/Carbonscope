@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
-from api.deps import get_current_user
+from api.deps import get_current_user, require_credits
 from api.limiter import limiter
 from api.models import Company, EmissionReport, User
 from api.schemas import ComplianceReportRequest
@@ -28,7 +28,7 @@ router = APIRouter(prefix="/compliance", tags=["compliance"])
 async def create_compliance_report(
     request: Request,
     body: ComplianceReportRequest,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_credits("estimate")),
     db: AsyncSession = Depends(get_db),
 ):
     """Generate a compliance report for a specific framework and emission report."""
