@@ -11,6 +11,7 @@ import {
   updateSupplyChainLink,
   deleteSupplyChainLink,
 } from "@/lib/api";
+import { PageSkeleton } from "@/components/Skeleton";
 
 interface Supplier {
   link_id: string;
@@ -113,7 +114,7 @@ export default function SupplyChainPage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-[var(--muted)]">Loading...</div>;
+  if (loading) return <PageSkeleton />;
   if (error && suppliers.length === 0)
     return <div className="p-8 text-[var(--danger)]">Error: {error}</div>;
 
@@ -213,9 +214,11 @@ export default function SupplyChainPage() {
       <div className="card overflow-x-auto">
         <h2 className="text-lg font-semibold mb-4">Suppliers</h2>
         {suppliers.length === 0 ? (
-          <p className="text-[var(--muted)] text-sm">
-            No suppliers linked yet.
-          </p>
+          <div className="text-center py-12">
+            <span className="text-4xl mb-3 block">🔗</span>
+            <p className="text-[var(--muted)] mb-2">No suppliers linked yet</p>
+            <p className="text-sm text-[var(--muted)]">Add a supplier above to start tracking Scope 3 emissions.</p>
+          </div>
         ) : (
           <table className="w-full text-sm">
             <thead>

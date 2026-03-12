@@ -15,6 +15,7 @@ from api.schemas import (
     PaginatedResponse,
 )
 from api.services.marketplace import browse_listings, create_listing, list_my_listings, purchase_listing, withdraw_listing
+from api.services import audit
 
 router = APIRouter(prefix="/marketplace", tags=["marketplace"])
 
@@ -103,6 +104,10 @@ async def purchase_data(
             .options(selectinload(DataPurchase.listing))
         )
         purchase = result.scalar_one()
+        await audit.record(
+            db, user_id=user.id, company_id=user.company_id,
+            action="create", resource_type="data_purchase", resource_id=purchase.id,
+        )
         return purchase
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

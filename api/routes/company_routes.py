@@ -160,6 +160,10 @@ async def update_data_upload(
     for key, value in updates.items():
         setattr(upload, key, value)
 
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="update", resource_type="data_upload", resource_id=upload_id,
+    )
     await db.commit()
     await db.refresh(upload)
     return upload

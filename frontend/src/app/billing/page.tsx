@@ -13,6 +13,7 @@ import {
   type PlanLimits,
   ApiError,
 } from "@/lib/api";
+import { CardSkeleton } from "@/components/Skeleton";
 
 export default function BillingPage() {
   const { user, loading } = useAuth();
@@ -55,7 +56,12 @@ export default function BillingPage() {
   }
 
   if (loading || (!sub && !error)) {
-    return <div className="p-8 text-[var(--muted)]">Loading billing...</div>;
+    return (
+      <div className="max-w-4xl mx-auto p-8 space-y-6">
+        <CardSkeleton />
+        <CardSkeleton />
+      </div>
+    );
   }
 
   if (error && !sub) {

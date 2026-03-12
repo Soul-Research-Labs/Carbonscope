@@ -359,6 +359,7 @@ class Scenario(Base):
     status: str = Column(Enum(ScenarioStatus, native_enum=False, length=50), default=ScenarioStatus.draft)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
     updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
 
     company = relationship("Company")
 

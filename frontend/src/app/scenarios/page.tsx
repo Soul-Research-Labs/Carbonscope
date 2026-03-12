@@ -13,6 +13,7 @@ import {
   type EmissionReport,
   type ScenarioOut,
 } from "@/lib/api";
+import { PageSkeleton } from "@/components/Skeleton";
 
 const ADJUSTMENT_TYPES = [
   {
@@ -171,8 +172,7 @@ export default function ScenariosPage() {
     }
   }
 
-  if (loading)
-    return <div className="p-8 text-center text-[var(--muted)]">Loading…</div>;
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto p-8">
@@ -307,9 +307,11 @@ export default function ScenariosPage() {
       {/* Scenario list */}
       <div className="space-y-4">
         {scenarios.length === 0 && !showCreate ? (
-          <p className="text-center text-[var(--muted)] py-12">
-            No scenarios yet. Create one to model emission reduction strategies.
-          </p>
+          <div className="text-center py-16 rounded-xl border border-[var(--card-border)] bg-[var(--card)]">
+            <span className="text-4xl mb-3 block">🔬</span>
+            <p className="text-[var(--muted)] mb-2">No scenarios yet</p>
+            <p className="text-sm text-[var(--muted)]">Create one to model emission reduction strategies.</p>
+          </div>
         ) : (
           scenarios.map((s) => {
             const results = s.results as Record<string, unknown> | null;

@@ -19,6 +19,7 @@ import {
 } from "@/lib/api";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import { FormField } from "@/components/FormField";
+import { PageSkeleton } from "@/components/Skeleton";
 
 const INDUSTRIES = [
   "energy",
@@ -162,7 +163,7 @@ export default function SettingsPage() {
   }
 
   if (loading || !company) {
-    return <div className="p-8 text-[var(--muted)]">Loading settings...</div>;
+    return <PageSkeleton />;
   }
 
   return (

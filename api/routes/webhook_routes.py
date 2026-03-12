@@ -10,6 +10,7 @@ from api.deps import get_current_user, require_admin
 from api.models import User
 from api.schemas import PaginatedResponse, WebhookCreate, WebhookDeliveryOut, WebhookOut, WebhookOutPublic, WebhookToggle
 from api.services.webhooks import create_webhook, delete_webhook, list_deliveries, list_webhooks, toggle_webhook
+from api.services import audit
 
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
@@ -23,6 +24,10 @@ async def add_webhook(
     """Register a new webhook endpoint."""
     try:
         wh = await create_webhook(db, user.company_id, body.url, body.event_types)
+        await audit.record(
+            db, user_id=user.id, company_id=user.company_id,
+            action="create", resource_type="webhook", resource_id=wh.id,
+        )
         return wh
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -53,6 +58,10 @@ async def update_webhook(
     wh = await toggle_webhook(db, webhook_id, user.company_id, body.active)
     if not wh:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="update", resource_type="webhook", resource_id=webhook_id,
+    )
     return wh
 
 
@@ -66,6 +75,10 @@ async def remove_webhook(
     removed = await delete_webhook(db, webhook_id, user.company_id)
     if not removed:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Webhook not found")
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="delete", resource_type="webhook", resource_id=webhook_id,
+    )
 
 
 @router.get("/{webhook_id}/deliveries", response_model=PaginatedResponse[WebhookDeliveryOut])

@@ -107,6 +107,11 @@ async def create_estimate(
     await db.commit()
     await db.refresh(report)
 
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="create", resource_type="emission_report", resource_id=report.id,
+    )
+
     # Dispatch webhook event (fire-and-forget; errors are logged)
     await dispatch_event(db, user.company_id, "report.created", {
         "report_id": report.id,

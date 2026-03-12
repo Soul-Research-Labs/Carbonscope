@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   browseListings,
   purchaseListing,
@@ -35,6 +36,7 @@ export default function MarketplacePage() {
     price_credits: 0,
   });
   const [creating, setCreating] = useState(false);
+  const [purchaseTarget, setPurchaseTarget] = useState<string | null>(null);
 
   const fetchListings = useCallback(async (ind?: string, reg?: string) => {
     try {
@@ -58,7 +60,7 @@ export default function MarketplacePage() {
   }, [user, loading, router, fetchListings]);
 
   async function handlePurchase(id: string) {
-    if (!confirm("Purchase this listing? Credits will be deducted.")) return;
+    setPurchaseTarget(null);
     try {
       await purchaseListing(id);
       alert("Purchase successful!");
@@ -317,7 +319,7 @@ export default function MarketplacePage() {
                 </span>
                 <button
                   className="btn-primary text-xs px-3 py-1.5"
-                  onClick={() => handlePurchase(listing.id)}
+                  onClick={() => setPurchaseTarget(listing.id)}
                 >
                   Purchase
                 </button>
@@ -326,6 +328,15 @@ export default function MarketplacePage() {
           ))}
         </div>
       )}
+
+      <ConfirmDialog
+        open={!!purchaseTarget}
+        title="Confirm Purchase"
+        message="Purchase this listing? Credits will be deducted."
+        confirmLabel="Purchase"
+        onConfirm={() => purchaseTarget && handlePurchase(purchaseTarget)}
+        onCancel={() => setPurchaseTarget(null)}
+      />
     </div>
   );
 }

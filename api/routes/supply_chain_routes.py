@@ -17,6 +17,7 @@ from api.services.supply_chain import (
     remove_link,
     update_link_status,
 )
+from api.services import audit
 
 router = APIRouter(prefix="/supply-chain", tags=["supply-chain"])
 
@@ -110,6 +111,10 @@ async def update_link(
     link = await update_link_status(db, link_id, user.company_id, body.status)
     if not link:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Link not found")
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="update", resource_type="supply_chain_link", resource_id=link_id,
+    )
     return link
 
 

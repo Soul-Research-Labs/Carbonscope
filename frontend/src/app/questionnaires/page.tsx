@@ -14,6 +14,7 @@ import {
   type QuestionnaireOut,
   type TemplateSummary,
 } from "@/lib/api";
+import { PageSkeleton } from "@/components/Skeleton";
 
 export default function QuestionnairesPage() {
   const { user, loading } = useAuth();
@@ -105,8 +106,7 @@ export default function QuestionnairesPage() {
     );
   };
 
-  if (loading)
-    return <div className="p-8 text-center text-[var(--muted)]">Loading…</div>;
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto p-8">
@@ -200,10 +200,11 @@ export default function QuestionnairesPage() {
       {activeTab === "list" && (
         <div className="space-y-3">
           {questionnaires.length === 0 ? (
-            <p className="text-center text-[var(--muted)] py-12">
-              No questionnaires yet. Upload a document or apply a template to
-              get started.
-            </p>
+            <div className="text-center py-16 rounded-xl border border-[var(--card-border)] bg-[var(--card)]">
+              <span className="text-4xl mb-3 block">📋</span>
+              <p className="text-[var(--muted)] mb-2">No questionnaires yet</p>
+              <p className="text-sm text-[var(--muted)]">Upload a document or apply a template to get started.</p>
+            </div>
           ) : (
             questionnaires.map((q) => (
               <div

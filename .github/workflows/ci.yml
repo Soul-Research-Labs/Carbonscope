@@ -40,6 +40,12 @@ jobs:
           SECRET_KEY: ci-test-secret-key-12345
           DATABASE_URL: "sqlite+aiosqlite:///:memory:"
 
+      - name: Validate Alembic migrations
+        run: alembic upgrade head
+        env:
+          SECRET_KEY: ci-test-secret-key-12345
+          DATABASE_URL: "sqlite+aiosqlite:///ci_migration_test.db"
+
   lint:
     runs-on: ubuntu-latest
     steps:

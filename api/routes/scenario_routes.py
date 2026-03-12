@@ -8,8 +8,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.database import get_db
 from api.deps import get_current_user, require_credits
-from api.models import EmissionReport, Scenario, User
+from api.models import EmissionReport, Scenario, User, _utcnow
 from api.schemas import PaginatedResponse, ScenarioCreate, ScenarioOut, ScenarioUpdate
+from api.services import audit
 from api.services.scenarios import run_scenario
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
@@ -57,7 +58,10 @@ async def list_scenarios(
     db: AsyncSession = Depends(get_db),
 ):
     """List scenarios for the current user's company."""
-    base = select(Scenario).where(Scenario.company_id == user.company_id)
+    base = select(Scenario).where(
+        Scenario.company_id == user.company_id,
+        Scenario.deleted_at.is_(None),
+    )
     total = (await db.execute(select(func.count()).select_from(base.subquery()))).scalar() or 0
     rows = (
         await db.execute(
@@ -86,6 +90,7 @@ async def get_scenario(
         select(Scenario).where(
             Scenario.id == scenario_id,
             Scenario.company_id == user.company_id,
+            Scenario.deleted_at.is_(None),
         )
     )
     scenario = result.scalar_one_or_none()
@@ -106,6 +111,7 @@ async def update_scenario(
         select(Scenario).where(
             Scenario.id == scenario_id,
             Scenario.company_id == user.company_id,
+            Scenario.deleted_at.is_(None),
         )
     )
     scenario = result.scalar_one_or_none()
@@ -116,6 +122,10 @@ async def update_scenario(
     for key, value in updates.items():
         setattr(scenario, key, value)
 
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="update", resource_type="scenario", resource_id=scenario_id,
+    )
     await db.commit()
     await db.refresh(scenario)
     return scenario
@@ -146,10 +156,15 @@ async def delete_scenario(
         select(Scenario).where(
             Scenario.id == scenario_id,
             Scenario.company_id == user.company_id,
+            Scenario.deleted_at.is_(None),
         )
     )
     scenario = result.scalar_one_or_none()
     if not scenario:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Scenario not found")
-    await db.delete(scenario)
+    scenario.deleted_at = _utcnow()
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="delete", resource_type="scenario", resource_id=scenario_id,
+    )
     await db.commit()

@@ -8,6 +8,7 @@ import {
   generateComplianceReport,
   type EmissionReport,
 } from "@/lib/api";
+import { PageSkeleton } from "@/components/Skeleton";
 
 type Framework = "ghg_protocol" | "cdp" | "tcfd" | "sbti";
 
@@ -76,7 +77,7 @@ export default function CompliancePage() {
     }
   }
 
-  if (loading) return <div className="p-8 text-[var(--muted)]">Loading...</div>;
+  if (loading) return <PageSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto p-8 space-y-8">

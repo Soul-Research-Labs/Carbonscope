@@ -83,9 +83,10 @@ export default function AuditLogsPage() {
               <tr>
                 <td
                   colSpan={4}
-                  className="py-8 text-center text-[var(--muted)]"
+                  className="py-12 text-center"
                 >
-                  No audit log entries found.
+                  <span className="text-3xl block mb-2">📋</span>
+                  <span className="text-[var(--muted)]">No audit log entries found.</span>
                 </td>
               </tr>
             ) : (
