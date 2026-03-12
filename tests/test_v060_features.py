@@ -81,14 +81,14 @@ class TestRefreshTokenFlow:
     async def test_login_returns_refresh_token(self, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "refresh@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Refresh User",
             "company_name": "RefreshCorp",
             "industry": "energy",
         })
         resp = await client.post("/api/v1/auth/login", json={
             "email": "refresh@example.com",
-            "password": "Password123",
+            "password": "Password123!",
         })
         assert resp.status_code == 200
         data = resp.json()
@@ -99,14 +99,14 @@ class TestRefreshTokenFlow:
     async def test_refresh_token_rotation(self, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "rotate@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Rotate User",
             "company_name": "RotateCorp",
             "industry": "retail",
         })
         login_resp = await client.post("/api/v1/auth/login", json={
             "email": "rotate@example.com",
-            "password": "Password123",
+            "password": "Password123!",
         })
         refresh_token = login_resp.json()["refresh_token"]
 
@@ -130,14 +130,14 @@ class TestRefreshTokenFlow:
     async def test_old_refresh_token_invalidated(self, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "oldr@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Old Refresh",
             "company_name": "OldCorp",
             "industry": "technology",
         })
         login_resp = await client.post("/api/v1/auth/login", json={
             "email": "oldr@example.com",
-            "password": "Password123",
+            "password": "Password123!",
         })
         old_refresh = login_resp.json()["refresh_token"]
 
@@ -162,7 +162,7 @@ class TestPasswordReset:
     async def test_forgot_password_existing_email(self, mock_email, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "forgot@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Forgot User",
             "company_name": "ForgotCorp",
             "industry": "manufacturing",
@@ -185,7 +185,7 @@ class TestPasswordReset:
     async def test_reset_password_full_flow(self, mock_email, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "reset@example.com",
-            "password": "OldPassword123",
+            "password": "OldPassword123!",
             "full_name": "Reset User",
             "company_name": "ResetCorp",
             "industry": "energy",
@@ -204,28 +204,28 @@ class TestPasswordReset:
         # Reset password
         resp = await client.post("/api/v1/auth/reset-password", json={
             "token": token,
-            "new_password": "NewPassword456",
+            "new_password": "NewPassword456!",
         })
         assert resp.status_code == 204
 
         # Login with new password
         resp = await client.post("/api/v1/auth/login", json={
             "email": "reset@example.com",
-            "password": "NewPassword456",
+            "password": "NewPassword456!",
         })
         assert resp.status_code == 200
 
         # Old password should fail
         resp = await client.post("/api/v1/auth/login", json={
             "email": "reset@example.com",
-            "password": "OldPassword123",
+            "password": "OldPassword123!",
         })
         assert resp.status_code == 401
 
     async def test_reset_password_invalid_token(self, client: AsyncClient):
         resp = await client.post("/api/v1/auth/reset-password", json={
             "token": "bogus-token",
-            "new_password": "NewPassword456",
+            "new_password": "NewPassword456!",
         })
         assert resp.status_code == 400
 
@@ -350,7 +350,7 @@ class TestSupplyChainRoutes:
         """Register a second company and return its company_id."""
         resp = await client.post("/api/v1/auth/register", json={
             "email": "supplier@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Supplier User",
             "company_name": "SupplierCorp",
             "industry": "manufacturing",
@@ -417,8 +417,8 @@ class TestAuditLog:
     async def test_audit_log_after_password_change(self, auth_client: AsyncClient):
         # Change password generates an audit entry
         await auth_client.post("/api/v1/auth/change-password", json={
-            "current_password": "Securepass123",
-            "new_password": "NewSecure456",
+            "current_password": "Securepass123!",
+            "new_password": "NewSecure456!",
         })
         resp = await auth_client.get("/api/v1/audit-logs/")
         data = resp.json()

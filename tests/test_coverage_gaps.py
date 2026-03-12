@@ -13,14 +13,14 @@ class TestTokenRefresh:
         # Register and login to obtain a refresh token
         await client.post("/api/v1/auth/register", json={
             "email": "trefresh@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Trefresh User",
             "company_name": "TrefreshCorp",
             "industry": "energy",
         })
         login_resp = await client.post("/api/v1/auth/login", json={
             "email": "trefresh@example.com",
-            "password": "Password123",
+            "password": "Password123!",
         })
         refresh_token = login_resp.json()["refresh_token"]
 
@@ -146,8 +146,8 @@ class TestAuditLogs:
     async def test_audit_log_created_on_password_change(self, auth_client: AsyncClient):
         # Change password triggers audit
         await auth_client.post("/api/v1/auth/change-password", json={
-            "current_password": "Securepass123",
-            "new_password": "Newpassword456",
+            "current_password": "Securepass123!",
+            "new_password": "Newpassword456!",
         })
 
         resp = await auth_client.get("/api/v1/audit-logs/")
@@ -202,14 +202,14 @@ class TestCrossCompanyIsolation:
         """Register a user and return their token."""
         await client.post("/api/v1/auth/register", json={
             "email": email,
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Isolation User",
             "company_name": company,
             "industry": "technology",
         })
         resp = await client.post("/api/v1/auth/login", json={
             "email": email,
-            "password": "Password123",
+            "password": "Password123!",
         })
         return resp.json()["access_token"]
 
@@ -275,8 +275,8 @@ class TestCrossCompanyIsolation:
         # A changes password (creates audit log)
         client.headers["Authorization"] = f"Bearer {token_a}"
         await client.post("/api/v1/auth/change-password", json={
-            "current_password": "Password123",
-            "new_password": "Newpassword456",
+            "current_password": "Password123!",
+            "new_password": "Newpassword456!",
         })
 
         # B sees no audit logs from A

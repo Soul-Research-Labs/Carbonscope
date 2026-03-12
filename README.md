@@ -266,7 +266,7 @@ export ENV=production
 docker compose up --build -d
 ```
 
-## Platform API (v0.6.0)
+## Platform API (v0.7.0)
 
 ### Start the API server
 
@@ -496,6 +496,43 @@ cd frontend && npm install && npm run dev   # http://localhost:3000
 | Frontend can't reach backend            | Ensure backend on port 8000, check Next.js rewrites                 |
 | SQLite locked under load                | Switch `DATABASE_URL` to PostgreSQL                                 |
 | Bittensor timeout                       | Check wallet registration and `BT_QUERY_TIMEOUT`                    |
+
+## Changelog
+
+### v0.7.0
+
+**Phase 4 — Polish & Nice-to-Have**
+- Password strength: require lowercase + special character in all password fields
+- Python Enum types for 15 role/status string columns across 9 models
+- Navbar highlights active item on deep/nested routes
+- Schema validators: `ge=0` for spend/employee/revenue, URL validation for webhooks
+- Streaming file upload size check (rejects oversized uploads early)
+- Pinned all frontend dependency versions
+- Removed stale `dark:` Tailwind prefixes — consistent CSS variable theming
+
+**Phase 3 — Quality, Performance & Documentation**
+- Soft delete on Company, Subscription, SupplyChainLink
+- CHECK constraints on EmissionReport (scope1/2/3 ≥ 0, 0 ≤ confidence ≤ 1) and CreditLedger
+- Structured JSON logging with sensitive data masking
+- Request logging middleware (method, path, status, duration, request_id)
+- CSP header, expanded CORS, expanded health check
+- Loading skeletons, Breadcrumbs component, focus-trapped ConfirmDialog
+- URL state sync for filters/pagination
+- Pinned backend dependency versions, DEPLOYMENT.md
+
+**Phase 2 — Feature Completeness & Test Coverage**
+- PATCH/DELETE for reports, questionnaires; PATCH for scenarios
+- Webhook exponential-backoff retry system
+- DataTable, FormField reusable components
+- Auto token refresh, 104 backend + 21 frontend tests
+
+**Phase 1 — Auth Hardening & Production Safety**
+- Persistent token storage (RefreshToken/RevokedToken DB models)
+- POST /auth/logout with JWT revocation
+- Account lockout after 5 failed logins
+- Rate limiting on auth, AI, compliance routes
+- SECRET_KEY entropy + DATABASE_URL production guards
+- httpOnly cookies + CSRF protection, non-root Docker user
 
 ## License
 

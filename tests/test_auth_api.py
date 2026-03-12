@@ -11,7 +11,7 @@ class TestAuthRoutes:
     async def test_register_success(self, client: AsyncClient):
         resp = await client.post("/api/v1/auth/register", json={
             "email": "new@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "New User",
             "company_name": "NewCorp",
             "industry": "technology",
@@ -27,7 +27,7 @@ class TestAuthRoutes:
     async def test_register_duplicate_email(self, client: AsyncClient):
         payload = {
             "email": "dup@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Dup User",
             "company_name": "DupCorp",
             "industry": "retail",
@@ -50,14 +50,14 @@ class TestAuthRoutes:
     async def test_login_success(self, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "login@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Login User",
             "company_name": "LoginCorp",
             "industry": "manufacturing",
         })
         resp = await client.post("/api/v1/auth/login", json={
             "email": "login@example.com",
-            "password": "Password123",
+            "password": "Password123!",
         })
         assert resp.status_code == 200
         data = resp.json()
@@ -67,7 +67,7 @@ class TestAuthRoutes:
     async def test_login_wrong_password(self, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "wrong@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Wrong User",
             "company_name": "WrongCorp",
             "industry": "manufacturing",
@@ -81,7 +81,7 @@ class TestAuthRoutes:
     async def test_login_nonexistent_user(self, client: AsyncClient):
         resp = await client.post("/api/v1/auth/login", json={
             "email": "ghost@example.com",
-            "password": "Password123",
+            "password": "Password123!",
         })
         assert resp.status_code == 401
 
@@ -113,7 +113,7 @@ class TestUserProfile:
         # Register a second user
         await client.post("/api/v1/auth/register", json={
             "email": "other@example.com",
-            "password": "Password123",
+            "password": "Password123!",
             "full_name": "Other User",
             "company_name": "OtherCorp",
             "industry": "technology",
@@ -126,28 +126,28 @@ class TestUserProfile:
 
     async def test_change_password(self, auth_client: AsyncClient):
         resp = await auth_client.post("/api/v1/auth/change-password", json={
-            "current_password": "Securepass123",
-            "new_password": "NewSecure456",
+            "current_password": "Securepass123!",
+            "new_password": "NewSecure456!",
         })
         assert resp.status_code == 204
 
         # Old password should now fail
         login_resp = await auth_client.post("/api/v1/auth/login", json={
             "email": "test@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
         })
         assert login_resp.status_code == 401
 
         # New password should work
         login_resp2 = await auth_client.post("/api/v1/auth/login", json={
             "email": "test@example.com",
-            "password": "NewSecure456",
+            "password": "NewSecure456!",
         })
         assert login_resp2.status_code == 200
 
     async def test_change_password_wrong_current(self, auth_client: AsyncClient):
         resp = await auth_client.post("/api/v1/auth/change-password", json={
-            "current_password": "WrongPassword1",
-            "new_password": "NewSecure456",
+            "current_password": "WrongPassword1!",
+            "new_password": "NewSecure456!",
         })
         assert resp.status_code == 400

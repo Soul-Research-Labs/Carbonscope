@@ -57,12 +57,21 @@ async def upload_questionnaire(
             detail=f"Unsupported file type. Allowed: PDF, DOCX, XLSX, CSV",
         )
 
-    content = await file.read()
-    if len(content) > _MAX_FILE_SIZE:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size: {_MAX_FILE_SIZE // (1024*1024)} MB",
-        )
+    # Read file in chunks to reject oversized uploads early
+    chunks: list[bytes] = []
+    total_size = 0
+    while True:
+        chunk = await file.read(64 * 1024)  # 64 KB
+        if not chunk:
+            break
+        total_size += len(chunk)
+        if total_size > _MAX_FILE_SIZE:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"File too large. Maximum size: {_MAX_FILE_SIZE // (1024*1024)} MB",
+            )
+        chunks.append(chunk)
+    content = b"".join(chunks)
 
     extracted_text = extract_text(content, file_type)
 
@@ -71,7 +80,7 @@ async def upload_questionnaire(
         title=file.filename or "Untitled",
         original_filename=file.filename or "unknown",
         file_type=file_type,
-        file_size=len(content),
+        file_size=total_size,
         status="uploaded",
         extracted_text=extracted_text,
     )

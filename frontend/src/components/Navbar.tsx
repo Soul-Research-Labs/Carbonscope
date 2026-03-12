@@ -48,19 +48,24 @@ export default function Navbar() {
           </Link>
           {/* Desktop nav */}
           <div className="hidden lg:flex gap-1">
-            {NAV_ITEMS.map((item) => (
+            {NAV_ITEMS.map((item) => {
+              const isActive =
+                pathname === item.href ||
+                (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+              return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-                  pathname === item.href
+                  isActive
                     ? "bg-[var(--primary)] text-black"
                     : "text-[var(--muted)] hover:text-[var(--foreground)]"
                 }`}
               >
                 {item.icon} {item.label}
               </Link>
-            ))}
+              );
+            })}
           </div>
         </div>
         <div className="flex items-center gap-4">
@@ -112,19 +117,24 @@ export default function Navbar() {
           id="mobile-nav"
           className="lg:hidden border-t border-[var(--card-border)] px-4 py-2 grid grid-cols-2 gap-1"
         >
-          {NAV_ITEMS.map((item) => (
+          {NAV_ITEMS.map((item) => {
+            const isActive =
+              pathname === item.href ||
+              (item.href !== "/dashboard" && pathname.startsWith(item.href + "/"));
+            return (
             <Link
               key={item.href}
               href={item.href}
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                pathname === item.href
+                isActive
                   ? "bg-[var(--primary)] text-black"
                   : "text-[var(--muted)] hover:text-[var(--foreground)]"
               }`}
             >
               {item.icon} {item.label}
             </Link>
-          ))}
+            );
+          })}
         </div>
       )}
     </nav>

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import enum
 import uuid
 from datetime import datetime, timezone
 
@@ -24,6 +25,91 @@ from sqlalchemy import (
 from sqlalchemy.orm import relationship
 
 from api.database import Base
+
+
+# ── Python Enums ────────────────────────────────────────────────────
+
+
+class UserRole(str, enum.Enum):
+    admin = "admin"
+    member = "member"
+
+
+class SupplyChainStatus(str, enum.Enum):
+    pending = "pending"
+    verified = "verified"
+    rejected = "rejected"
+
+
+class QuestionnaireStatus(str, enum.Enum):
+    uploaded = "uploaded"
+    extracting = "extracting"
+    extracted = "extracted"
+    reviewed = "reviewed"
+    exported = "exported"
+
+
+class QuestionStatus(str, enum.Enum):
+    draft = "draft"
+    reviewed = "reviewed"
+    approved = "approved"
+
+
+class ScenarioStatus(str, enum.Enum):
+    draft = "draft"
+    computed = "computed"
+    archived = "archived"
+
+
+class SubscriptionPlan(str, enum.Enum):
+    free = "free"
+    pro = "pro"
+    enterprise = "enterprise"
+
+
+class SubscriptionStatus(str, enum.Enum):
+    active = "active"
+    cancelled = "cancelled"
+    past_due = "past_due"
+
+
+class AlertType(str, enum.Enum):
+    emission_increase = "emission_increase"
+    confidence_drop = "confidence_drop"
+    target_exceeded = "target_exceeded"
+
+
+class AlertSeverity(str, enum.Enum):
+    info = "info"
+    warning = "warning"
+    critical = "critical"
+
+
+class DataListingType(str, enum.Enum):
+    emission_report = "emission_report"
+    benchmark = "benchmark"
+    supply_chain = "supply_chain"
+
+
+class DataListingStatus(str, enum.Enum):
+    active = "active"
+    sold = "sold"
+    withdrawn = "withdrawn"
+
+
+class CreditReason(str, enum.Enum):
+    subscription_grant = "subscription_grant"
+    plan_upgrade = "plan_upgrade"
+    estimate_usage = "estimate_usage"
+    export_usage = "export_usage"
+    pdf_export_usage = "pdf_export_usage"
+    questionnaire_extract_usage = "questionnaire_extract_usage"
+    scenario_compute_usage = "scenario_compute_usage"
+    marketplace_purchase_usage = "marketplace_purchase_usage"
+    manual = "manual"
+    manual_grant = "manual_grant"
+    monthly_reset = "monthly_reset"
+    marketplace_sale = "marketplace_sale"
 
 
 def _utcnow() -> datetime:
@@ -66,7 +152,7 @@ class User(Base):
     hashed_password: str = Column(String(255), nullable=False)
     full_name: str = Column(String(255), nullable=False)
     company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False)
-    role: str = Column(String(50), default="member")  # admin | member
+    role: str = Column(Enum(UserRole, native_enum=False, length=50), default=UserRole.member)
     is_active: bool = Column(Boolean, nullable=False, default=True)
     deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
     last_login: datetime | None = Column(DateTime(timezone=True), nullable=True)
@@ -148,7 +234,7 @@ class SupplyChainLink(Base):
     supplier_company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
     spend_usd: float | None = Column(Float, nullable=True)
     category: str = Column(String(100), default="purchased_goods")
-    status: str = Column(String(50), default="pending")  # pending | verified | rejected
+    status: str = Column(Enum(SupplyChainStatus, native_enum=False, length=50), default=SupplyChainStatus.pending)
     notes: str | None = Column(Text, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
     deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
@@ -226,7 +312,7 @@ class Questionnaire(Base):
     original_filename: str = Column(String(500), nullable=False)
     file_type: str = Column(String(20), nullable=False)  # pdf, xlsx, docx, csv
     file_size: int = Column(Integer, nullable=False)
-    status: str = Column(String(50), default="uploaded")  # uploaded | extracting | extracted | reviewed | exported
+    status: str = Column(Enum(QuestionnaireStatus, native_enum=False, length=50), default=QuestionnaireStatus.uploaded)
     extracted_text: str | None = Column(Text, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
     updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -247,7 +333,7 @@ class QuestionnaireQuestion(Base):
     category: str = Column(String(100), nullable=True)  # emissions, energy, waste, transport, governance, etc.
     ai_draft_answer: str | None = Column(Text, nullable=True)
     human_answer: str | None = Column(Text, nullable=True)
-    status: str = Column(String(50), default="draft")  # draft | reviewed | approved
+    status: str = Column(Enum(QuestionStatus, native_enum=False, length=50), default=QuestionStatus.draft)
     confidence: float = Column(Float, default=0.0)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
     updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
@@ -269,7 +355,7 @@ class Scenario(Base):
     base_report_id: str | None = Column(String(32), ForeignKey("emission_reports.id"), nullable=True)
     parameters: dict = Column(JSON, nullable=False, default=dict)  # what-if changes
     results: dict | None = Column(JSON, nullable=True)  # computed results
-    status: str = Column(String(50), default="draft")  # draft | computed | archived
+    status: str = Column(Enum(ScenarioStatus, native_enum=False, length=50), default=ScenarioStatus.draft)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
     updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
@@ -285,8 +371,8 @@ class Subscription(Base):
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
     company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
-    plan: str = Column(String(50), nullable=False, default="free")  # free | pro | enterprise
-    status: str = Column(String(50), nullable=False, default="active")  # active | cancelled | past_due
+    plan: str = Column(Enum(SubscriptionPlan, native_enum=False, length=50), nullable=False, default=SubscriptionPlan.free)
+    status: str = Column(Enum(SubscriptionStatus, native_enum=False, length=50), nullable=False, default=SubscriptionStatus.active)
     stripe_customer_id: str | None = Column(String(255), nullable=True)
     stripe_subscription_id: str | None = Column(String(255), nullable=True)
     current_period_start: datetime | None = Column(DateTime(timezone=True), nullable=True)
@@ -305,7 +391,7 @@ class CreditLedger(Base):
     id: str = Column(String(32), primary_key=True, default=_new_id)
     company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
     amount: int = Column(Integer, nullable=False)  # positive = add, negative = deduct
-    reason: str = Column(String(255), nullable=False)  # subscription_grant | estimate_usage | export_usage | manual
+    reason: str = Column(Enum(CreditReason, native_enum=False, length=255), nullable=False)
     balance_after: int = Column(Integer, nullable=False)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
 
@@ -325,8 +411,8 @@ class Alert(Base):
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
     company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
-    alert_type: str = Column(String(100), nullable=False)  # emission_increase | confidence_drop | target_exceeded
-    severity: str = Column(String(50), nullable=False, default="info")  # info | warning | critical
+    alert_type: str = Column(Enum(AlertType, native_enum=False, length=100), nullable=False)
+    severity: str = Column(Enum(AlertSeverity, native_enum=False, length=50), nullable=False, default=AlertSeverity.info)
     title: str = Column(String(500), nullable=False)
     message: str = Column(Text, nullable=False)
     is_read: bool = Column(Boolean, nullable=False, default=False)
@@ -348,13 +434,13 @@ class DataListing(Base):
     seller_company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
     title: str = Column(String(500), nullable=False)
     description: str | None = Column(Text, nullable=True)
-    data_type: str = Column(String(100), nullable=False)  # emission_report | benchmark | supply_chain
+    data_type: str = Column(Enum(DataListingType, native_enum=False, length=100), nullable=False)
     industry: str = Column(String(100), nullable=False)
     region: str = Column(String(10), nullable=False)
     year: int = Column(Integer, nullable=False)
     price_credits: int = Column(Integer, nullable=False, default=0)  # 0 = free
     anonymized_data: dict = Column(JSON, nullable=False, default=dict)
-    status: str = Column(String(50), default="active")  # active | sold | withdrawn
+    status: str = Column(Enum(DataListingStatus, native_enum=False, length=50), default=DataListingStatus.active)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
 
     seller = relationship("Company")

@@ -47,7 +47,7 @@ class TestE2ELifecycle:
     async def test_full_workflow(self, client: AsyncClient):
         """Register → Upload data → Estimate → List reports → Export → Dashboard."""
         # 1. Register + login
-        token = await _register_and_login(client, "e2e@test.com", "StrongPass1", "E2ECorp")
+        token = await _register_and_login(client, "e2e@test.com", "StrongPass1!", "E2ECorp")
         client.headers["Authorization"] = f"Bearer {token}"
 
         # 2. Upload operational data
@@ -115,8 +115,8 @@ class TestCrossCompanyIsolation:
     async def test_cannot_access_other_company_data(self, client: AsyncClient):
         """User A cannot see User B's data uploads or reports."""
         # Register two users in different companies
-        token_a = await _register_and_login(client, "usera@corp.com", "StrongPass1", "CorpA")
-        token_b = await _register_and_login(client, "userb@corp.com", "StrongPass1", "CorpB")
+        token_a = await _register_and_login(client, "usera@corp.com", "StrongPass1!", "CorpA")
+        token_b = await _register_and_login(client, "userb@corp.com", "StrongPass1!", "CorpB")
 
         # User A uploads data
         client.headers["Authorization"] = f"Bearer {token_a}"
@@ -207,7 +207,7 @@ class TestRateLimiting:
             # Register first
             await client.post("/api/v1/auth/register", json={
                 "email": "ratelimit@test.com",
-                "password": "StrongPass1",
+                "password": "StrongPass1!",
                 "full_name": "Rate Test",
                 "company_name": "RateCorp",
                 "industry": "technology",
@@ -219,7 +219,7 @@ class TestRateLimiting:
             for _ in range(15):
                 resp = await client.post("/api/v1/auth/login", json={
                     "email": "ratelimit@test.com",
-                    "password": "StrongPass1",
+                    "password": "StrongPass1!",
                 })
                 statuses.append(resp.status_code)
 
@@ -253,7 +253,7 @@ class TestInputValidation:
         """Invalid email format should be rejected."""
         resp = await client.post("/api/v1/auth/register", json={
             "email": "not-an-email",
-            "password": "StrongPass1",
+            "password": "StrongPass1!",
             "full_name": "Bad Email",
             "company_name": "Corp",
             "industry": "manufacturing",

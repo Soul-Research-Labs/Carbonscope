@@ -62,6 +62,6 @@ describe("FormField", () => {
   it("applies normal styling without error", () => {
     const { container } = render(<FormField label="Field" />);
     const input = container.querySelector("input");
-    expect(input?.className).toContain("border-gray-300");
+    expect(input?.className).toContain("border-[var(--card-border)]");
   });
 });

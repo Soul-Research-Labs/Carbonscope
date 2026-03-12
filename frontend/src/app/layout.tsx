@@ -11,6 +11,13 @@ export const metadata: Metadata = {
   },
   description:
     "Decentralized corporate carbon emission intelligence powered by Bittensor",
+  openGraph: {
+    title: "CarbonScope",
+    description:
+      "Decentralized corporate carbon emission intelligence powered by Bittensor",
+    type: "website",
+  },
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({

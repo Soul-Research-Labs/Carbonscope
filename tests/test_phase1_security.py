@@ -13,7 +13,7 @@ class TestTokenRevocationAndLogout:
     async def _register_and_login(self, client: AsyncClient, email: str = "rev@example.com"):
         await client.post("/api/v1/auth/register", json={
             "email": email,
-            "password": "Securepass123",
+            "password": "Securepass123!",
             "full_name": "Revoke User",
             "company_name": "RevokeCorp",
             "industry": "manufacturing",
@@ -21,7 +21,7 @@ class TestTokenRevocationAndLogout:
         })
         resp = await client.post("/api/v1/auth/login", json={
             "email": email,
-            "password": "Securepass123",
+            "password": "Securepass123!",
         })
         data = resp.json()
         return data["access_token"], data.get("refresh_token")
@@ -72,7 +72,7 @@ class TestTokenRevocationAndLogout:
         await self._register_and_login(client, "csrf@example.com")
         resp = await client.post("/api/v1/auth/login", json={
             "email": "csrf@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
         })
         data = resp.json()
         assert "csrf_token" in data
@@ -87,7 +87,7 @@ class TestBruteForceProtection:
         # Register a user
         await client.post("/api/v1/auth/register", json={
             "email": "brute@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
             "full_name": "Brute User",
             "company_name": "BruteCorp",
             "industry": "manufacturing",
@@ -97,28 +97,28 @@ class TestBruteForceProtection:
         for i in range(5):
             resp = await client.post("/api/v1/auth/login", json={
                 "email": "brute@example.com",
-                "password": "WrongPassword1",
+                "password": "WrongPassword1!",
             })
             assert resp.status_code == 401, f"Attempt {i+1} expected 401"
 
         # 6th attempt should be locked out (429)
         resp = await client.post("/api/v1/auth/login", json={
             "email": "brute@example.com",
-            "password": "WrongPassword1",
+            "password": "WrongPassword1!",
         })
         assert resp.status_code == 429
 
         # Even correct password should be blocked while locked
         resp = await client.post("/api/v1/auth/login", json={
             "email": "brute@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
         })
         assert resp.status_code == 429
 
     async def test_successful_login_resets_attempts(self, client: AsyncClient):
         await client.post("/api/v1/auth/register", json={
             "email": "reset@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
             "full_name": "Reset User",
             "company_name": "ResetCorp",
             "industry": "energy",
@@ -128,13 +128,13 @@ class TestBruteForceProtection:
         for _ in range(3):
             await client.post("/api/v1/auth/login", json={
                 "email": "reset@example.com",
-                "password": "WrongPassword1",
+                "password": "WrongPassword1!",
             })
 
         # Success resets the counter
         resp = await client.post("/api/v1/auth/login", json={
             "email": "reset@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
         })
         assert resp.status_code == 200
 
@@ -142,11 +142,11 @@ class TestBruteForceProtection:
         for _ in range(3):
             await client.post("/api/v1/auth/login", json={
                 "email": "reset@example.com",
-                "password": "WrongPassword1",
+                "password": "WrongPassword1!",
             })
         resp = await client.post("/api/v1/auth/login", json={
             "email": "reset@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
         })
         assert resp.status_code == 200
 
@@ -159,14 +159,14 @@ class TestDeactivatedUser:
         # Register and login
         await client.post("/api/v1/auth/register", json={
             "email": "deact@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
             "full_name": "Deactivated User",
             "company_name": "DeactCorp",
             "industry": "manufacturing",
         })
         resp = await client.post("/api/v1/auth/login", json={
             "email": "deact@example.com",
-            "password": "Securepass123",
+            "password": "Securepass123!",
         })
         token = resp.json()["access_token"]
         headers = {"Authorization": f"Bearer {token}"}

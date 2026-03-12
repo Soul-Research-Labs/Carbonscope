@@ -23,7 +23,7 @@ export function FormField({
     <div className="space-y-1">
       <label
         htmlFor={id}
-        className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+        className="block text-sm font-medium text-[var(--foreground)]"
       >
         {label}
       </label>
@@ -34,7 +34,7 @@ export function FormField({
           className={`block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 ${
             error
               ? "border-red-500 focus:ring-red-400"
-              : "border-gray-300 focus:ring-green-500 dark:border-gray-600"
+              : "border-[var(--card-border)] focus:ring-[var(--primary)]"
           } ${className}`}
           aria-invalid={!!error}
           aria-describedby={

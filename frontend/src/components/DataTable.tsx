@@ -35,25 +35,25 @@ export function DataTable<T extends Record<string, unknown>>({
 
   return (
     <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-800">
+      <table className="min-w-full divide-y divide-[var(--card-border)]">
+        <thead className="bg-[var(--card)]">
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
-                className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
+                className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--muted)]"
               >
                 {col.header}
               </th>
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white dark:divide-gray-700 dark:bg-gray-900">
+        <tbody className="divide-y divide-[var(--card-border)] bg-[var(--background)]">
           {loading ? (
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-8 text-center text-gray-400"
+                className="px-4 py-8 text-center text-[var(--muted)]"
               >
                 Loading…
               </td>
@@ -62,7 +62,7 @@ export function DataTable<T extends Record<string, unknown>>({
             <tr>
               <td
                 colSpan={columns.length}
-                className="px-4 py-8 text-center text-gray-400"
+                className="px-4 py-8 text-center text-[var(--muted)]"
               >
                 {emptyMessage}
               </td>
@@ -73,7 +73,7 @@ export function DataTable<T extends Record<string, unknown>>({
                 {columns.map((col) => (
                   <td
                     key={col.key}
-                    className="whitespace-nowrap px-4 py-3 text-sm text-gray-700 dark:text-gray-300"
+                    className="whitespace-nowrap px-4 py-3 text-sm text-[var(--foreground)]"
                   >
                     {col.render ? col.render(row) : String(row[col.key] ?? "")}
                   </td>
@@ -85,8 +85,8 @@ export function DataTable<T extends Record<string, unknown>>({
       </table>
 
       {hasPagination && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-gray-200 px-4 py-3 dark:border-gray-700">
-          <span className="text-sm text-gray-500 dark:text-gray-400">
+        <div className="flex items-center justify-between border-t border-[var(--card-border)] px-4 py-3">
+          <span className="text-sm text-[var(--muted)]">
             Page {currentPage} of {totalPages} ({total} items)
           </span>
           <div className="flex gap-2">

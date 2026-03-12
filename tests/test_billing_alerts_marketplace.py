@@ -32,7 +32,7 @@ async def _register_second_user(client: AsyncClient) -> AsyncClient:
     """Register a second user/company and return an authenticated client."""
     await client.post("/api/v1/auth/register", json={
         "email": "buyer@other.com",
-        "password": "Securepass123",
+        "password": "Securepass123!",
         "full_name": "Buyer User",
         "company_name": "BuyerCorp",
         "industry": "technology",
@@ -40,7 +40,7 @@ async def _register_second_user(client: AsyncClient) -> AsyncClient:
     })
     resp = await client.post("/api/v1/auth/login", json={
         "email": "buyer@other.com",
-        "password": "Securepass123",
+        "password": "Securepass123!",
     })
     token = resp.json()["access_token"]
     client.headers["Authorization"] = f"Bearer {token}"

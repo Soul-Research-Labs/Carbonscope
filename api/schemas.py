@@ -27,8 +27,12 @@ class UserRegister(BaseModel):
     def password_strength(cls, v: str) -> str:
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
         if not re.search(r"[0-9]", v):
             raise ValueError("Password must contain at least one digit")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>\[\]\\~`_+\-=/;']", v):
+            raise ValueError("Password must contain at least one special character")
         return v
 
 
@@ -66,8 +70,12 @@ class PasswordChange(BaseModel):
     def password_strength(cls, v: str) -> str:
         if not re.search(r"[A-Z]", v):
             raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
         if not re.search(r"[0-9]", v):
             raise ValueError("Password must contain at least one digit")
+        if not re.search(r"[!@#$%^&*(),.?\":{}|<>\[\]\\~`_+\-=/;']", v):
+            raise ValueError("Password must contain at least one special character")
         return v
 
 
@@ -90,8 +98,8 @@ class CompanyUpdate(BaseModel):
     name: str | None = None
     industry: str | None = None
     region: str | None = None
-    employee_count: int | None = None
-    revenue_usd: float | None = None
+    employee_count: int | None = Field(default=None, ge=0)
+    revenue_usd: float | None = Field(default=None, ge=0)
 
 
 # ── Data upload ─────────────────────────────────────────────────────
@@ -234,7 +242,7 @@ class RecommendationSummary(BaseModel):
 
 class SupplyChainLinkCreate(BaseModel):
     supplier_company_id: str
-    spend_usd: float | None = None
+    spend_usd: float | None = Field(default=None, ge=0)
     category: str = "purchased_goods"
     notes: str | None = None
 
@@ -270,6 +278,13 @@ class ComplianceReportRequest(BaseModel):
 class WebhookCreate(BaseModel):
     url: str = Field(min_length=1, max_length=2048)
     event_types: list[str] = Field(min_length=1)
+
+    @field_validator("url")
+    @classmethod
+    def validate_url(cls, v: str) -> str:
+        if not v.startswith(("https://", "http://")):
+            raise ValueError("Webhook URL must start with https:// or http://")
+        return v
 
 
 class WebhookToggle(BaseModel):
