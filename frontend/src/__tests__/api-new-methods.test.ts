@@ -78,11 +78,13 @@ describe("New API methods", () => {
 
   it("getSupplyChainLink calls correct endpoint", async () => {
     const mockLink = {
-      link_id: "abc-123",
-      supplier_name: "Acme Corp",
-      tier: 1,
+      id: "abc-123",
+      buyer_company_id: "buyer-1",
+      supplier_company_id: "supplier-1",
+      spend_usd: 1000,
       category: "raw_materials",
-      verified: false,
+      status: "pending",
+      notes: null,
       created_at: "2025-01-01T00:00:00Z",
     };
     mockFetch.mockResolvedValue({
@@ -96,7 +98,7 @@ describe("New API methods", () => {
 
     const [url] = mockFetch.mock.calls[0];
     expect(url).toContain("/supply-chain/links/abc-123");
-    expect(result.link_id).toBe("abc-123");
+    expect(result.id).toBe("abc-123");
   });
 
   it("getListing calls correct endpoint", async () => {

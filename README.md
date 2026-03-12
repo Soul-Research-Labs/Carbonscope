@@ -266,18 +266,18 @@ pytest tests/ --cov=api --cov-report=term-missing  # With coverage
 
 **Frontend tests** (65 tests in `frontend/src/__tests__/`):
 
-| File                          | Coverage                                            |
-| ----------------------------- | --------------------------------------------------- |
-| `Breadcrumbs.test.tsx`        | Rendering, links, accessibility, separators         |
-| `ConfirmDialog.test.tsx`      | Open/close, confirm/cancel, variants, custom labels |
-| `DataTable.test.tsx`          | Sorting, pagination, empty states, rendering        |
-| `FormField.test.tsx`          | Labels, errors, hints, children, accessibility      |
-| `Navbar.test.tsx`             | Navigation links, active states, mobile menu        |
-| `Skeleton.test.tsx`           | Skeleton variants, animation, sizing                |
-| `Toast.test.tsx`              | Toast types, auto-dismiss, manual close             |
-| `api.test.ts`                 | ApiError, auth headers, error handling              |
-| `api-new-methods.test.ts`     | Credit ledger, delete account, supply chain, webhooks |
-| `auto-refresh.test.ts`        | Token refresh on 401, retry logic                   |
+| File                      | Coverage                                              |
+| ------------------------- | ----------------------------------------------------- |
+| `Breadcrumbs.test.tsx`    | Rendering, links, accessibility, separators           |
+| `ConfirmDialog.test.tsx`  | Open/close, confirm/cancel, variants, custom labels   |
+| `DataTable.test.tsx`      | Sorting, pagination, empty states, rendering          |
+| `FormField.test.tsx`      | Labels, errors, hints, children, accessibility        |
+| `Navbar.test.tsx`         | Navigation links, active states, mobile menu          |
+| `Skeleton.test.tsx`       | Skeleton variants, animation, sizing                  |
+| `Toast.test.tsx`          | Toast types, auto-dismiss, manual close               |
+| `api.test.ts`             | ApiError, auth headers, error handling                |
+| `api-new-methods.test.ts` | Credit ledger, delete account, supply chain, webhooks |
+| `auto-refresh.test.ts`    | Token refresh on 401, retry logic                     |
 
 ## Docker Deployment
 

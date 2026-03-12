@@ -373,7 +373,10 @@ export async function exportReports(
   if (year != null) q.set("year", String(year));
   const headers: Record<string, string> = {};
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  const res = await fetch(`${BASE}/reports/export?${q}`, { headers });
+  const res = await fetch(`${BASE}/reports/export?${q}`, {
+    headers,
+    credentials: "include",
+  });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new ApiError(res.status, body.detail ?? res.statusText);
@@ -687,6 +690,7 @@ export async function uploadQuestionnaire(
     method: "POST",
     headers,
     body: formData,
+    credentials: "include",
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -747,7 +751,7 @@ export async function exportQuestionnairePdf(id: string): Promise<Blob> {
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(
     `${BASE}/questionnaires/${encodeURIComponent(id)}/export/pdf`,
-    { headers },
+    { headers, credentials: "include" },
   );
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -763,7 +767,7 @@ export async function exportReportPdf(id: string): Promise<Blob> {
   if (token) headers["Authorization"] = `Bearer ${token}`;
   const res = await fetch(
     `${BASE}/reports/${encodeURIComponent(id)}/export/pdf`,
-    { headers },
+    { headers, credentials: "include" },
   );
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

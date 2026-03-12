@@ -5,15 +5,15 @@ from __future__ import annotations
 from starlette.requests import Request
 from slowapi import Limiter
 
-from api.config import RATE_LIMIT_DEFAULT
+from api.config import RATE_LIMIT_DEFAULT, TRUST_PROXY
 
 
 def _get_real_ip(request: Request) -> str:
-    """Extract client IP, respecting X-Forwarded-For behind a reverse proxy."""
-    forwarded = request.headers.get("x-forwarded-for")
-    if forwarded:
-        # First IP in the chain is the real client
-        return forwarded.split(",")[0].strip()
+    """Extract client IP, respecting X-Forwarded-For only when behind a trusted proxy."""
+    if TRUST_PROXY:
+        forwarded = request.headers.get("x-forwarded-for")
+        if forwarded:
+            return forwarded.split(",")[0].strip()
     if request.client:
         return request.client.host
     return "127.0.0.1"

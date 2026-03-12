@@ -10,6 +10,7 @@ When no LLM API key is configured, falls back to rule-based extraction.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
@@ -138,21 +139,24 @@ async def parse_unstructured_text(text: str) -> dict[str, Any]:
         provider = "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "openai"
         prompt = _EXTRACT_PROMPT.format(text=text[:4000])  # Limit input size
 
-        if provider == "anthropic":
-            response = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=1024,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            content = response.content[0].text
-        else:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=1024,
-                temperature=0,
-            )
-            content = response.choices[0].message.content
+        def _call() -> str:
+            if provider == "anthropic":
+                response = client.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=1024,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                return response.content[0].text
+            else:
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=1024,
+                    temperature=0,
+                )
+                return response.choices[0].message.content
+
+        content = await asyncio.to_thread(_call)
 
         # Parse JSON from response
         json_match = re.search(r"\{[^}]+\}", content, re.DOTALL)
@@ -294,20 +298,24 @@ async def generate_audit_trail(
         )
 
         if provider == "anthropic":
-            response = client.messages.create(
-                model="claude-sonnet-4-20250514",
-                max_tokens=2048,
-                messages=[{"role": "user", "content": prompt}],
-            )
-            return response.content[0].text
+            def _audit_call() -> str:
+                response = client.messages.create(
+                    model="claude-sonnet-4-20250514",
+                    max_tokens=2048,
+                    messages=[{"role": "user", "content": prompt}],
+                )
+                return response.content[0].text
         else:
-            response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=2048,
-                temperature=0.3,
-            )
-            return response.choices[0].message.content
+            def _audit_call() -> str:
+                response = client.chat.completions.create(
+                    model="gpt-4o-mini",
+                    messages=[{"role": "user", "content": prompt}],
+                    max_tokens=2048,
+                    temperature=0.3,
+                )
+                return response.choices[0].message.content
+
+        return await asyncio.to_thread(_audit_call)
 
     except Exception as e:
         logger.warning("LLM audit trail failed, falling back to rule-based: %s", e)

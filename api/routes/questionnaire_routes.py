@@ -119,6 +119,110 @@ async def list_questionnaires(
     )
 
 
+# ── Template library ────────────────────────────────────────────────
+# NOTE: Template routes MUST be defined before /{questionnaire_id}
+# to prevent FastAPI from matching "templates" as a questionnaire ID.
+
+
+@router.get("/templates/", response_model=list)
+async def get_templates(
+    user: User = Depends(get_current_user),
+):
+    """List available pre-built questionnaire templates."""
+    return list_templates()
+
+
+@router.get("/templates/{template_id}")
+async def get_template_detail(
+    template_id: str,
+    user: User = Depends(get_current_user),
+):
+    """Get a specific questionnaire template with all questions."""
+    tpl = get_template(template_id)
+    if not tpl:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+    return tpl
+
+
+@router.post("/templates/{template_id}/apply", response_model=QuestionnaireDetail)
+async def apply_template(
+    template_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Create a questionnaire from a pre-built template and generate draft answers."""
+    tpl = get_template(template_id)
+    if not tpl:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
+
+    questionnaire = Questionnaire(
+        company_id=user.company_id,
+        title=tpl["title"],
+        original_filename=f"template:{template_id}",
+        file_type="template",
+        file_size=0,
+        status="extracted",
+        extracted_text="",
+    )
+    db.add(questionnaire)
+    await db.flush()
+
+    # Get company data for draft answers
+    from api.models import Company, EmissionReport
+    from api.services.questionnaire import generate_draft_answer
+
+    company_result = await db.execute(
+        select(Company).where(Company.id == user.company_id)
+    )
+    company = company_result.scalar_one()
+
+    report_result = await db.execute(
+        select(EmissionReport)
+        .where(
+            EmissionReport.company_id == user.company_id,
+            EmissionReport.deleted_at.is_(None),
+        )
+        .order_by(EmissionReport.created_at.desc())
+        .limit(1)
+    )
+    report = report_result.scalar_one_or_none()
+
+    questions_out = []
+    for i, q in enumerate(tpl["questions"], start=1):
+        draft, confidence = await generate_draft_answer(
+            question=q["question_text"],
+            company_name=company.name,
+            industry=company.industry,
+            region=company.region,
+            scope1=report.scope1 if report else 0,
+            scope2=report.scope2 if report else 0,
+            scope3=report.scope3 if report else 0,
+            total=report.total if report else 0,
+        )
+        question = QuestionnaireQuestion(
+            questionnaire_id=questionnaire.id,
+            question_number=i,
+            question_text=q["question_text"],
+            category=q.get("category"),
+            ai_draft_answer=draft,
+            confidence=confidence,
+        )
+        db.add(question)
+        await db.flush()
+        questions_out.append(QuestionOut.model_validate(question))
+
+    await db.commit()
+    await db.refresh(questionnaire)
+
+    return QuestionnaireDetail(
+        questionnaire=QuestionnaireOut.model_validate(questionnaire),
+        questions=questions_out,
+    )
+
+
+# ── Individual questionnaire operations ──────────────────────────────
+
+
 @router.get("/{questionnaire_id}", response_model=QuestionnaireDetail)
 async def get_questionnaire(
     questionnaire_id: str,
@@ -321,107 +425,12 @@ async def export_questionnaire_pdf(
         questionnaire_title=q.title,
         questions=questions_data,
     )
+
+    # Commit credit deduction
+    await db.commit()
+
     return StreamingResponse(
         io.BytesIO(pdf_bytes),
         media_type="application/pdf",
         headers={"Content-Disposition": f"attachment; filename=questionnaire_{questionnaire_id[:8]}.pdf"},
-    )
-
-
-# ── Template library ────────────────────────────────────────────────
-
-
-@router.get("/templates/", response_model=list)
-async def get_templates(
-    user: User = Depends(get_current_user),
-):
-    """List available pre-built questionnaire templates."""
-    return list_templates()
-
-
-@router.get("/templates/{template_id}")
-async def get_template_detail(
-    template_id: str,
-    user: User = Depends(get_current_user),
-):
-    """Get a specific questionnaire template with all questions."""
-    tpl = get_template(template_id)
-    if not tpl:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
-    return tpl
-
-
-@router.post("/templates/{template_id}/apply", response_model=QuestionnaireDetail)
-async def apply_template(
-    template_id: str,
-    user: User = Depends(get_current_user),
-    db: AsyncSession = Depends(get_db),
-):
-    """Create a questionnaire from a pre-built template and generate draft answers."""
-    tpl = get_template(template_id)
-    if not tpl:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Template not found")
-
-    questionnaire = Questionnaire(
-        company_id=user.company_id,
-        title=tpl["title"],
-        original_filename=f"template:{template_id}",
-        file_type="template",
-        file_size=0,
-        status="extracted",
-        extracted_text="",
-    )
-    db.add(questionnaire)
-    await db.flush()
-
-    # Get company data for draft answers
-    from api.models import Company, EmissionReport
-    from api.services.questionnaire import generate_draft_answer
-
-    company_result = await db.execute(
-        select(Company).where(Company.id == user.company_id)
-    )
-    company = company_result.scalar_one()
-
-    report_result = await db.execute(
-        select(EmissionReport)
-        .where(
-            EmissionReport.company_id == user.company_id,
-            EmissionReport.deleted_at.is_(None),
-        )
-        .order_by(EmissionReport.created_at.desc())
-        .limit(1)
-    )
-    report = report_result.scalar_one_or_none()
-
-    questions_out = []
-    for i, q in enumerate(tpl["questions"], start=1):
-        draft, confidence = await generate_draft_answer(
-            question=q["question_text"],
-            company_name=company.name,
-            industry=company.industry,
-            region=company.region,
-            scope1=report.scope1 if report else 0,
-            scope2=report.scope2 if report else 0,
-            scope3=report.scope3 if report else 0,
-            total=report.total if report else 0,
-        )
-        question = QuestionnaireQuestion(
-            questionnaire_id=questionnaire.id,
-            question_number=i,
-            question_text=q["question_text"],
-            category=q.get("category"),
-            ai_draft_answer=draft,
-            confidence=confidence,
-        )
-        db.add(question)
-        await db.flush()
-        questions_out.append(QuestionOut.model_validate(question))
-
-    await db.commit()
-    await db.refresh(questionnaire)
-
-    return QuestionnaireDetail(
-        questionnaire=QuestionnaireOut.model_validate(questionnaire),
-        questions=questions_out,
     )

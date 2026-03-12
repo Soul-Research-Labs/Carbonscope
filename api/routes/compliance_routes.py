@@ -46,6 +46,9 @@ async def create_compliance_report(
     company_result = await db.execute(select(Company).where(Company.id == user.company_id))
     company = company_result.scalar_one()
 
+    # Commit credit deduction before generating report
+    await db.commit()
+
     if body.framework == "ghg_protocol":
         return generate_ghg_inventory(
             company_name=company.name,

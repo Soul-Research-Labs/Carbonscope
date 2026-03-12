@@ -36,18 +36,18 @@ export default function MarketplacePage() {
   });
   const [creating, setCreating] = useState(false);
 
-  const fetchListings = useCallback(async () => {
+  const fetchListings = useCallback(async (ind?: string, reg?: string) => {
     try {
       const res = await browseListings({
-        industry: industry || undefined,
-        region: region || undefined,
+        industry: ind || undefined,
+        region: reg || undefined,
         limit: 50,
       });
       setData(res);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load listings");
     }
-  }, [industry, region]);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -157,7 +157,7 @@ export default function MarketplacePage() {
           className="input text-sm px-3 py-1.5 w-48"
         />
         <button
-          onClick={fetchListings}
+          onClick={() => fetchListings(industry, region)}
           className="text-sm px-4 py-1.5 rounded-md bg-[var(--card-border)] hover:bg-[var(--primary)] hover:text-black transition-colors"
         >
           Apply

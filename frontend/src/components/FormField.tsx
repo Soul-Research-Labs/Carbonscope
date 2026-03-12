@@ -1,6 +1,13 @@
 "use client";
 
-import { type InputHTMLAttributes, type ReactNode, useId } from "react";
+import {
+  type InputHTMLAttributes,
+  type ReactNode,
+  type ReactElement,
+  useId,
+  isValidElement,
+  cloneElement,
+} from "react";
 
 interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
@@ -19,6 +26,14 @@ export function FormField({
 }: FormFieldProps) {
   const id = useId();
 
+  // When children are provided (e.g. <select>), inject the generated id
+  // so the <label htmlFor> correctly associates with the child element.
+  const renderedChildren = children
+    ? isValidElement(children)
+      ? cloneElement(children as ReactElement<{ id?: string }>, { id })
+      : children
+    : null;
+
   return (
     <div className="space-y-1">
       <label
@@ -28,7 +43,7 @@ export function FormField({
         {label}
       </label>
 
-      {children ?? (
+      {renderedChildren ?? (
         <input
           id={id}
           className={`block w-full rounded-md border px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-2 ${

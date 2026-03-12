@@ -84,13 +84,13 @@ export default function ScenariosPage() {
       ]);
       setScenarios(sRes.items);
       setReports(rRes.items);
-      if (rRes.items.length > 0 && !baseReportId) {
-        setBaseReportId(rRes.items[0].id);
+      if (rRes.items.length > 0) {
+        setBaseReportId((prev) => prev || rRes.items[0].id);
       }
     } catch {
       setError("Failed to load data");
     }
-  }, [baseReportId]);
+  }, []);
 
   useEffect(() => {
     if (!loading && !user) {

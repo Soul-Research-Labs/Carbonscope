@@ -70,6 +70,7 @@ ALLOWED_ORIGINS: list[str] = [
 
 RATE_LIMIT_AUTH: str = os.getenv("RATE_LIMIT_AUTH", "10/minute")
 RATE_LIMIT_DEFAULT: str = os.getenv("RATE_LIMIT_DEFAULT", "60/minute")
+TRUST_PROXY: bool = os.getenv("TRUST_PROXY", "false").lower() in ("true", "1", "yes")
 
 # ── Cookies / CSRF ──────────────────────────────────────────────────
 

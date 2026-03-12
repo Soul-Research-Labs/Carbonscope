@@ -375,7 +375,7 @@ export default function SettingsPage() {
                   url: whUrl,
                   event_types: whEvents,
                 });
-                setWebhooks([...webhooks, wh]);
+                setWebhooks((prev) => [...prev, wh]);
                 setWhUrl("");
                 setWhEvents(["report.created"]);
               } catch {
@@ -415,13 +415,19 @@ export default function SettingsPage() {
                     <td className="py-2">
                       <button
                         onClick={async () => {
-                          const updated = await toggleWebhook(
-                            wh.id,
-                            !wh.active,
-                          );
-                          setWebhooks(
-                            webhooks.map((w) => (w.id === wh.id ? updated : w)),
-                          );
+                          try {
+                            const updated = await toggleWebhook(
+                              wh.id,
+                              !wh.active,
+                            );
+                            setWebhooks((prev) =>
+                              prev.map((w) =>
+                                w.id === wh.id ? updated : w,
+                              ),
+                            );
+                          } catch {
+                            setError("Failed to toggle webhook");
+                          }
                         }}
                         className={`text-xs ${wh.active ? "text-green-400" : "text-[var(--muted)]"} hover:underline`}
                       >
@@ -451,11 +457,18 @@ export default function SettingsPage() {
         confirmLabel="Delete"
         variant="danger"
         onConfirm={async () => {
-          if (deleteWhTarget) {
-            await deleteWebhook(deleteWhTarget);
-            setWebhooks(webhooks.filter((w) => w.id !== deleteWhTarget));
+          try {
+            if (deleteWhTarget) {
+              await deleteWebhook(deleteWhTarget);
+              setWebhooks((prev) =>
+                prev.filter((w) => w.id !== deleteWhTarget),
+              );
+            }
+          } catch {
+            setError("Failed to delete webhook");
+          } finally {
+            setDeleteWhTarget(null);
           }
-          setDeleteWhTarget(null);
         }}
         onCancel={() => setDeleteWhTarget(null)}
       />

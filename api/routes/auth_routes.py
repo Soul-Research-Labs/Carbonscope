@@ -124,6 +124,11 @@ async def register(request: Request, body: UserRegister, db: AsyncSession = Depe
         role="admin",
     )
     db.add(user)
+
+    # Create the free subscription eagerly so concurrent requests never race to create one
+    from api.services.subscriptions import get_or_create_subscription
+    await get_or_create_subscription(db, company.id)
+
     await db.commit()
     await db.refresh(user)
     return user

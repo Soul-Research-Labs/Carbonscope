@@ -134,7 +134,7 @@ async def purchase_listing(
 
     # Deduct credits from buyer
     if listing.price_credits > 0:
-        await deduct_credits(db, buyer_company_id, listing.price_credits, "marketplace_purchase")
+        await deduct_credits(db, buyer_company_id, listing.price_credits, "marketplace_purchase_usage")
         # Credit the seller
         await grant_credits(db, listing.seller_company_id, listing.price_credits, "marketplace_sale")
 

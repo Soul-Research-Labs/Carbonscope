@@ -8,6 +8,7 @@ Handles:
 
 from __future__ import annotations
 
+import asyncio
 import csv
 import io
 import json
@@ -16,7 +17,7 @@ import os
 import re
 from typing import Any
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models import (
@@ -221,8 +222,8 @@ def _get_llm_client():
             return None, provider
 
 
-def _llm_call(client: Any, provider: str, prompt: str, max_tokens: int = 2048) -> str:
-    """Make a synchronous LLM call."""
+def _llm_call_sync(client: Any, provider: str, prompt: str, max_tokens: int = 2048) -> str:
+    """Make a synchronous LLM call (runs in thread pool via caller)."""
     if provider == "anthropic":
         resp = client.messages.create(
             model="claude-sonnet-4-20250514",
@@ -248,7 +249,7 @@ async def extract_questions_llm(text: str) -> list[dict[str, Any]]:
 
     try:
         prompt = _EXTRACT_QUESTIONS_PROMPT.format(text=text[:8000])
-        content = _llm_call(client, provider, prompt)
+        content = await asyncio.to_thread(_llm_call_sync, client, provider, prompt)
 
         # Parse JSON array from response
         json_match = re.search(r"\[.*\]", content, re.DOTALL)
@@ -287,7 +288,7 @@ async def generate_draft_answer(
             total=total,
             question=question,
         )
-        answer = _llm_call(client, provider, prompt, max_tokens=512)
+        answer = await asyncio.to_thread(_llm_call_sync, client, provider, prompt, 512)
         return answer.strip(), 0.75
     except Exception as e:
         logger.warning("LLM draft answer failed: %s", e)
@@ -338,6 +339,13 @@ async def process_questionnaire(
 
     if not raw_questions:
         raw_questions = extract_questions_rule_based(text)
+
+    # Delete existing questions to prevent duplicates on re-extraction
+    await db.execute(
+        delete(QuestionnaireQuestion).where(
+            QuestionnaireQuestion.questionnaire_id == questionnaire_id
+        )
+    )
 
     # Get company info for draft answers
     company_result = await db.execute(

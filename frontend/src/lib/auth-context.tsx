@@ -61,8 +61,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("token", resp.access_token);
       setToken(resp.access_token);
 
-      // Decode JWT payload to get user info (sub, company_id)
-      const payload = JSON.parse(atob(resp.access_token.split(".")[1]));
+      // Decode JWT payload — handle base64url encoding (RFC 7519)
+      const raw = resp.access_token.split(".")[1];
+      const base64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+      const payload = JSON.parse(atob(base64));
       const u: User = {
         id: payload.sub,
         email,

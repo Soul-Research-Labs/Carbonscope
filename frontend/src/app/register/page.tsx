@@ -39,7 +39,7 @@ export default function RegisterPage() {
     confirmPassword: "",
     fullName: "",
     companyName: "",
-    industry: "Technology",
+    industry: "technology",
     region: "US",
   });
   const [error, setError] = useState("");

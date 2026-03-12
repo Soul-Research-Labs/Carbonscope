@@ -9,6 +9,7 @@ import logging
 from typing import Any
 
 from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models import CreditLedger, Subscription, _utcnow
@@ -68,16 +69,26 @@ async def get_or_create_subscription(db: AsyncSession, company_id: str) -> Subsc
     result = await db.execute(
         select(Subscription).where(
             Subscription.company_id == company_id,
-            Subscription.status == "active",
         )
     )
     sub = result.scalar_one_or_none()
     if sub is None:
         sub = Subscription(company_id=company_id, plan="free", status="active")
         db.add(sub)
-        # Grant initial free credits
+        try:
+            await db.flush()
+        except IntegrityError:
+            await db.rollback()
+            result = await db.execute(
+                select(Subscription).where(
+                    Subscription.company_id == company_id,
+                )
+            )
+            sub = result.scalar_one_or_none()
+            if sub is None:
+                raise
+            return sub
         await grant_credits(db, company_id, PLAN_LIMITS["free"]["monthly_credits"], "subscription_grant")
-        await db.flush()
     return sub
 
 

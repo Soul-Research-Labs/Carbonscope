@@ -75,6 +75,7 @@ class TestEnums:
             "export_usage", "pdf_export_usage", "questionnaire_extract_usage",
             "scenario_compute_usage", "marketplace_purchase_usage",
             "manual", "manual_grant", "monthly_reset", "marketplace_sale",
+            "plan_downgrade_adjustment",
         }
         assert set(r.value for r in CreditReason) == expected
 

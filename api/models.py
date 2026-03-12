@@ -110,6 +110,7 @@ class CreditReason(str, enum.Enum):
     manual_grant = "manual_grant"
     monthly_reset = "monthly_reset"
     marketplace_sale = "marketplace_sale"
+    plan_downgrade_adjustment = "plan_downgrade_adjustment"
 
 
 def _utcnow() -> datetime:
@@ -368,6 +369,9 @@ class Scenario(Base):
 class Subscription(Base):
     """Company subscription for tiered access."""
     __tablename__ = "subscriptions"
+    __table_args__ = (
+        UniqueConstraint("company_id", name="uq_subscription_company"),
+    )
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
     company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
@@ -449,6 +453,9 @@ class DataListing(Base):
 class DataPurchase(Base):
     """Record of a marketplace data purchase."""
     __tablename__ = "data_purchases"
+    __table_args__ = (
+        UniqueConstraint("listing_id", "buyer_company_id", name="uq_purchase_listing_buyer"),
+    )
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
     listing_id: str = Column(String(32), ForeignKey("data_listings.id"), nullable=False, index=True)

@@ -286,6 +286,9 @@ async def export_report_pdf(
     company_result = await db.execute(select(Company).where(Company.id == user.company_id))
     company = company_result.scalar_one()
 
+    # Commit credit deduction before generating PDF
+    await db.commit()
+
     pdf_bytes = generate_report_pdf(
         company_name=company.name,
         industry=company.industry,
@@ -376,21 +379,38 @@ async def dashboard(
     )
     latest = latest_result.scalar_one_or_none()
 
-    # Year-over-year totals
-    yoy_result = await db.execute(
+    # Year-over-year totals — use the latest report per year to avoid
+    # inflated sums when multiple estimates exist for the same year.
+    latest_per_year = (
         select(
             EmissionReport.year,
-            func.sum(EmissionReport.scope1).label("scope1"),
-            func.sum(EmissionReport.scope2).label("scope2"),
-            func.sum(EmissionReport.scope3).label("scope3"),
-            func.sum(EmissionReport.total).label("total"),
+            EmissionReport.scope1,
+            EmissionReport.scope2,
+            EmissionReport.scope3,
+            EmissionReport.total,
+            func.row_number()
+            .over(
+                partition_by=EmissionReport.year,
+                order_by=EmissionReport.created_at.desc(),
+            )
+            .label("rn"),
         )
         .where(
             EmissionReport.company_id == user.company_id,
             EmissionReport.deleted_at.is_(None),
         )
-        .group_by(EmissionReport.year)
-        .order_by(EmissionReport.year)
+        .subquery()
+    )
+    yoy_result = await db.execute(
+        select(
+            latest_per_year.c.year,
+            latest_per_year.c.scope1,
+            latest_per_year.c.scope2,
+            latest_per_year.c.scope3,
+            latest_per_year.c.total,
+        )
+        .where(latest_per_year.c.rn == 1)
+        .order_by(latest_per_year.c.year)
     )
     yoy = [
         {"year": row.year, "scope1": row.scope1, "scope2": row.scope2, "scope3": row.scope3, "total": row.total}

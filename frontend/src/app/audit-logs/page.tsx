@@ -4,10 +4,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { listAuditLogs, AuditLogEntry, ApiError } from "@/lib/api";
 import { SkeletonRows } from "@/components/Skeleton";
+import { useAuth } from "@/lib/auth-context";
 
 const PAGE_SIZE = 25;
 
 export default function AuditLogsPage() {
+  const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [logs, setLogs] = useState<AuditLogEntry[]>([]);
@@ -44,8 +46,12 @@ export default function AuditLogsPage() {
   }, [offset]);
 
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!authLoading && !user) {
+      router.replace("/login");
+      return;
+    }
+    if (user) load();
+  }, [user, authLoading, router, load]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;

@@ -94,23 +94,38 @@ export default function SupplyChainPage() {
   }
 
   async function handleVerify(linkId: string) {
-    await updateSupplyChainLink(linkId, "verified");
-    await refresh();
+    try {
+      await updateSupplyChainLink(linkId, "verified");
+      await refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to verify");
+    }
   }
 
   async function handleRemove(linkId: string) {
-    await deleteSupplyChainLink(linkId);
-    await refresh();
-    setDeleteTarget(null);
+    try {
+      await deleteSupplyChainLink(linkId);
+      await refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to remove");
+    } finally {
+      setDeleteTarget(null);
+    }
   }
 
   if (loading) return <div className="p-8 text-[var(--muted)]">Loading...</div>;
-  if (error)
+  if (error && suppliers.length === 0)
     return <div className="p-8 text-[var(--danger)]">Error: {error}</div>;
 
   return (
     <div className="max-w-6xl mx-auto p-8 space-y-8">
       <h1 className="text-2xl font-bold">Supply Chain Network</h1>
+
+      {error && (
+        <div className="bg-[var(--danger)]/10 border border-[var(--danger)] text-[var(--danger)] px-4 py-2 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
       {/* Scope 3 from suppliers summary */}
       {scope3 && (
