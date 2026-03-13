@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import {
@@ -62,10 +62,12 @@ const ADJUSTMENT_TYPES = [
 export default function ScenariosPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [scenarios, setScenarios] = useState<ScenarioOut[]>([]);
   const [reports, setReports] = useState<EmissionReport[]>([]);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
+  const [statusFilter, setStatusFilter] = useState(searchParams.get("status") ?? "");
 
   // Create form state
   const [name, setName] = useState("");
@@ -77,10 +79,10 @@ export default function ScenariosPage() {
   const [creating, setCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (status?: string) => {
     try {
       const [sRes, rRes] = await Promise.all([
-        listScenarios(),
+        listScenarios({ status: status || undefined }),
         listReports({ limit: 50 }),
       ]);
       setScenarios(sRes.items);
@@ -88,18 +90,23 @@ export default function ScenariosPage() {
       if (rRes.items.length > 0) {
         setBaseReportId((prev) => prev || rRes.items[0].id);
       }
+      // Sync filter to URL
+      const params = new URLSearchParams();
+      if (status) params.set("status", status);
+      const qs = params.toString();
+      router.replace(`/scenarios${qs ? `?${qs}` : ""}`, { scroll: false });
     } catch {
       setError("Failed to load data");
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) fetchData();
-  }, [user, loading, router, fetchData]);
+    if (user) fetchData(searchParams.get("status") ?? "");
+  }, [user, loading, router, fetchData, searchParams]);
 
   function toggleAdjustment(key: string, paramKey: string, defaultVal: number) {
     setAdjustments((prev) => {
@@ -138,7 +145,7 @@ export default function ScenariosPage() {
         parameters: adjustments,
       });
       await computeScenario(scenario.id);
-      await fetchData();
+      await fetchData(statusFilter);
       setShowCreate(false);
       setName("");
       setDescription("");
@@ -155,7 +162,7 @@ export default function ScenariosPage() {
   async function handleCompute(id: string) {
     try {
       await computeScenario(id);
-      await fetchData();
+      await fetchData(statusFilter);
     } catch {
       setError("Failed to compute scenario");
     }
@@ -184,6 +191,25 @@ export default function ScenariosPage() {
         >
           {showCreate ? "Cancel" : "New Scenario"}
         </button>
+      </div>
+
+      {/* Status filter */}
+      <div className="flex gap-3 mb-4">
+        <select
+          aria-label="Filter by status"
+          value={statusFilter}
+          onChange={(e) => {
+            const val = e.target.value;
+            setStatusFilter(val);
+            fetchData(val);
+          }}
+          className="input text-sm px-3 py-1.5 w-48"
+        >
+          <option value="">All Statuses</option>
+          <option value="draft">Draft</option>
+          <option value="computed">Computed</option>
+          <option value="archived">Archived</option>
+        </select>
       </div>
 
       {error && (

@@ -827,10 +827,12 @@ export async function createScenario(data: {
 export async function listScenarios(params?: {
   limit?: number;
   offset?: number;
+  status?: string;
 }): Promise<PaginatedResponse<ScenarioOut>> {
   const q = new URLSearchParams();
   if (params?.limit != null) q.set("limit", String(params.limit));
   if (params?.offset != null) q.set("offset", String(params.offset));
+  if (params?.status) q.set("status", params.status);
   const qs = q.toString();
   return request(`/scenarios/${qs ? `?${qs}` : ""}`);
 }

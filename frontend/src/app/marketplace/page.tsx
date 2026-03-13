@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -20,12 +20,13 @@ import {
 export default function MarketplacePage() {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [data, setData] = useState<PaginatedResponse<DataListingOut> | null>(
     null,
   );
   const [error, setError] = useState("");
-  const [industry, setIndustry] = useState("");
-  const [region, setRegion] = useState("");
+  const [industry, setIndustry] = useState(searchParams.get("industry") ?? "");
+  const [region, setRegion] = useState(searchParams.get("region") ?? "");
 
   // Create listing state
   const [showCreate, setShowCreate] = useState(false);
@@ -48,18 +49,24 @@ export default function MarketplacePage() {
         limit: 50,
       });
       setData(res);
+      // Sync filters to URL
+      const params = new URLSearchParams();
+      if (ind) params.set("industry", ind);
+      if (reg) params.set("region", reg);
+      const qs = params.toString();
+      router.replace(`/marketplace${qs ? `?${qs}` : ""}`, { scroll: false });
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load listings");
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) fetchListings();
-  }, [user, loading, router, fetchListings]);
+    if (user) fetchListings(searchParams.get("industry") ?? "", searchParams.get("region") ?? "");
+  }, [user, loading, router, fetchListings, searchParams]);
 
   async function handlePurchase(id: string) {
     setPurchaseTarget(null);
