@@ -1,273 +1,333 @@
-# CarbonScope — Bittensor Subnet for Decentralized Carbon Intelligence
+<p align="center">
+  <img src="https://img.shields.io/badge/CarbonScope-Decentralized%20Carbon%20Intelligence-00C853?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJ3aGl0ZSI+PHBhdGggZD0iTTEyIDJDNi40OCAyIDIgNi40OCAyIDEyczQuNDggMTAgMTAgMTAgMTAtNC40OCAxMC0xMFMxNy41MiAyIDEyIDJ6bTAgMThjLTQuNDIgMC04LTMuNTgtOC04czMuNTgtOCA4LTggOCAzLjU4IDggOC0zLjU4IDgtOCA4eiIvPjwvc3ZnPg==" alt="CarbonScope">
+</p>
 
-CarbonScope is a Bittensor subnet where **miners** estimate corporate carbon emissions and **validators** score report quality using the GHG Protocol Corporate Standard against curated benchmarks.
+<h1 align="center">CarbonScope</h1>
+
+<p align="center">
+  <strong>Decentralized Carbon Intelligence on Bittensor</strong><br>
+  <em>Enterprise-grade carbon accounting platform powered by decentralized AI</em>
+</p>
+
+<p align="center">
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
+  <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
+  <img src="https://img.shields.io/badge/node-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node 18+">
+  <img src="https://img.shields.io/badge/version-0.16.0-orange?style=flat-square" alt="Version 0.16.0">
+  <img src="https://img.shields.io/badge/tests-491%2B%20backend%20%7C%2065%2B%20frontend-brightgreen?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/endpoints-75%2B-7B61FF?style=flat-square" alt="75+ API Endpoints">
+  <img src="https://img.shields.io/badge/Bittensor-Subnet-000000?style=flat-square" alt="Bittensor Subnet">
+</p>
+
+<p align="center">
+  <a href="#quick-start">Quick Start</a> · 
+  <a href="API.md">API Reference</a> · 
+  <a href="ARCHITECTURE.md">Architecture</a> · 
+  <a href="DEPLOYMENT.md">Deploy</a> · 
+  <a href="CONTRIBUTING.md">Contribute</a> · 
+  <a href="CHANGELOG.md">Changelog</a>
+</p>
+
+---
+
+## Overview
+
+CarbonScope is a **Bittensor subnet** that combines decentralized AI with enterprise carbon accounting. Miners estimate corporate carbon emissions across Scope 1, 2, and 3 categories, while validators score report quality against the **GHG Protocol Corporate Standard** using curated benchmarks.
+
+The platform ships with a production-ready **FastAPI** backend (75+ endpoints), a **Next.js 15** dashboard, and a complete carbon management suite — covering emission estimation, compliance reporting, supply chain tracking, AI-powered document processing, and a data marketplace.
+
+### Why CarbonScope?
+
+- **Decentralized Accuracy** — Leverage a network of competing miners for unbiased emission estimates
+- **GHG Protocol Compliant** — Built from the ground up around the Corporate Standard
+- **8 Emission Factor Datasets** — EPA, eGRID, IEA, DEFRA, GLEC, IPCC AR6, and industry averages
+- **Full Scope Coverage** — Scope 1 (direct), Scope 2 (energy), Scope 3 (value chain) with category-level breakdowns
+- **Enterprise Features** — Multi-tenant architecture, RBAC, audit logging, webhook integrations, and subscription billing
+
+---
+
+## Table of Contents
+
+- [Overview](#overview)
+- [Architecture](#architecture)
+- [Key Features](#key-features)
+- [Quick Start](#quick-start)
+- [Environment Variables](#environment-variables)
+- [Running on Testnet](#running-on-testnet)
+- [Running Tests](#running-tests)
+- [Platform API](#platform-api)
+- [Data Models](#data-models)
+- [Subscription Plans](#subscription-plans)
+- [Emission Factor Datasets](#emission-factor-datasets)
+- [GHG Protocol Coverage](#ghg-protocol-coverage)
+- [Compliance Frameworks](#compliance-frameworks)
+- [Questionnaire Templates](#questionnaire-templates)
+- [Frontend Dashboard](#frontend-dashboard)
+- [Docker Deployment](#docker-deployment)
+- [Project Structure](#project-structure)
+- [Troubleshooting](#troubleshooting)
+- [Documentation](#documentation)
+- [Changelog](#changelog)
+- [License](#license)
+
+---
 
 ## Architecture
 
 ```
-Validator                          Miner
-┌────────────────-┐    Synapse     ┌────────────────────-┐
-│ Generate query  ├───────────────►│ Parse questionnaire │
-│ (curated/       │  CarbonSynapse │ Calculate S1/S2/S3  │
-│  synthetic)     │◄──────────────-┤ Fill breakdown      │
-│ Score response  │   response     │ Assess confidence   │
-│ Set weights     │                └───────────────────-─┘
-└────────────────-┘
+                    ┌─────────────────────────────────────────┐
+                    │           Bittensor Network              │
+                    │                                         │
+  ┌─────────────┐  │  ┌──────────────┐   ┌──────────────┐   │  ┌─────────────┐
+  │   Next.js   │  │  │  Validator    │   │    Miner     │   │  │  PostgreSQL  │
+  │  Dashboard  │──┼──│  (Dendrite)   │◄─►│   (Axon)     │   │  │  Database    │
+  │  React 19   │  │  │  Score &      │   │  Estimate    │   │  │             │
+  └──────┬──────┘  │  │  Set Weights  │   │  S1/S2/S3    │   │  └──────┬──────┘
+         │         │  └──────────────┘   └──────────────┘   │         │
+         │         └─────────────────────────────────────────┘         │
+         │                                                             │
+         │         ┌─────────────────────────────────────────┐         │
+         └────────►│          FastAPI Backend                 │◄────────┘
+                   │  13 Route Modules · 75+ Endpoints        │
+                   │  JWT Auth · Rate Limiting · Audit Logs   │
+                   └─────────────────────────────────────────┘
 ```
 
-**Scoring Axes** (0.0–1.0 composite):
-| Axis | Weight | Description |
-|------|--------|-------------|
-| Accuracy | 40% | Weighted MAPE against ground truth (S1=30%, S2=20%, S3=50%) |
-| GHG Compliance | 25% | Arithmetic consistency, scope classification, non-negative |
-| Completeness | 15% | All output fields present (emissions, breakdown, sources, etc.) |
-| Anti-Hallucination | 15% | Sanity checks for physically impossible values |
-| Benchmark | 5% | Scope-split alignment with industry norms |
+**Validators** send `CarbonSynapse` queries containing company operational data. **Miners** respond with full emission estimates including Scope 1/2/3 breakdowns, confidence scores, data sources, and assumptions. Validators score responses across five axes and set on-chain weights accordingly.
 
-## Project Structure
+### Scoring Axes
 
-```
-carbonscope/
-├── carbonscope/                    # Bittensor subnet core
-│   ├── protocol.py                # CarbonSynapse (bt.Synapse)
-│   ├── scoring.py                 # Composite scoring engine
-│   ├── utils.py                   # Unit conversions, GWP helpers
-│   ├── emission_factors/          # Scope 1/2/3 calculation engines
-│   │   ├── loader.py, scope1.py, scope2.py, scope3.py
-│   ├── validation/                # GHG Protocol, sanity checks, benchmarks
-│   └── test_cases/                # Curated + synthetic test generator
-├── neurons/
-│   ├── miner.py                   # Bittensor Axon server
-│   └── validator.py               # Bittensor Dendrite client
-├── api/                           # FastAPI platform backend
-│   ├── main.py                    # App entry point (13 routers, lifespan scheduler)
-│   ├── config.py                  # Env-based configuration + production enforcement
-│   ├── database.py                # SQLAlchemy async (SQLite + PostgreSQL)
-│   ├── models.py                  # 16 models (see Data Models below)
-│   ├── schemas.py                 # Pydantic request/response schemas
-│   ├── auth.py                    # JWT + bcrypt + refresh/reset tokens
-│   ├── deps.py                    # Dependencies: auth, plan gates, credits, admin
-│   ├── middleware.py               # Request ID, security headers, error handler
-│   ├── limiter.py                 # Shared rate limiter
-│   ├── routes/
-│   │   ├── auth_routes.py         # Register, login, refresh, password reset
-│   │   ├── company_routes.py      # Company CRUD, data upload CRUD
-│   │   ├── carbon_routes.py       # Estimation (local/subnet), reports, dashboard
-│   │   ├── ai_routes.py           # LLM parsing, prediction, recommendations
-│   │   ├── supply_chain_routes.py # Supplier/buyer linking, Scope 3 propagation
-│   │   ├── compliance_routes.py   # GHG Protocol, CDP, TCFD, SBTi reports
-│   │   ├── webhook_routes.py      # Webhook CRUD + HMAC-signed dispatch
-│   │   ├── audit_routes.py        # Audit log listing
-│   │   ├── questionnaire_routes.py # Document upload, AI extraction, PDF export
-│   │   ├── scenario_routes.py     # What-if scenario builder
-│   │   ├── billing_routes.py      # Subscription, credits, plan management
-│   │   ├── alert_routes.py        # Automated alerts + acknowledgement
-│   │   └── marketplace_routes.py  # Anonymized data marketplace
-│   └── services/
-│       ├── subnet_bridge.py       # Bittensor + local estimation engine
-│       ├── llm_parser.py          # Rule-based + LLM text extraction
-│       ├── prediction.py          # Revenue/employee emission prediction
-│       ├── recommendations.py     # 11 reduction strategies
-│       ├── supply_chain.py        # Buyer↔supplier + Scope 3 Cat 1
-│       ├── compliance.py          # GHG Protocol, CDP, TCFD, SBTi
-│       ├── webhooks.py            # HMAC-SHA256 webhook dispatch
-│       ├── audit.py               # Audit logging
-│       ├── questionnaire.py       # Document parsing + AI Q&A extraction
-│       ├── scenarios.py           # What-if computation engine
-│       ├── pdf_export.py          # ReportLab PDF generation
-│       ├── templates.py           # 5 questionnaire templates (CDP, TCFD, etc.)
-│       ├── subscriptions.py       # Plan tiers, credits, billing
-│       ├── alerts.py              # Emission monitoring + alert generation
-│       ├── marketplace.py         # Data anonymization + marketplace logic
-│       ├── email.py               # SMTP email notifications (sync)
-│       ├── email_async.py         # Async email via aiosmtplib
-│       ├── url_validator.py       # SSRF protection for webhook URLs
-│       └── scheduler.py           # Alert checks + monthly credit reset
-├── alembic/                       # Database migrations
-│   ├── env.py                     # Async migration runner
-│   └── versions/                  # Migration scripts
-├── frontend/                      # Next.js 15 + React 19 dashboard
-│   └── src/
-│       ├── lib/api.ts             # Typed API client (55+ functions)
-│       ├── lib/auth-context.tsx   # JWT auth context provider
-│       ├── components/            # Navbar, ScopeChart, Toast, ConfirmDialog, Skeleton
-│       └── app/                   # App Router pages (20 routes)
-├── data/emission_factors/         # EPA, eGRID, IEA, DEFRA JSON datasets
-├── .github/workflows/ci.yml      # GitHub Actions CI/CD pipeline
-├── alembic.ini                    # Alembic configuration
-├── docker-compose.yml
-├── Dockerfile
-├── requirements.txt
-└── setup.py
-```
+| Axis                   | Weight | Description                                                       |
+| :--------------------- | :----: | :---------------------------------------------------------------- |
+| **Accuracy**           |  40%   | Weighted MAPE against ground truth (S1 30%, S2 20%, S3 50%)       |
+| **GHG Compliance**     |  25%   | Arithmetic consistency, scope classification, non-negative values |
+| **Completeness**       |  15%   | All output fields present (emissions, breakdown, sources, etc.)   |
+| **Anti-Hallucination** |  15%   | Sanity checks for physically impossible values                    |
+| **Benchmark**          |   5%   | Scope-split alignment with industry norms                         |
 
-## Data Models (16)
+> **Deep Dive:** See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed system design, data flow diagrams, database schema, and service architecture.
 
-| Model                 | Description                                                          |
-| --------------------- | -------------------------------------------------------------------- |
-| Company               | Organization profile (industry, region, revenue, employees)          |
-| User                  | Authenticated member (email, role: admin/member)                     |
-| DataUpload            | Raw operational data (year, JSON provided_data)                      |
-| EmissionReport        | Calculated emissions (S1/S2/S3, breakdown, confidence, miner scores) |
-| SupplyChainLink       | Buyer↔supplier relationship (spend, category, status)                |
-| Webhook               | HTTP webhook endpoint (URL, events, HMAC secret)                     |
-| WebhookDelivery       | Webhook delivery log (status code, duration, response)               |
-| AuditLog              | Action audit trail (user, action, resource)                          |
-| Questionnaire         | Uploaded document (PDF/DOCX/XLSX/CSV, extracted text)                |
-| QuestionnaireQuestion | Extracted question with AI draft + human answer                      |
-| Scenario              | What-if analysis (parameters, computed results)                      |
-| Subscription          | Company plan tier (free/pro/enterprise, Stripe IDs)                  |
-| CreditLedger          | Credit transactions (grants, deductions, balance)                    |
-| Alert                 | Automated alerts (emission increase, confidence drop)                |
-| DataListing           | Marketplace listing (anonymized data, price in credits)              |
-| DataPurchase          | Marketplace purchase record                                          |
+---
 
-## Prerequisites
+## Key Features
 
-- Python 3.10+
-- Node.js 18+ (for the frontend)
-- Bittensor SDK >= 6.0.0
-- PostgreSQL (recommended for production; SQLite works for dev)
+| Category              | Highlights                                                                                                       |
+| :-------------------- | :--------------------------------------------------------------------------------------------------------------- |
+| **Carbon Accounting** | Scope 1/2/3 estimation via Bittensor subnet or local engine; 8 emission factor datasets; GHG Protocol compliance |
+| **AI Enhancement**    | LLM-powered text extraction, emission prediction, audit trail generation, reduction recommendations              |
+| **Questionnaires**    | Upload PDF/DOCX/XLSX/CSV → AI-extract questions → human review → PDF export; 5 pre-built templates               |
+| **Supply Chain**      | Buyer↔supplier linking, Scope 3 Category 1 aggregation, verification workflow                                    |
+| **Compliance**        | Generate reports for GHG Protocol, CDP, TCFD, and SBTi frameworks                                                |
+| **What-If Scenarios** | Create parameter-based scenarios, compute projected emissions                                                    |
+| **Data Marketplace**  | Anonymized data listings, credit-based purchasing (Pro+ plans)                                                   |
+| **Billing**           | Three subscription tiers (Free / Pro / Enterprise), credit ledger, automated monthly grants                      |
+| **Webhooks**          | HMAC-SHA256 signed payloads, exponential-backoff retries, delivery logs                                          |
+| **Security**          | JWT + refresh token rotation, bcrypt, CSRF double-submit, rate limiting, SSRF protection, cross-tenant isolation |
 
-## Environment Variables
+---
 
-| Variable                      | Default                              | Description                                    |
-| ----------------------------- | ------------------------------------ | ---------------------------------------------- |
-| `ENV`                         | `development`                        | Environment mode (development/production/test) |
-| `DATABASE_URL`                | `sqlite+aiosqlite:///carbonscope.db` | Async DB URL (SQLite or PostgreSQL)            |
-| `SECRET_KEY`                  | `change-me-in-production`            | JWT signing key (**enforced** in production)   |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | `60`                                 | JWT token lifetime                             |
-| `ALLOWED_ORIGINS`             | `http://localhost:3000`              | Comma-separated CORS origins                   |
-| `RATE_LIMIT_AUTH`             | `10/minute`                          | Rate limit for auth endpoints                  |
-| `RATE_LIMIT_DEFAULT`          | `60/minute`                          | Rate limit for general endpoints               |
-| `LOG_LEVEL`                   | `INFO`                               | Logging level                                  |
-| `ESTIMATION_MODE`             | `local`                              | `local` (dev) or `subnet` (Bittensor network)  |
-| `BT_NETWORK`                  | `test`                               | Bittensor network (test, finney)               |
-| `BT_NETUID`                   | `1`                                  | Bittensor subnet UID                           |
-| `BT_WALLET_NAME`              | `api_client`                         | Bittensor wallet name                          |
-| `BT_WALLET_HOTKEY`            | `default`                            | Bittensor wallet hotkey                        |
-| `BT_QUERY_TIMEOUT`            | `30.0`                               | Bittensor query timeout (seconds)              |
-| `SMTP_HOST`                   | —                                    | SMTP server (set to enable email)              |
-| `SMTP_PORT`                   | `587`                                | SMTP port                                      |
-| `SMTP_USER`                   | —                                    | SMTP username                                  |
-| `SMTP_PASSWORD`               | —                                    | SMTP password                                  |
-| `EMAIL_FROM`                  | `noreply@carbonscope.io`             | Sender email address                           |
-| `OPENAI_API_KEY`              | —                                    | OpenAI API key (optional, LLM parsing)         |
-| `ANTHROPIC_API_KEY`           | —                                    | Anthropic API key (optional, LLM parsing)      |
+## Quick Start
 
-## Setup
+### Prerequisites
+
+| Requirement   | Version | Purpose                                      |
+| :------------ | :------ | :------------------------------------------- |
+| Python        | 3.10+   | Backend & Bittensor subnet                   |
+| Node.js       | 18+     | Frontend dashboard                           |
+| Bittensor SDK | ≥ 6.0.0 | Subnet communication                         |
+| PostgreSQL    | 15+     | Production database (SQLite for development) |
+
+### 1. Install the Backend
 
 ```bash
-# Clone and install
+# Clone the repository
 git clone <repo-url> && cd carbonscope
+
+# Option A: Editable install (recommended for development)
 pip install -e ".[dev]"
 
-# Or install dependencies directly
+# Option B: Pinned dependencies
 pip install -r requirements.txt
 ```
 
-### Database Setup
+### 2. Configure Environment
 
 ```bash
-# Development (SQLite — auto-creates on startup)
+cp .env.example .env
+# Edit .env with your preferred settings
+```
+
+### 3. Start the Backend
+
+```bash
+# Development (SQLite — auto-creates tables on startup)
 uvicorn api.main:app --reload --port 8000
 
-# Production (PostgreSQL)
+# Production (PostgreSQL — run migrations first)
 export DATABASE_URL=postgresql+asyncpg://user:pass@localhost:5432/carbonscope
-alembic upgrade head    # Run migrations
-uvicorn api.main:app --port 8000
+alembic upgrade head
+uvicorn api.main:app --host 0.0.0.0 --port 8000 --workers 4
 ```
+
+### 4. Start the Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev         # → http://localhost:3000
+```
+
+### 5. Explore the API
+
+Once the backend is running, visit the interactive documentation:
+
+| URL                            | Description                                |
+| :----------------------------- | :----------------------------------------- |
+| `http://localhost:8000/docs`   | Swagger UI — interactive endpoint explorer |
+| `http://localhost:8000/redoc`  | ReDoc — structured API reference           |
+| `http://localhost:8000/health` | Health check endpoint                      |
 
 ### Database Migrations (Alembic)
 
 ```bash
-# Generate a new migration after model changes
-alembic revision --autogenerate -m "description of changes"
-
-# Apply migrations
-alembic upgrade head
-
-# Downgrade one revision
-alembic downgrade -1
-
-# View current revision
-alembic current
+alembic revision --autogenerate -m "description"   # Generate migration
+alembic upgrade head                                # Apply all migrations
+alembic downgrade -1                                # Rollback one revision
+alembic current                                     # Show current revision
 ```
+
+> **Production Deployment:** See [DEPLOYMENT.md](DEPLOYMENT.md) for Nginx, Docker, systemd, TLS, and scaling guides.
+
+---
+
+## Environment Variables
+
+| Variable                      | Default                              | Description                                               |
+| :---------------------------- | :----------------------------------- | :-------------------------------------------------------- |
+| `ENV`                         | `development`                        | Environment mode (`development` / `production` / `test`)  |
+| `DATABASE_URL`                | `sqlite+aiosqlite:///carbonscope.db` | Async database URL (SQLite or PostgreSQL)                 |
+| `SECRET_KEY`                  | `change-me-in-production`            | JWT signing key (**enforced ≥ 32 chars** in production)   |
+| `ACCESS_TOKEN_EXPIRE_MINUTES` | `60`                                 | JWT access token lifetime                                 |
+| `ALLOWED_ORIGINS`             | `http://localhost:3000`              | Comma-separated CORS origins                              |
+| `RATE_LIMIT_AUTH`             | `10/minute`                          | Auth endpoint rate limit                                  |
+| `RATE_LIMIT_DEFAULT`          | `60/minute`                          | General endpoint rate limit                               |
+| `TRUST_PROXY`                 | `false`                              | Honor `X-Forwarded-For` (set `true` behind reverse proxy) |
+| `LOG_LEVEL`                   | `INFO`                               | Logging level (`DEBUG` / `INFO` / `WARNING` / `ERROR`)    |
+| `LOG_JSON`                    | `false`                              | Structured JSON logging (auto-enabled in production)      |
+| `ESTIMATION_MODE`             | `local`                              | `local` (built-in engine) or `subnet` (Bittensor network) |
+| `BT_NETWORK`                  | `test`                               | Bittensor network (`test`, `finney`)                      |
+| `BT_NETUID`                   | `1`                                  | Bittensor subnet UID                                      |
+| `BT_WALLET_NAME`              | `api_client`                         | Bittensor wallet name                                     |
+| `BT_WALLET_HOTKEY`            | `default`                            | Bittensor wallet hotkey                                   |
+| `BT_QUERY_TIMEOUT`            | `30.0`                               | Bittensor query timeout (seconds)                         |
+| `SMTP_HOST`                   | —                                    | SMTP server hostname (enables email notifications)        |
+| `SMTP_PORT`                   | `587`                                | SMTP port                                                 |
+| `SMTP_USER` / `SMTP_PASSWORD` | —                                    | SMTP credentials                                          |
+| `EMAIL_FROM`                  | `noreply@carbonscope.io`             | Sender email address                                      |
+| `OPENAI_API_KEY`              | —                                    | OpenAI API key (optional — enables LLM text parsing)      |
+| `ANTHROPIC_API_KEY`           | —                                    | Anthropic API key (optional — enables LLM text parsing)   |
+| `COOKIE_DOMAIN`               | —                                    | Cookie domain for cross-subdomain auth                    |
+| `COOKIE_SECURE`               | `true` (production)                  | HTTPS-only cookies                                        |
+| `COOKIE_SAMESITE`             | `lax`                                | Cookie SameSite policy                                    |
+
+> A complete template is available in [`.env.example`](.env.example).
+
+---
 
 ## Running on Testnet
 
-### 1. Create wallets
+### 1. Create Wallets
 
 ```bash
 btcli wallet create --wallet.name miner --wallet.hotkey default
 btcli wallet create --wallet.name validator --wallet.hotkey default
 ```
 
-### 2. Get testnet TAO
+### 2. Get Testnet TAO
 
 ```bash
 btcli wallet faucet --wallet.name miner --subtensor.network test
 btcli wallet faucet --wallet.name validator --subtensor.network test
 ```
 
-### 3. Register on subnet
+### 3. Register on Subnet
 
 ```bash
 WALLET_NAME=miner ./scripts/register.sh
 WALLET_NAME=validator ./scripts/register.sh
 ```
 
-### 4. Run miner & validator
+### 4. Run Miner & Validator
 
 ```bash
-./scripts/run_miner.sh
-./scripts/run_validator.sh
+./scripts/run_miner.sh      # Starts the Axon server (port 8091)
+./scripts/run_validator.sh   # Starts the Dendrite client
 ```
+
+> **Configuration:** All scripts accept environment variables for customization. See `scripts/` for details.
+
+---
 
 ## Running Tests
 
+### Backend Tests (491+)
+
 ```bash
-pytest tests/ -v               # All 491+ backend tests
-pytest tests/test_carbon_api.py -v  # Specific file
-pytest tests/ -q --tb=short    # Short output
-pytest tests/ --cov=api --cov-report=term-missing  # With coverage
+pytest tests/ -v                                      # Full suite
+pytest tests/test_carbon_api.py -v                    # Specific file
+pytest tests/ --cov=api --cov-report=term-missing     # With coverage
+pytest tests/ -k "test_auth" -v                       # Pattern matching
 ```
 
-### Test Coverage
+### Frontend Tests (65+)
 
-| File                                 | Coverage                                                   |
-| ------------------------------------ | ---------------------------------------------------------- |
-| `test_auth_api.py`                   | Registration, login, profile CRUD, password change         |
-| `test_company_api.py`                | Company CRUD, data upload pagination, PATCH, soft delete   |
-| `test_carbon_api.py`                 | Estimation, report listing, pagination, soft delete        |
-| `test_new_routes.py`                 | Webhooks CRUD, delivery logs, report export (CSV/JSON)     |
-| `test_new_features.py`               | Questionnaire upload, AI extraction, scenarios, PDF export |
-| `test_compliance.py`                 | GHG Protocol, CDP, TCFD, SBTi report generation            |
-| `test_ai_services.py`                | LLM parser, prediction engine, recommendations             |
-| `test_emission_factors.py`           | Scope 1/2/3 emission factor calculations                   |
-| `test_scoring.py`                    | Validator composite scoring engine                         |
-| `test_generator.py`                  | Test case generation (curated + synthetic)                 |
-| `test_utils.py`                      | Unit conversion utilities                                  |
-| `test_e2e_security.py`               | Cross-tenant isolation, rate limiting, auth flows          |
-| `test_billing_alerts_marketplace.py` | Subscriptions, credits, alerts, marketplace, scheduler     |
-| `test_coverage_gaps.py`              | Refresh tokens, soft deletes, pagination, webhook toggle   |
-| `test_v060_features.py`              | SSRF, refresh rotation, password reset, middleware, admin  |
-| `test_ai_routes.py`                  | AI endpoints: parse-text, predict, audit-trail             |
-| `test_audit_routes.py`               | Audit log listing, filtering by action/resource/user       |
-| `test_concurrency.py`                | Concurrent credit deduction race conditions                |
-| `test_middleware_and_crud.py`        | Request logging, security headers, CRUD operations         |
-| `test_phase1_security.py`            | Token revocation, brute force lockout, CSRF                |
-| `test_phase5_security.py`            | Admin RBAC, cookie auth, rate limiter proxy                |
-| `test_phase6_business_logic.py`      | Credit gating, pagination, GDPR delete, ledger             |
-| `test_questionnaire_routes.py`       | Questionnaire CRUD, questions, templates, extraction       |
-| `test_scenario_routes.py`            | Scenario CRUD, compute, pagination                         |
-| `test_supply_chain_routes.py`        | Supply chain links, Scope 3 calculation, verification      |
-| `test_webhook_routes.py`             | Webhook CRUD, toggle, delivery logs, pagination            |
+```bash
+cd frontend
+npm test                  # Run full Vitest suite
+npm run test:watch        # Watch mode for development
+```
 
-**Frontend tests** (65 tests in `frontend/src/__tests__/`):
+<details>
+<summary><strong>Backend Test Coverage (28 test files)</strong></summary>
+
+| File                                 | Coverage                                                    |
+| :----------------------------------- | :---------------------------------------------------------- |
+| `test_auth_api.py`                   | Registration, login, profile CRUD, password change, lockout |
+| `test_company_api.py`                | Company CRUD, data upload pagination, PATCH, soft delete    |
+| `test_carbon_api.py`                 | Estimation, report listing, pagination, soft delete         |
+| `test_new_routes.py`                 | Webhooks CRUD, delivery logs, report export (CSV/JSON)      |
+| `test_new_features.py`               | Questionnaire upload, AI extraction, scenarios, PDF export  |
+| `test_compliance.py`                 | GHG Protocol, CDP, TCFD, SBTi report generation             |
+| `test_ai_services.py`                | LLM parser, prediction engine, recommendations              |
+| `test_ai_routes.py`                  | AI endpoints: parse-text, predict, audit-trail              |
+| `test_emission_factors.py`           | Scope 1/2/3 emission factor calculations                    |
+| `test_scoring.py`                    | Validator composite scoring engine                          |
+| `test_generator.py`                  | Test case generation (curated + synthetic)                  |
+| `test_utils.py`                      | Unit conversion utilities                                   |
+| `test_e2e_security.py`               | Cross-tenant isolation, rate limiting, auth flows           |
+| `test_billing_alerts_marketplace.py` | Subscriptions, credits, alerts, marketplace, scheduler      |
+| `test_coverage_gaps.py`              | Refresh tokens, soft deletes, pagination, webhook toggle    |
+| `test_v060_features.py`              | SSRF, refresh rotation, password reset, middleware, admin   |
+| `test_audit_routes.py`               | Audit log listing, filtering by action/resource/user        |
+| `test_concurrency.py`                | Concurrent credit deduction race conditions                 |
+| `test_middleware_and_crud.py`        | Request logging, security headers, CRUD operations          |
+| `test_phase1_security.py`            | Token revocation, brute force lockout, CSRF                 |
+| `test_phase3_features.py`            | Soft delete, constraints, JSON logging                      |
+| `test_phase4_polish.py`              | Enum types, validators, password strength                   |
+| `test_phase5_security.py`            | Admin RBAC, cookie auth, rate limiter proxy                 |
+| `test_phase6_business_logic.py`      | Credit gating, pagination, GDPR delete, ledger              |
+| `test_questionnaire_routes.py`       | Questionnaire CRUD, questions, templates, extraction        |
+| `test_scenario_routes.py`            | Scenario CRUD, compute, pagination                          |
+| `test_supply_chain_routes.py`        | Supply chain links, Scope 3 calculation, verification       |
+| `test_webhook_routes.py`             | Webhook CRUD, toggle, delivery logs, pagination             |
+
+</details>
+
+<details>
+<summary><strong>Frontend Test Coverage (10 test files)</strong></summary>
 
 | File                      | Coverage                                              |
-| ------------------------- | ----------------------------------------------------- |
+| :------------------------ | :---------------------------------------------------- |
 | `Breadcrumbs.test.tsx`    | Rendering, links, accessibility, separators           |
 | `ConfirmDialog.test.tsx`  | Open/close, confirm/cancel, variants, custom labels   |
 | `DataTable.test.tsx`      | Sorting, pagination, empty states, rendering          |
@@ -279,321 +339,353 @@ pytest tests/ --cov=api --cov-report=term-missing  # With coverage
 | `api-new-methods.test.ts` | Credit ledger, delete account, supply chain, webhooks |
 | `auto-refresh.test.ts`    | Token refresh on 401, retry logic                     |
 
-## Docker Deployment
+</details>
 
-```bash
-# Quick start
-docker compose up --build -d
-curl http://localhost:8000/health
+---
 
-# Production
-export SECRET_KEY=$(openssl rand -hex 32)
-export ENV=production
-docker compose up --build -d
-```
+## Platform API
 
-## Platform API (v0.8.0)
+The platform exposes **75+ RESTful endpoints** across 13 route modules. All endpoints are prefixed with `/api/v1/` and documented via OpenAPI.
 
-### Start the API server
+### Endpoint Summary
 
-```bash
-uvicorn api.main:app --reload --port 8000
-```
+| Category              | Endpoints | Highlights                                                             |
+| :-------------------- | :-------: | :--------------------------------------------------------------------- |
+| **Auth**              |    10     | Register, login, logout, JWT + refresh rotation, password reset/forgot |
+| **Company & Data**    |     7     | Company CRUD, data upload with pagination and soft delete              |
+| **Carbon Estimation** |     8     | Local/subnet estimation, reports, dashboard, CSV/JSON/PDF export       |
+| **AI Enhancement**    |     4     | Text parsing, emission prediction, audit trail, recommendations        |
+| **Questionnaires**    |    11     | Upload, AI extraction, templates, human review, PDF export             |
+| **Scenarios**         |     6     | What-if scenario builder with compute engine                           |
+| **Supply Chain**      |     7     | Supplier linking, Scope 3 propagation, verification                    |
+| **Compliance**        |     1     | GHG Protocol / CDP / TCFD / SBTi report generation                     |
+| **Billing**           |     6     | Subscription management, credits, plan comparison, ledger              |
+| **Alerts**            |     3     | Emission threshold monitoring, acknowledgement                         |
+| **Marketplace**       |     6     | Anonymized data listings, credit-based purchase                        |
+| **Webhooks**          |     5     | HMAC-signed webhooks, delivery logs with retry info                    |
+| **Audit & Health**    |     2     | Audit logs (admin), health check                                       |
 
-Interactive docs: `http://localhost:8000/docs`
+> **Full Reference:** See [API.md](API.md) for the complete endpoint reference with request/response examples.
 
-### API Endpoints (75+)
+---
 
-#### Auth (8 endpoints)
+## Data Models
 
-| Method | Endpoint                       | Description                       |
-| ------ | ------------------------------ | --------------------------------- |
-| POST   | `/api/v1/auth/register`        | Register user + company           |
-| POST   | `/api/v1/auth/login`           | Get JWT access + refresh tokens   |
-| GET    | `/api/v1/auth/me`              | Get current user profile          |
-| PATCH  | `/api/v1/auth/me`              | Update name / email               |
-| POST   | `/api/v1/auth/change-password` | Change password                   |
-| POST   | `/api/v1/auth/refresh`         | Rotate refresh token for new pair |
-| POST   | `/api/v1/auth/forgot-password` | Request password reset email      |
-| POST   | `/api/v1/auth/reset-password`  | Reset password with token         |
+The platform uses **19 SQLAlchemy models** with full async support, soft deletes, and CHECK constraints.
 
-#### Company & Data (7)
+| Model                     | Description                                                                       |
+| :------------------------ | :-------------------------------------------------------------------------------- |
+| **Company**               | Organization profile (industry, region, revenue, employees)                       |
+| **User**                  | Authenticated member (email, bcrypt password, role: admin/member, lockout fields) |
+| **DataUpload**            | Raw operational data (year, JSON `provided_data`)                                 |
+| **EmissionReport**        | Calculated emissions (S1/S2/S3, breakdown, confidence, miner scores)              |
+| **SupplyChainLink**       | Buyer↔supplier relationship (spend, category, verification status)                |
+| **Webhook**               | HTTP callback endpoint (URL, event types, HMAC secret)                            |
+| **WebhookDelivery**       | Delivery log (status code, duration, retry info)                                  |
+| **AuditLog**              | Action audit trail (user, action, resource type/id, detail)                       |
+| **Questionnaire**         | Uploaded document (PDF/DOCX/XLSX/CSV, extraction status)                          |
+| **QuestionnaireQuestion** | Extracted question with AI draft + human-reviewed answer                          |
+| **Scenario**              | What-if analysis (parameters, base report, computed results)                      |
+| **Subscription**          | Company plan tier (free/pro/enterprise, billing status)                           |
+| **CreditLedger**          | Credit transaction log (grants, deductions, running balance)                      |
+| **Alert**                 | Automated alert (emission increase, confidence drop, target exceeded)             |
+| **DataListing**           | Marketplace listing (anonymized data, price in credits)                           |
+| **DataPurchase**          | Marketplace purchase transaction record                                           |
+| **RefreshToken**          | Persistent refresh token (SHA-256 hashed, single-use rotation)                    |
+| **RevokedToken**          | Access token blacklist (JTI-based, for logout)                                    |
+| **PasswordResetToken**    | Short-lived password reset token (15-minute expiry)                               |
 
-| Method | Endpoint            | Description                   |
-| ------ | ------------------- | ----------------------------- |
-| GET    | `/api/v1/company`   | Get company profile           |
-| PATCH  | `/api/v1/company`   | Update company profile        |
-| POST   | `/api/v1/data`      | Upload operational data       |
-| GET    | `/api/v1/data`      | List data uploads (paginated) |
-| GET    | `/api/v1/data/{id}` | Get specific upload           |
-| PATCH  | `/api/v1/data/{id}` | Update upload                 |
-| DELETE | `/api/v1/data/{id}` | Soft-delete upload            |
+> **Schema Details:** See [ARCHITECTURE.md](ARCHITECTURE.md) for database relationships, constraints, and ER diagrams.
 
-#### Carbon Estimation & Reports (6)
+---
 
-| Method | Endpoint                 | Description                                    |
-| ------ | ------------------------ | ---------------------------------------------- |
-| POST   | `/api/v1/estimate`       | Run emission estimation (local or subnet)      |
-| GET    | `/api/v1/reports`        | List reports (paginated, sortable, filterable) |
-| GET    | `/api/v1/reports/{id}`   | Get specific report                            |
-| DELETE | `/api/v1/reports/{id}`   | Soft-delete report                             |
-| GET    | `/api/v1/reports/export` | Export reports as CSV or JSON                  |
-| GET    | `/api/v1/dashboard`      | Company dashboard summary                      |
+## Subscription Plans
 
-#### AI Enhancement (4)
+| Feature            | Free | Pro ($99/mo) | Enterprise ($499/mo) |
+| :----------------- | :--: | :----------: | :------------------: |
+| Monthly Credits    | 100  |    1,000     |        10,000        |
+| Reports / month    |  3   |  Unlimited   |      Unlimited       |
+| Scenarios          |  5   |  Unlimited   |      Unlimited       |
+| Questionnaires     |  3   |  Unlimited   |      Unlimited       |
+| PDF Export         |  —   |      ✓       |          ✓           |
+| Supply Chain       |  —   |      ✓       |          ✓           |
+| Webhooks           |  —   |      ✓       |          ✓           |
+| Data Marketplace   |  —   |      ✓       |          ✓           |
+| Compliance Reports |  —   |      ✓       |          ✓           |
+| Priority Support   |  —   |      —       |          ✓           |
 
-| Method | Endpoint                          | Description                           |
-| ------ | --------------------------------- | ------------------------------------- |
-| POST   | `/api/v1/ai/parse-text`           | Extract emissions data from free text |
-| POST   | `/api/v1/ai/predict`              | Predict missing emission categories   |
-| POST   | `/api/v1/ai/audit-trail`          | Generate audit trail for a report     |
-| GET    | `/api/v1/ai/recommendations/{id}` | Get reduction recommendations         |
+### Credit Costs
 
-#### Questionnaires (10)
+| Operation                   |  Credits |
+| :-------------------------- | -------: |
+| Emission Estimate           |       10 |
+| Questionnaire AI Extraction |        8 |
+| PDF Export                  |        5 |
+| Scenario Compute            |        3 |
+| Marketplace Purchase        | Variable |
 
-| Method | Endpoint                                        | Description                        |
-| ------ | ----------------------------------------------- | ---------------------------------- |
-| POST   | `/api/v1/questionnaires/upload`                 | Upload PDF/DOCX/XLSX/CSV document  |
-| GET    | `/api/v1/questionnaires`                        | List uploaded questionnaires       |
-| GET    | `/api/v1/questionnaires/{id}`                   | Get questionnaire with questions   |
-| POST   | `/api/v1/questionnaires/{id}/extract`           | AI-extract questions from document |
-| PATCH  | `/api/v1/questionnaires/{qid}/questions/{qnid}` | Update question answer/status      |
-| DELETE | `/api/v1/questionnaires/{id}`                   | Delete questionnaire               |
-| GET    | `/api/v1/questionnaires/{id}/export/pdf`        | Export questionnaire as PDF        |
-| GET    | `/api/v1/questionnaires/templates`              | List template library              |
-| GET    | `/api/v1/questionnaires/templates/{id}`         | Get template details               |
-| POST   | `/api/v1/questionnaires/templates/{id}/apply`   | Create questionnaire from template |
-
-#### Scenarios (5)
-
-| Method | Endpoint                         | Description              |
-| ------ | -------------------------------- | ------------------------ |
-| POST   | `/api/v1/scenarios`              | Create what-if scenario  |
-| GET    | `/api/v1/scenarios`              | List scenarios           |
-| GET    | `/api/v1/scenarios/{id}`         | Get scenario details     |
-| POST   | `/api/v1/scenarios/{id}/compute` | Compute scenario results |
-| DELETE | `/api/v1/scenarios/{id}`         | Delete scenario          |
-
-#### Supply Chain (6)
-
-| Method | Endpoint                                     | Description                           |
-| ------ | -------------------------------------------- | ------------------------------------- |
-| POST   | `/api/v1/supply-chain/links`                 | Link a supplier                       |
-| GET    | `/api/v1/supply-chain/suppliers`             | List your suppliers                   |
-| GET    | `/api/v1/supply-chain/buyers`                | List companies buying from you        |
-| GET    | `/api/v1/supply-chain/scope3-from-suppliers` | Scope 3 Cat 1 from verified suppliers |
-| PATCH  | `/api/v1/supply-chain/links/{id}`            | Update link status                    |
-| DELETE | `/api/v1/supply-chain/links/{id}`            | Remove supplier link                  |
-
-#### Compliance (1)
-
-| Method | Endpoint                    | Description                                    |
-| ------ | --------------------------- | ---------------------------------------------- |
-| POST   | `/api/v1/compliance/report` | Generate compliance report (GHG/CDP/TCFD/SBTi) |
-
-#### Billing & Subscriptions (5)
-
-| Method | Endpoint                        | Description                       |
-| ------ | ------------------------------- | --------------------------------- |
-| GET    | `/api/v1/billing/subscription`  | Get current subscription          |
-| POST   | `/api/v1/billing/subscription`  | Change plan (free/pro/enterprise) |
-| GET    | `/api/v1/billing/credits`       | Get credit balance                |
-| GET    | `/api/v1/billing/plans`         | List available plans + limits     |
-| POST   | `/api/v1/billing/credits/grant` | Admin: grant credits manually     |
-
-#### Alerts (3)
-
-| Method | Endpoint                          | Description                        |
-| ------ | --------------------------------- | ---------------------------------- |
-| GET    | `/api/v1/alerts`                  | List alerts (filterable by unread) |
-| POST   | `/api/v1/alerts/{id}/acknowledge` | Acknowledge alert                  |
-| POST   | `/api/v1/alerts/check`            | Trigger alert check manually       |
-
-#### Data Marketplace (5)
-
-| Method | Endpoint                                     | Description                                    |
-| ------ | -------------------------------------------- | ---------------------------------------------- |
-| POST   | `/api/v1/marketplace/listings`               | Create anonymized data listing (Pro+)          |
-| GET    | `/api/v1/marketplace/listings`               | Browse marketplace (filter by industry/region) |
-| POST   | `/api/v1/marketplace/listings/{id}/purchase` | Purchase listing with credits (Pro+)           |
-| GET    | `/api/v1/marketplace/my-listings`            | List your own marketplace listings             |
-| POST   | `/api/v1/marketplace/listings/{id}/withdraw` | Withdraw a listing from the marketplace        |
-
-#### Webhooks (5)
-
-| Method | Endpoint                           | Description                 |
-| ------ | ---------------------------------- | --------------------------- |
-| POST   | `/api/v1/webhooks/`                | Register webhook endpoint   |
-| GET    | `/api/v1/webhooks/`                | List webhooks               |
-| PATCH  | `/api/v1/webhooks/{id}`            | Toggle webhook active state |
-| DELETE | `/api/v1/webhooks/{id}`            | Remove webhook              |
-| GET    | `/api/v1/webhooks/{id}/deliveries` | List delivery logs          |
-
-#### Audit & Health (2)
-
-| Method | Endpoint              | Description                    |
-| ------ | --------------------- | ------------------------------ |
-| GET    | `/api/v1/audit-logs/` | List audit logs (paginated)    |
-| GET    | `/health`             | Health check (DB connectivity) |
-
-### Subscription Plans
-
-| Feature          | Free | Pro ($99/mo) | Enterprise ($499/mo) |
-| ---------------- | ---- | ------------ | -------------------- |
-| Monthly Credits  | 100  | 1,000        | 10,000               |
-| Reports/month    | 3    | Unlimited    | Unlimited            |
-| Scenarios        | 5    | Unlimited    | Unlimited            |
-| Questionnaires   | 3    | Unlimited    | Unlimited            |
-| PDF Export       | ✗    | ✓            | ✓                    |
-| Supply Chain     | ✗    | ✓            | ✓                    |
-| Webhooks         | ✗    | ✓            | ✓                    |
-| Data Marketplace | ✗    | ✓            | ✓                    |
+---
 
 ## Emission Factor Datasets
 
-| Dataset                   | Source         | Coverage                            |
-| ------------------------- | -------------- | ----------------------------------- |
-| EPA Stationary Combustion | US EPA         | 10 fuel types                       |
-| EPA Mobile Combustion     | US EPA         | 8 vehicle types                     |
-| eGRID Subregions          | US EPA         | 27 US subregions + state mapping    |
-| IEA Grid Factors          | IEA            | 68 countries + regional averages    |
-| DEFRA                     | UK BEIS        | UK-specific factors                 |
-| Transport                 | GLEC Framework | Freight + passenger modes           |
-| Industry Averages         | Multiple       | 9 industries with scope splits      |
-| GWP AR6                   | IPCC           | CO2, CH4, N2O, SF6 + 9 refrigerants |
+| Dataset                   | Source           | Coverage                                        |
+| :------------------------ | :--------------- | :---------------------------------------------- |
+| EPA Stationary Combustion | US EPA           | 10 fuel types (coal, natural gas, diesel, etc.) |
+| EPA Mobile Combustion     | US EPA           | 8 vehicle types (passenger, light truck, etc.)  |
+| eGRID Subregions          | US EPA           | 27 US subregions + state-to-subregion mapping   |
+| IEA Grid Factors          | IEA              | 68 countries + regional averages                |
+| DEFRA                     | UK BEIS          | UK-specific emission factors                    |
+| Transport                 | GLEC Framework   | Freight + passenger transport modes             |
+| Industry Averages         | Multiple sources | 9 industries with scope-split ratios            |
+| GWP AR6                   | IPCC             | CO₂, CH₄, N₂O, SF₆ + 9 common refrigerants      |
+
+---
 
 ## GHG Protocol Coverage
 
-- **Scope 1**: Stationary combustion, mobile combustion, fugitive emissions (refrigerant leaks)
-- **Scope 2**: Location-based method, market-based method (with REC offset), purchased steam/heating
-- **Scope 3**: Categories 1, 4, 5, 6, 7 (activity-based) + industry-default gap-filling for remaining categories
+| Scope       | Categories                                                                                                              | Method                                                                 |
+| :---------- | :---------------------------------------------------------------------------------------------------------------------- | :--------------------------------------------------------------------- |
+| **Scope 1** | Stationary combustion, mobile combustion, fugitive emissions (refrigerant leaks)                                        | Activity-based (EPA factors)                                           |
+| **Scope 2** | Grid electricity, purchased steam/heating                                                                               | Location-based (eGRID/IEA) + market-based (with REC offsets)           |
+| **Scope 3** | Cat 1 (purchased goods), Cat 4 (upstream transport), Cat 5 (waste), Cat 6 (business travel), Cat 7 (employee commuting) | Activity-based + industry-default gap-filling for remaining categories |
+
+---
 
 ## Compliance Frameworks
 
-- **GHG Protocol Corporate Standard** — Full inventory with all 15 Scope 3 categories
-- **CDP Climate Change** — Questionnaire modules C0–C7
-- **TCFD** — 4-pillar disclosure (Governance, Strategy, Risk Management, Metrics & Targets)
-- **SBTi** — 11-year 1.5°C-aligned reduction pathway (4.2% annual Scope 1+2 reduction)
+| Framework                           | Description                                                                    |
+| :---------------------------------- | :----------------------------------------------------------------------------- |
+| **GHG Protocol Corporate Standard** | Full inventory with all 15 Scope 3 categories                                  |
+| **CDP Climate Change**              | Questionnaire modules C0–C7                                                    |
+| **TCFD**                            | 4-pillar disclosure (Governance, Strategy, Risk Management, Metrics & Targets) |
+| **SBTi**                            | 11-year 1.5°C-aligned reduction pathway (4.2% annual S1+S2 reduction)          |
+
+---
 
 ## Questionnaire Templates
 
-5 pre-built templates for major sustainability frameworks:
+Five pre-built templates for major sustainability frameworks:
 
-- **CDP Climate Change** — 30 questions covering governance, risk management, emissions
-- **EcoVadis Assessment** — 20 questions on environment, labor, supply chain
-- **TCFD Disclosure** — 15 questions across 4 pillars
-- **GHG Protocol Inventory** — 25 questions for complete emission inventory
-- **CSRD/ESRS** — 35 questions for EU sustainability reporting
+| Template                   | Questions | Focus                                            |
+| :------------------------- | --------: | :----------------------------------------------- |
+| **CDP Climate Change**     |        30 | Governance, risk management, emissions reporting |
+| **EcoVadis Assessment**    |        20 | Environment, labor practices, supply chain       |
+| **TCFD Disclosure**        |        15 | Four-pillar climate risk disclosure              |
+| **GHG Protocol Inventory** |        25 | Complete emission inventory questionnaire        |
+| **CSRD/ESRS**              |        35 | EU sustainability reporting standards            |
 
-## Frontend
+---
 
-The Next.js 15 dashboard provides:
+## Frontend Dashboard
 
-- **Dashboard** — KPI cards, scope breakdown chart, year-over-year trends
-- **Data Upload** — Structured entry for Scope 1/2/3 activity data
-- **Reports** — Paginated list with sorting, filtering, CSV/JSON export + PDF
-- **Recommendations** — AI-generated reduction strategies per report
-- **Questionnaires** — Document upload, AI extraction, human review, PDF export
-- **Scenarios** — Interactive what-if builder with visual results
-- **Supply Chain** — Supplier network management, Scope 3 propagation
-- **Compliance** — Generate GHG Protocol / CDP / TCFD / SBTi reports
-- **Marketplace** — Browse, purchase, create, and withdraw data listings
-- **Alerts** — Emission threshold alerts with acknowledgement
-- **Billing** — Subscription plans, credit balance, plan management
-- **Audit Log** — Activity trail viewer with pagination
-- **Settings** — User profile, password change, company profile, webhooks
-- **Forgot / Reset Password** — Email-based password recovery flow
-- **Mobile Responsive** — Hamburger menu navigation on small screens
-- **Toast Notifications** — Success/error/info feedback system
-- **Accessibility** — Skip-to-content, focus indicators, reduced motion support
+The **Next.js 15** dashboard (React 19, Tailwind CSS 4, Recharts) provides a complete carbon management interface:
+
+| Page                | Description                                                 |
+| :------------------ | :---------------------------------------------------------- |
+| **Dashboard**       | KPI cards, scope breakdown chart, year-over-year trends     |
+| **Data Upload**     | Structured entry for Scope 1/2/3 activity data              |
+| **Reports**         | Paginated list with sorting, filtering, CSV/JSON/PDF export |
+| **Recommendations** | AI-generated reduction strategies ranked by impact          |
+| **Questionnaires**  | Document upload → AI extraction → human review → PDF export |
+| **Scenarios**       | Interactive what-if builder with visual results             |
+| **Supply Chain**    | Supplier network management, Scope 3 propagation            |
+| **Compliance**      | Generate GHG Protocol / CDP / TCFD / SBTi reports           |
+| **Marketplace**     | Browse, purchase, create, and withdraw data listings        |
+| **Alerts**          | Emission threshold alerts with acknowledgement              |
+| **Billing**         | Subscription plans, credit balance, plan management         |
+| **Audit Log**       | Activity trail viewer with pagination and filters           |
+| **Settings**        | User profile, password change, company profile, webhooks    |
+
+**UI Features:** Toast notifications, confirmation dialogs, loading skeletons, breadcrumb navigation, mobile-responsive layout, accessibility (skip-to-content, focus indicators, reduced motion).
+
+> **Setup & Components:** See [frontend/README.md](frontend/README.md) for frontend development details.
+
+---
+
+## Docker Deployment
+
+### Development
 
 ```bash
-cd frontend && npm install && npm run dev   # http://localhost:3000
+docker compose up --build -d
+curl http://localhost:8000/health
 ```
+
+### Production
+
+```bash
+cp .env.example .env                # Edit with production values
+export POSTGRES_PASSWORD=$(openssl rand -hex 16)
+docker compose -f docker-compose.prod.yml up --build -d
+```
+
+The production stack includes PostgreSQL 16, resource limits, `no-new-privileges` security, and non-root container execution.
+
+> **Full Guide:** See [DEPLOYMENT.md](DEPLOYMENT.md) for Nginx reverse proxy, TLS certificates, systemd services, scaling strategies, and the pre-launch checklist.
+
+---
+
+## Project Structure
+
+```
+carbonscope/
+├── api/                            # FastAPI platform backend
+│   ├── main.py                     # App entry point (13 routers, lifespan scheduler)
+│   ├── config.py                   # Env-based configuration + production enforcement
+│   ├── database.py                 # SQLAlchemy async (SQLite + PostgreSQL)
+│   ├── models.py                   # 19 models (see Data Models)
+│   ├── schemas.py                  # Pydantic request/response schemas
+│   ├── auth.py                     # JWT + bcrypt + refresh/reset tokens
+│   ├── deps.py                     # Dependencies: auth, plan gates, credits, admin
+│   ├── middleware.py               # Request ID, security headers, error handler
+│   ├── limiter.py                  # SlowAPI rate limiter
+│   ├── routes/                     # 13 route modules (see Platform API)
+│   └── services/                   # 19 service modules (see Architecture)
+├── carbonscope/                    # Bittensor subnet core
+│   ├── protocol.py                 # CarbonSynapse (bt.Synapse)
+│   ├── scoring.py                  # 5-axis composite scoring engine
+│   ├── utils.py                    # Unit conversions, GWP helpers
+│   ├── emission_factors/           # Scope 1/2/3 calculation engines
+│   ├── validation/                 # GHG Protocol, sanity checks, benchmarks
+│   └── test_cases/                 # Curated + synthetic test generator
+├── neurons/
+│   ├── miner.py                    # Bittensor Axon server
+│   └── validator.py                # Bittensor Dendrite client
+├── frontend/                       # Next.js 15 + React 19 dashboard
+│   └── src/
+│       ├── app/                    # App Router pages (18 routes)
+│       ├── components/             # Reusable UI components
+│       └── lib/                    # API client, auth context, utilities
+├── alembic/                        # Database migrations
+├── data/emission_factors/          # EPA, eGRID, IEA, DEFRA JSON datasets
+├── scripts/                        # Shell scripts (register, run miner/validator)
+├── tests/                          # 491+ backend tests (pytest)
+├── docker-compose.yml              # Development stack
+├── docker-compose.prod.yml         # Production stack (PostgreSQL)
+├── Dockerfile                      # Multi-stage (backend + frontend)
+├── requirements.txt                # Pinned Python dependencies
+├── pyproject.toml                  # Build configuration
+└── alembic.ini                     # Alembic migration config
+```
+
+---
 
 ## Troubleshooting
 
-| Issue                                   | Solution                                                            |
-| --------------------------------------- | ------------------------------------------------------------------- |
-| `SECRET_KEY is using the default value` | Set `SECRET_KEY` env var (required in production: `ENV=production`) |
-| `RuntimeError: SECRET_KEY must be set`  | Production mode enforces a real secret key                          |
-| CORS errors                             | Add frontend URL to `ALLOWED_ORIGINS`                               |
-| 429 Too Many Requests                   | Adjust `RATE_LIMIT_AUTH`/`RATE_LIMIT_DEFAULT`                       |
-| Frontend can't reach backend            | Ensure backend on port 8000, check Next.js rewrites                 |
-| SQLite locked under load                | Switch `DATABASE_URL` to PostgreSQL                                 |
-| Bittensor timeout                       | Check wallet registration and `BT_QUERY_TIMEOUT`                    |
+| Issue                                   | Solution                                                                                                                  |
+| :-------------------------------------- | :------------------------------------------------------------------------------------------------------------------------ |
+| `SECRET_KEY is using the default value` | Set a real `SECRET_KEY` env var (required in production: ≥ 32 chars, high entropy)                                        |
+| `RuntimeError: SECRET_KEY must be set`  | Production mode enforces a real secret key — generate one with `python -c "import secrets; print(secrets.token_hex(32))"` |
+| CORS errors in browser                  | Add your frontend URL to `ALLOWED_ORIGINS` (comma-separated)                                                              |
+| 429 Too Many Requests                   | Adjust `RATE_LIMIT_AUTH` / `RATE_LIMIT_DEFAULT` env vars                                                                  |
+| Frontend can't reach backend            | Ensure backend is on port 8000 and check Next.js rewrites in `next.config.js`                                             |
+| SQLite locked under load                | Switch `DATABASE_URL` to PostgreSQL for concurrent access                                                                 |
+| Bittensor timeout                       | Check wallet registration with `btcli wallet overview` and increase `BT_QUERY_TIMEOUT`                                    |
+| Tests fail with 429                     | Rate limiter state accumulates across test files — the autouse fixture in `conftest.py` clears it                         |
+| `alembic upgrade head` fails            | Ensure `DATABASE_URL` is set and the database is reachable                                                                |
+| Docker build fails                      | Check Docker daemon is running and you have sufficient disk space                                                         |
+
+---
+
+## Kubernetes Deployment
+
+Production Kubernetes manifests are in `k8s/`. See [k8s/README.md](k8s/README.md) for setup instructions.
+
+```bash
+# Quick deploy
+kubectl apply -f k8s/
+```
+
+---
+
+## Operations Runbook
+
+### Backup & Recovery
+
+```bash
+# PostgreSQL backup (run daily via cron)
+docker exec carbonscope-db-1 pg_dump -U carbonscope carbonscope | gzip > backup_$(date +%Y%m%d).sql.gz
+
+# Restore from backup
+gunzip -c backup_20260313.sql.gz | docker exec -i carbonscope-db-1 psql -U carbonscope carbonscope
+```
+
+### Database Migrations
+
+```bash
+# Apply pending migrations
+alembic upgrade head
+
+# Rollback last migration
+alembic downgrade -1
+
+# Check current revision
+alembic current
+```
+
+### Monitoring
+
+| Endpoint       | Purpose                                                            |
+| :------------- | :----------------------------------------------------------------- |
+| `GET /health`  | Liveness check — returns `200` with version, uptime, DB status     |
+| `GET /metrics` | Prometheus text format — request counts, error rates, status codes |
+
+Connect Prometheus to scrape `/metrics` every 15s. Import the Grafana dashboard from `docs/grafana-dashboard.json` (if available) or create panels for `carbonscope_requests_total`, `carbonscope_errors_total`, and `carbonscope_http_requests_by_status`.
+
+### Sentry / APM
+
+Set `SENTRY_DSN` to enable error tracking and performance monitoring. Adjust `SENTRY_TRACES_SAMPLE_RATE` (default `0.1` = 10% of requests traced).
+
+### Scaling
+
+| Component | Scaling Strategy                                                                                |
+| :-------- | :---------------------------------------------------------------------------------------------- |
+| Backend   | Horizontal — run multiple `uvicorn` workers behind Nginx (`--workers N`) or multiple containers |
+| Frontend  | Horizontal — stateless Next.js containers behind Nginx                                          |
+| Database  | Vertical first, then read replicas. Use `pgbouncer` for connection pooling                      |
+| Redis     | Single instance for rate limiting; Redis Sentinel or Cluster for HA                             |
+| Scheduler | Run exactly **one** instance (the background scheduler is not distributed)                      |
+
+### Incident Response
+
+1. **Check health**: `curl https://your-domain/health`
+2. **Check logs**: `docker compose -f docker-compose.prod.yml logs --tail=100 backend`
+3. **Check metrics**: `curl https://your-domain/metrics | grep errors`
+4. **Check Sentry**: Review error dashboard for stack traces
+5. **Restart service**: `docker compose -f docker-compose.prod.yml restart backend`
+6. **Rollback deployment**: `docker compose -f docker-compose.prod.yml pull && docker compose up -d`
+
+---
+
+## Documentation
+
+| Document                                 | Description                                                               |
+| :--------------------------------------- | :------------------------------------------------------------------------ |
+| [README.md](README.md)                   | Project overview, quick start, and feature summary (this file)            |
+| [API.md](API.md)                         | Complete API reference — all 75+ endpoints with request/response examples |
+| [ARCHITECTURE.md](ARCHITECTURE.md)       | System design, data flow, database schema, service architecture           |
+| [DEPLOYMENT.md](DEPLOYMENT.md)           | Production deployment guide (Nginx, Docker, systemd, TLS, scaling)        |
+| [CONTRIBUTING.md](CONTRIBUTING.md)       | Development workflow, code style, testing, and PR process                 |
+| [CHANGELOG.md](CHANGELOG.md)             | Version history and release notes                                         |
+| [SECURITY.md](SECURITY.md)               | Security policy, vulnerability reporting, and security architecture       |
+| [frontend/README.md](frontend/README.md) | Frontend setup, components, testing, and development guide                |
+
+---
 
 ## Changelog
 
-### v0.8.0
+See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
-**Phase 7 — Frontend Quality**
+**Latest — v0.10.0** (Phase 11: Enterprise Hardening): Sentry APM integration, Docker healthchecks on all services, safety scanner in CI, frontend build step, operational runbook, dark mode toggle, webhook event coverage.
 
-- Wire ConfirmDialog into all delete actions (scenarios, questionnaires, supply-chain, webhooks)
-- Add Breadcrumbs to report detail and questionnaire detail pages
-- Replace raw label/input pairs with FormField component (login, register, settings)
-- Add error.tsx boundaries for 5 missing routes (alerts, audit-logs, billing, marketplace, recommendations)
-- Add/fix API client methods: paginated webhooks, audit log filters, credit ledger, single listing, account delete, single supply chain link
-- 7 new frontend tests for API methods
-
-**Phase 6 — Business Logic Completeness**
-
-- Credit/plan gating on premium endpoints (estimate, PDF export, questionnaire extract, scenario compute, compliance report)
-- Paginated webhook list endpoint with limit/offset
-- Credit transaction history endpoint (GET /billing/credits/ledger)
-- User self-delete GDPR endpoint (DELETE /auth/me)
-- GET single supply chain link and GET single marketplace listing
-- Audit log filtering by action, resource_type, user_id
-- 17 new backend tests for business logic
-
-**Phase 5 — Security & Authorization Hardening**
-
-- Admin-only enforcement on subscription changes, credit grants, company updates
-- Cookie-based authentication with Secure/HttpOnly/SameSite flags
-- Rate limiter proxy for multi-instance deployments
-- CSRF double-submit cookie validation
-- Alembic migration for Phase 5 schema changes
-- 11 new security tests
-
-### v0.7.0
-
-**Phase 4 — Polish & Nice-to-Have**
-
-- Password strength: require lowercase + special character in all password fields
-- Python Enum types for 15 role/status string columns across 9 models
-- Navbar highlights active item on deep/nested routes
-- Schema validators: `ge=0` for spend/employee/revenue, URL validation for webhooks
-- Streaming file upload size check (rejects oversized uploads early)
-- Pinned all frontend dependency versions
-- Removed stale `dark:` Tailwind prefixes — consistent CSS variable theming
-
-**Phase 3 — Quality, Performance & Documentation**
-
-- Soft delete on Company, Subscription, SupplyChainLink
-- CHECK constraints on EmissionReport (scope1/2/3 ≥ 0, 0 ≤ confidence ≤ 1) and CreditLedger
-- Structured JSON logging with sensitive data masking
-- Request logging middleware (method, path, status, duration, request_id)
-- CSP header, expanded CORS, expanded health check
-- Loading skeletons, Breadcrumbs component, focus-trapped ConfirmDialog
-- URL state sync for filters/pagination
-- Pinned backend dependency versions, DEPLOYMENT.md
-
-**Phase 2 — Feature Completeness & Test Coverage**
-
-- PATCH/DELETE for reports, questionnaires; PATCH for scenarios
-- Webhook exponential-backoff retry system
-- DataTable, FormField reusable components
-- Auto token refresh, 104 backend + 21 frontend tests
-
-**Phase 1 — Auth Hardening & Production Safety**
-
-- Persistent token storage (RefreshToken/RevokedToken DB models)
-- POST /auth/logout with JWT revocation
-- Account lockout after 5 failed logins
-- Rate limiting on auth, AI, compliance routes
-- SECRET_KEY entropy + DATABASE_URL production guards
-- httpOnly cookies + CSRF protection, non-root Docker user
+---
 
 ## License
 
-MIT
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+<p align="center">
+  Built with ❤️ for a sustainable future · Powered by <a href="https://bittensor.com">Bittensor</a>
+</p>
