@@ -20,15 +20,15 @@ export default function ScopeChart({ data }: { data: Datum[] }) {
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-        <XAxis dataKey="name" tick={{ fill: "#888" }} />
+        <XAxis dataKey="name" tick={{ fill: "var(--muted)" }} />
         <YAxis
-          tick={{ fill: "#888" }}
+          tick={{ fill: "var(--muted)" }}
           tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`}
         />
         <Tooltip
           contentStyle={{
-            background: "#1a1a1a",
-            border: "1px solid #333",
+            background: "var(--card)",
+            border: "1px solid var(--card-border)",
             borderRadius: 8,
           }}
           formatter={(v: number) => [`${v.toLocaleString()} tCO₂e`, ""]}

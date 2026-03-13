@@ -43,10 +43,46 @@ export default function RegisterPage() {
     region: "US",
   });
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
 
   function update(field: string, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
+    // Clear field error on change
+    setFieldErrors((prev) => {
+      if (!prev[field]) return prev;
+      const next = { ...prev };
+      delete next[field];
+      return next;
+    });
+  }
+
+  function validateField(field: string, value: string) {
+    let err = "";
+    switch (field) {
+      case "email":
+        if (value && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          err = "Enter a valid email address";
+        break;
+      case "password":
+        if (value && value.length < 8)
+          err = "Password must be at least 8 characters";
+        else if (value && (!/[A-Z]/.test(value) || !/\d/.test(value)))
+          err = "Must include an uppercase letter and a digit";
+        break;
+      case "confirmPassword":
+        if (value && value !== form.password) err = "Passwords do not match";
+        break;
+    }
+    setFieldErrors((prev) => {
+      if (!err && !prev[field]) return prev;
+      if (!err) {
+        const next = { ...prev };
+        delete next[field];
+        return next;
+      }
+      return { ...prev, [field]: err };
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -157,6 +193,8 @@ export default function RegisterPage() {
             className="input"
             value={form.email}
             onChange={(e) => update("email", e.target.value)}
+            onBlur={(e) => validateField("email", e.target.value)}
+            error={fieldErrors.email}
             required
             autoComplete="email"
           />
@@ -166,6 +204,8 @@ export default function RegisterPage() {
             className="input"
             value={form.password}
             onChange={(e) => update("password", e.target.value)}
+            onBlur={(e) => validateField("password", e.target.value)}
+            error={fieldErrors.password}
             required
             minLength={8}
             autoComplete="new-password"
@@ -177,6 +217,8 @@ export default function RegisterPage() {
             className="input"
             value={form.confirmPassword}
             onChange={(e) => update("confirmPassword", e.target.value)}
+            onBlur={(e) => validateField("confirmPassword", e.target.value)}
+            error={fieldErrors.confirmPassword}
             required
             autoComplete="new-password"
           />

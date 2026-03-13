@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard", icon: "📊" },
@@ -22,6 +23,7 @@ const NAV_ITEMS = [
 
 export default function Navbar() {
   const { user, logout } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -70,6 +72,14 @@ export default function Navbar() {
           </div>
         </div>
         <div className="flex items-center gap-4">
+          <button
+            onClick={toggleTheme}
+            className="text-sm text-[var(--muted)] hover:text-[var(--foreground)] transition-colors"
+            aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
           <span className="hidden sm:inline text-sm text-[var(--muted)]">
             {user.email}
           </span>

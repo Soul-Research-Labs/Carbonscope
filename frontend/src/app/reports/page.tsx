@@ -124,7 +124,11 @@ export default function ReportsPage() {
 
       {/* Filters & controls */}
       <div className="flex flex-wrap items-center gap-3 mb-4">
+        <label htmlFor="year-filter" className="sr-only">
+          Filter by year
+        </label>
         <input
+          id="year-filter"
           type="number"
           placeholder="Filter by year"
           value={yearFilter}
@@ -136,7 +140,11 @@ export default function ReportsPage() {
           min={2000}
           max={2030}
         />
+        <label htmlFor="sort-by" className="sr-only">
+          Sort by
+        </label>
         <select
+          id="sort-by"
           value={sortBy}
           onChange={(e) => {
             setSortBy(e.target.value as typeof sortBy);
@@ -152,6 +160,7 @@ export default function ReportsPage() {
         <button
           onClick={() => setOrder(order === "desc" ? "asc" : "desc")}
           className="btn-secondary text-sm"
+          aria-label={`Sort ${order === "desc" ? "ascending" : "descending"}`}
           title={`Sort ${order === "desc" ? "ascending" : "descending"}`}
         >
           {order === "desc" ? "↓" : "↑"}

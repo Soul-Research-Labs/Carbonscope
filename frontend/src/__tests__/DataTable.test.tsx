@@ -49,7 +49,8 @@ describe("DataTable", () => {
 
   it("shows loading state", () => {
     render(<DataTable columns={columns} data={[]} loading />);
-    expect(screen.getByText("Loading…")).toBeInTheDocument();
+    const rows = document.querySelectorAll("[role='status']");
+    expect(rows.length).toBeGreaterThan(0);
   });
 
   it("renders custom column renderer", () => {

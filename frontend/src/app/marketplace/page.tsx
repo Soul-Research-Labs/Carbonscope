@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import ConfirmDialog from "@/components/ConfirmDialog";
+import { PageSkeleton } from "@/components/Skeleton";
 import {
   browseListings,
   purchaseListing,
@@ -110,9 +112,7 @@ export default function MarketplacePage() {
   }
 
   if (loading || (!data && !error)) {
-    return (
-      <div className="p-8 text-[var(--muted)]">Loading marketplace...</div>
-    );
+    return <PageSkeleton />;
   }
 
   if (error && !data) {
@@ -134,6 +134,15 @@ export default function MarketplacePage() {
         <button className="btn-primary text-sm px-4 py-2" onClick={openCreate}>
           + Create Listing
         </button>
+      </div>
+
+      <div className="flex gap-3">
+        <Link
+          href="/marketplace/seller"
+          className="btn-secondary text-sm px-4 py-2"
+        >
+          📊 Seller Dashboard
+        </Link>
       </div>
 
       {error && (

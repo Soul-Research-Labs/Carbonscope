@@ -203,7 +203,9 @@ export default function QuestionnairesPage() {
             <div className="text-center py-16 rounded-xl border border-[var(--card-border)] bg-[var(--card)]">
               <span className="text-4xl mb-3 block">📋</span>
               <p className="text-[var(--muted)] mb-2">No questionnaires yet</p>
-              <p className="text-sm text-[var(--muted)]">Upload a document or apply a template to get started.</p>
+              <p className="text-sm text-[var(--muted)]">
+                Upload a document or apply a template to get started.
+              </p>
             </div>
           ) : (
             questionnaires.map((q) => (

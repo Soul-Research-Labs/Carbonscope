@@ -81,12 +81,11 @@ export default function AuditLogsPage() {
               <SkeletonRows rows={5} columns={4} />
             ) : logs.length === 0 ? (
               <tr>
-                <td
-                  colSpan={4}
-                  className="py-12 text-center"
-                >
+                <td colSpan={4} className="py-12 text-center">
                   <span className="text-3xl block mb-2">📋</span>
-                  <span className="text-[var(--muted)]">No audit log entries found.</span>
+                  <span className="text-[var(--muted)]">
+                    No audit log entries found.
+                  </span>
                 </td>
               </tr>
             ) : (

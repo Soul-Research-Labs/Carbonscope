@@ -1,6 +1,7 @@
 "use client";
 
 import { type ReactNode } from "react";
+import { SkeletonRows } from "@/components/Skeleton";
 
 export interface Column<T> {
   key: string;
@@ -50,14 +51,7 @@ export function DataTable<T extends Record<string, unknown>>({
         </thead>
         <tbody className="divide-y divide-[var(--card-border)] bg-[var(--background)]">
           {loading ? (
-            <tr>
-              <td
-                colSpan={columns.length}
-                className="px-4 py-8 text-center text-[var(--muted)]"
-              >
-                Loading…
-              </td>
-            </tr>
+            <SkeletonRows rows={3} columns={columns.length} />
           ) : data.length === 0 ? (
             <tr>
               <td

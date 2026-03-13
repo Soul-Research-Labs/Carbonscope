@@ -1027,6 +1027,29 @@ export async function purchaseListing(id: string): Promise<DataPurchaseOut> {
   );
 }
 
+// ── Marketplace Seller ──────────────────────────────────────────────
+
+export async function getMyMarketplaceSales(params?: {
+  limit?: number;
+  offset?: number;
+}): Promise<PaginatedResponse<DataPurchaseOut>> {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request(`/marketplace/my-sales${qs ? `?${qs}` : ""}`);
+}
+
+export interface SellerRevenue {
+  total_revenue_credits: number;
+  total_sales: number;
+  active_listings: number;
+}
+
+export async function getMyMarketplaceRevenue(): Promise<SellerRevenue> {
+  return request<SellerRevenue>("/marketplace/my-revenue");
+}
+
 export async function deleteAccount(): Promise<void> {
   return request("/auth/me", { method: "DELETE" });
 }

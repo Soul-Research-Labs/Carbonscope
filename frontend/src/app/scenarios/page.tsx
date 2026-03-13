@@ -310,7 +310,9 @@ export default function ScenariosPage() {
           <div className="text-center py-16 rounded-xl border border-[var(--card-border)] bg-[var(--card)]">
             <span className="text-4xl mb-3 block">🔬</span>
             <p className="text-[var(--muted)] mb-2">No scenarios yet</p>
-            <p className="text-sm text-[var(--muted)]">Create one to model emission reduction strategies.</p>
+            <p className="text-sm text-[var(--muted)]">
+              Create one to model emission reduction strategies.
+            </p>
           </div>
         ) : (
           scenarios.map((s) => {

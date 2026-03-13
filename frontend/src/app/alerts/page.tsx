@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { PageSkeleton } from "@/components/Skeleton";
 import {
   listAlerts,
   acknowledgeAlert,
@@ -70,7 +71,7 @@ export default function AlertsPage() {
   }
 
   if (loading || (!data && !error)) {
-    return <div className="p-8 text-[var(--muted)]">Loading alerts...</div>;
+    return <PageSkeleton />;
   }
 
   if (error && !data) {

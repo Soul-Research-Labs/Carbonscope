@@ -2,9 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/lib/auth-context";
 import { getDashboard, type DashboardSummary } from "@/lib/api";
-import ScopeChart from "@/components/ScopeChart";
+import { PageSkeleton, CardSkeleton } from "@/components/Skeleton";
+
+const ScopeChart = dynamic(() => import("@/components/ScopeChart"), {
+  ssr: false,
+  loading: () => <CardSkeleton />,
+});
 
 export default function DashboardPage() {
   const { user, loading } = useAuth();
@@ -25,7 +31,7 @@ export default function DashboardPage() {
   }, [user, loading, router]);
 
   if (loading || (!data && !error)) {
-    return <div className="p-8 text-[var(--muted)]">Loading dashboard...</div>;
+    return <PageSkeleton />;
   }
 
   if (error) {

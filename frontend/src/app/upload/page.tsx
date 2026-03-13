@@ -116,8 +116,11 @@ export default function UploadPage() {
 
         {/* Year selector */}
         <div>
-          <label className="label">Reporting Year</label>
+          <label htmlFor="reporting-year" className="label">
+            Reporting Year
+          </label>
           <select
+            id="reporting-year"
             className="input w-40"
             value={year}
             onChange={(e) => setYear(Number(e.target.value))}
@@ -143,26 +146,31 @@ export default function UploadPage() {
           </legend>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <NumField
+              id="natural-gas"
               label="Natural Gas (therms)"
               value={naturalGas}
               onChange={setNaturalGas}
             />
             <NumField
+              id="diesel"
               label="Diesel (gallons)"
               value={diesel}
               onChange={setDiesel}
             />
             <NumField
+              id="gasoline"
               label="Gasoline (gallons)"
               value={gasoline}
               onChange={setGasoline}
             />
             <NumField
+              id="propane"
               label="Propane (gallons)"
               value={propane}
               onChange={setPropane}
             />
             <NumField
+              id="fleet-miles"
               label="Fleet Vehicle Miles"
               value={fleetMiles}
               onChange={setFleetMiles}
@@ -180,13 +188,17 @@ export default function UploadPage() {
           </legend>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <NumField
+              id="electricity-kwh"
               label="Electricity (kWh)"
               value={electricityKwh}
               onChange={setElectricityKwh}
             />
             <div>
-              <label className="label">Grid Region (e.g. RFCW, CAMX)</label>
+              <label htmlFor="grid-region" className="label">
+                Grid Region (e.g. RFCW, CAMX)
+              </label>
               <input
+                id="grid-region"
                 type="text"
                 className="input"
                 value={gridRegion}
@@ -195,6 +207,7 @@ export default function UploadPage() {
               />
             </div>
             <NumField
+              id="steam-mmbtu"
               label="Steam / Heating (MMBtu)"
               value={steamMmbtu}
               onChange={setSteamMmbtu}
@@ -212,31 +225,37 @@ export default function UploadPage() {
           </legend>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <NumField
+              id="employee-count"
               label="Employee Count"
               value={employeeCount}
               onChange={setEmployeeCount}
             />
             <NumField
+              id="revenue-usd"
               label="Revenue (USD)"
               value={revenueUsd}
               onChange={setRevenueUsd}
             />
             <NumField
+              id="purchased-goods-usd"
               label="Purchased Goods & Services (USD)"
               value={purchasedGoodsUsd}
               onChange={setPurchasedGoodsUsd}
             />
             <NumField
+              id="business-travel-miles"
               label="Business Travel (miles)"
               value={businessTravelMiles}
               onChange={setBusinessTravelMiles}
             />
             <NumField
+              id="waste-metric-tons"
               label="Waste Generated (metric tons)"
               value={wasteMetricTons}
               onChange={setWasteMetricTons}
             />
             <NumField
+              id="freight-ton-miles"
               label="Freight Transport (ton-miles)"
               value={freightTonMiles}
               onChange={setFreightTonMiles}
@@ -246,8 +265,11 @@ export default function UploadPage() {
 
         {/* Notes */}
         <div>
-          <label className="label">Notes (optional)</label>
+          <label htmlFor="notes" className="label">
+            Notes (optional)
+          </label>
           <textarea
+            id="notes"
             className="input min-h-[80px]"
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
@@ -267,15 +289,20 @@ function NumField({
   label,
   value,
   onChange,
+  id,
 }: {
   label: string;
   value: string;
   onChange: (v: string) => void;
+  id: string;
 }) {
   return (
     <div>
-      <label className="label">{label}</label>
+      <label htmlFor={id} className="label">
+        {label}
+      </label>
       <input
+        id={id}
         type="number"
         className="input"
         value={value}

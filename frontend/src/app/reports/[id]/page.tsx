@@ -3,10 +3,16 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import dynamic from "next/dynamic";
 import { useAuth } from "@/lib/auth-context";
-import { getReport, type EmissionReport } from "@/lib/api";
-import ScopeChart from "@/components/ScopeChart";
+import { getReport, exportReportPdf, type EmissionReport } from "@/lib/api";
 import Breadcrumbs from "@/components/Breadcrumbs";
+import { PageSkeleton, CardSkeleton } from "@/components/Skeleton";
+
+const ScopeChart = dynamic(() => import("@/components/ScopeChart"), {
+  ssr: false,
+  loading: () => <CardSkeleton />,
+});
 
 export default function ReportDetailPage() {
   const { user, loading } = useAuth();
@@ -15,6 +21,7 @@ export default function ReportDetailPage() {
   const id = params.id as string;
   const [report, setReport] = useState<EmissionReport | null>(null);
   const [error, setError] = useState("");
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -29,7 +36,7 @@ export default function ReportDetailPage() {
   }, [user, loading, router, id]);
 
   if (loading || (!report && !error)) {
-    return <div className="p-8 text-[var(--muted)]">Loading report...</div>;
+    return <PageSkeleton />;
   }
 
   if (error) {
@@ -118,6 +125,28 @@ export default function ReportDetailPage() {
         <Link href={`/recommendations/${id}`} className="btn-primary text-sm">
           🌱 View Reduction Recommendations
         </Link>
+        <button
+          onClick={async () => {
+            setExporting(true);
+            try {
+              const blob = await exportReportPdf(id);
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `report-${report.year}.pdf`;
+              a.click();
+              URL.revokeObjectURL(url);
+            } catch (e) {
+              setError(e instanceof Error ? e.message : "PDF export failed");
+            } finally {
+              setExporting(false);
+            }
+          }}
+          disabled={exporting}
+          className="btn-secondary text-sm"
+        >
+          {exporting ? "Exporting…" : "📄 Export PDF"}
+        </button>
       </div>
 
       {/* Detailed breakdown */}

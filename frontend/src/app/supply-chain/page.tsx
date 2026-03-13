@@ -217,7 +217,9 @@ export default function SupplyChainPage() {
           <div className="text-center py-12">
             <span className="text-4xl mb-3 block">🔗</span>
             <p className="text-[var(--muted)] mb-2">No suppliers linked yet</p>
-            <p className="text-sm text-[var(--muted)]">Add a supplier above to start tracking Scope 3 emissions.</p>
+            <p className="text-sm text-[var(--muted)]">
+              Add a supplier above to start tracking Scope 3 emissions.
+            </p>
           </div>
         ) : (
           <table className="w-full text-sm">

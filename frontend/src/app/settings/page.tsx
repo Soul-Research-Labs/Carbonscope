@@ -422,9 +422,7 @@ export default function SettingsPage() {
                               !wh.active,
                             );
                             setWebhooks((prev) =>
-                              prev.map((w) =>
-                                w.id === wh.id ? updated : w,
-                              ),
+                              prev.map((w) => (w.id === wh.id ? updated : w)),
                             );
                           } catch {
                             setError("Failed to toggle webhook");

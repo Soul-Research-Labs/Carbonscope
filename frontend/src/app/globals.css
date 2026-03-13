@@ -15,6 +15,21 @@
   --scope3: #a855f7;
 }
 
+[data-theme="light"] {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-border: #e2e8f0;
+  --primary: #16a34a;
+  --primary-hover: #15803d;
+  --danger: #dc2626;
+  --warning: #d97706;
+  --muted: #64748b;
+  --scope1: #ea580c;
+  --scope2: #2563eb;
+  --scope3: #9333ea;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
@@ -51,7 +66,7 @@ body {
 }
 
 .input {
-  background: #1a1a1a;
+  background: var(--card);
   border: 1px solid var(--card-border);
   border-radius: 0.5rem;
   padding: 0.5rem 0.75rem;
