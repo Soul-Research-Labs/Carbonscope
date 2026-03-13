@@ -234,6 +234,40 @@ alembic current                                     # Show current revision
 
 ---
 
+## Bittensor Economic Model
+
+CarbonScope operates as a Bittensor subnet where miners compete to produce the highest-quality carbon emission estimates. Rewards are distributed in TAO based on a multi-axis scoring system.
+
+### How Miners Earn TAO
+
+1. **Validators send queries** — Validators broadcast `CarbonSynapse` requests (industry, region, year, data) to miners on the subnet.
+2. **Miners return estimates** — Each miner runs its emission-factor pipeline and returns scope-level emissions, a confidence score, and methodology metadata.
+3. **Validators score responses** — Every response is evaluated across four weighted axes:
+
+| Axis | Weight | Description |
+|------|--------|-------------|
+| Accuracy | 0.40 | Deviation from validator's own ground-truth calculation |
+| Compliance | 0.25 | Adherence to GHG Protocol methodology |
+| Completeness | 0.20 | Coverage of all requested scopes and categories |
+| Timeliness | 0.15 | Response latency (faster is better) |
+
+4. **EMA scoring** — Miner scores are smoothed over time using an exponential moving average (α = 0.1) to reduce noise and reward consistent quality.
+5. **Weight setting** — Validators call `set_weights()` on the chain proportional to each miner's EMA score. Miners with zero scores receive weight 0 (effectively banned until quality improves).
+6. **TAO distribution** — Yuma Consensus distributes TAO from the subnet's emission pool in proportion to the on-chain weights. Higher weights → more TAO.
+
+### Reward Optimization Tips
+
+- **Keep emission factor datasets current** — accuracy is the dominant scoring axis (40%).
+- **Respond quickly** — timeliness contributes 15% of the score; cache emission factors in memory.
+- **Cover all scopes** — missing scope categories reduce the completeness score.
+- **Stay online** — the EMA smoothing means intermittent availability causes persistent score decay.
+
+### Validator Economics
+
+Validators earn their dividends from the Yuma Consensus mechanism. Running a validator requires staked TAO and incurs compute costs for dendrite queries and weight-setting transactions.
+
+---
+
 ## Running on Testnet
 
 ### 1. Create Wallets
