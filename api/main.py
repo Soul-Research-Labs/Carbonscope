@@ -31,10 +31,14 @@ from api.routes.billing_routes import router as billing_router
 from api.routes.alert_routes import router as alert_router
 from api.routes.marketplace_routes import router as marketplace_router
 from api.routes.stripe_routes import router as stripe_router
+from api.routes.pcaf_routes import router as pcaf_router
+from api.routes.review_routes import router as review_router
+from api.routes.mfa_routes import router as mfa_router
+from api.routes.benchmark_routes import router as benchmark_router
 
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "0.17.1"
+APP_VERSION = "0.18.0"
 _start_time: float = 0.0
 _request_count: int = 0
 _request_errors: int = 0
@@ -109,6 +113,10 @@ app.include_router(billing_router, prefix="/api/v1")
 app.include_router(alert_router, prefix="/api/v1")
 app.include_router(marketplace_router, prefix="/api/v1")
 app.include_router(stripe_router, prefix="/api/v1")
+app.include_router(pcaf_router, prefix="/api/v1")
+app.include_router(review_router, prefix="/api/v1")
+app.include_router(mfa_router, prefix="/api/v1")
+app.include_router(benchmark_router, prefix="/api/v1")
 
 
 @app.get("/health")

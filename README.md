@@ -14,8 +14,8 @@
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/node-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node 18+">
   <img src="https://img.shields.io/badge/version-0.17.1-orange?style=flat-square" alt="Version 0.17.1">
-  <img src="https://img.shields.io/badge/tests-564%20backend%20%7C%2083%20frontend-brightgreen?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/endpoints-80%2B-7B61FF?style=flat-square" alt="80+ API Endpoints">
+  <img src="https://img.shields.io/badge/tests-611%20backend%20%7C%2083%20frontend-brightgreen?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/endpoints-97%2B-7B61FF?style=flat-square" alt="97+ API Endpoints">
   <img src="https://img.shields.io/badge/Bittensor-Subnet-000000?style=flat-square" alt="Bittensor Subnet">
 </p>
 
@@ -34,7 +34,7 @@
 
 CarbonScope is a **Bittensor subnet** that combines decentralized AI with enterprise carbon accounting. Miners estimate corporate carbon emissions across Scope 1, 2, and 3 categories, while validators score report quality against the **GHG Protocol Corporate Standard** using curated benchmarks.
 
-The platform ships with a production-ready **FastAPI** backend (80+ endpoints), a **Next.js 15** dashboard, and a complete carbon management suite — covering emission estimation, compliance reporting, supply chain tracking, AI-powered document processing, and a data marketplace.
+The platform ships with a production-ready **FastAPI** backend (97+ endpoints), a **Next.js 15** dashboard, and a complete carbon management suite — covering emission estimation, compliance reporting, supply chain tracking, AI-powered document processing, and a data marketplace.
 
 ### Why CarbonScope?
 
@@ -88,7 +88,7 @@ The platform ships with a production-ready **FastAPI** backend (80+ endpoints), 
          │                                                             │
          │         ┌─────────────────────────────────────────┐         │
          └────────►│          FastAPI Backend                 │◄────────┘
-                   │  14 Route Modules · 80+ Endpoints        │
+                   │  18 Route Modules · 97+ Endpoints        │
                    │  JWT Auth · Rate Limiting · Audit Logs   │
                    └─────────────────────────────────────────┘
 ```
@@ -130,12 +130,12 @@ The platform ships with a production-ready **FastAPI** backend (80+ endpoints), 
 
 ### Prerequisites
 
-| Requirement   | Version | Purpose                                      |
-| :------------ | :------ | :------------------------------------------- |
-| Python        | 3.10+   | Backend & Bittensor subnet                   |
-| Node.js       | 18+     | Frontend dashboard                           |
+| Requirement   | Version  | Purpose                                      |
+| :------------ | :------- | :------------------------------------------- |
+| Python        | 3.10+    | Backend & Bittensor subnet                   |
+| Node.js       | 18+      | Frontend dashboard                           |
 | Bittensor SDK | ≥ 10.1.0 | Subnet communication                         |
-| PostgreSQL    | 15+     | Production database (SQLite for development) |
+| PostgreSQL    | 15+      | Production database (SQLite for development) |
 
 ### 1. Install the Backend
 
@@ -379,7 +379,7 @@ cd subtensor && docker compose down -v
 
 ## Running Tests
 
-### Backend Tests (564)
+### Backend Tests (611)
 
 ```bash
 pytest tests/ -v                                      # Full suite
@@ -465,7 +465,7 @@ npm run test:watch        # Watch mode for development
 
 ## Platform API
 
-The platform exposes **80+ RESTful endpoints** across 14 route modules. All endpoints are prefixed with `/api/v1/` and documented via OpenAPI.
+The platform exposes **97+ RESTful endpoints** across 18 route modules. All endpoints are prefixed with `/api/v1/` and documented via OpenAPI.
 
 ### Endpoint Summary
 
@@ -601,22 +601,22 @@ Five pre-built templates for major sustainability frameworks:
 
 The **Next.js 15** dashboard (React 19, Tailwind CSS 4, Recharts) provides a complete carbon management interface:
 
-| Page                | Description                                                 |
-| :------------------ | :---------------------------------------------------------- |
-| **Dashboard**       | KPI cards, scope breakdown chart, year-over-year trends     |
-| **Data Upload**     | Structured entry for Scope 1/2/3 activity data              |
-| **Reports**         | Paginated list with sorting, filtering, CSV/JSON/PDF export |
-| **Recommendations** | AI-generated reduction strategies ranked by impact          |
-| **Questionnaires**  | Document upload → AI extraction → human review → PDF export |
-| **Scenarios**       | Interactive what-if builder with visual results             |
-| **Supply Chain**    | Supplier network management, Scope 3 propagation            |
-| **Compliance**      | Generate GHG Protocol / CDP / TCFD / SBTi reports           |
-| **Marketplace**     | Browse, purchase, create, and withdraw data listings        |
-| **Seller Dashboard**| Revenue summary, sales table, active listings               |
-| **Alerts**          | Emission threshold alerts with acknowledgement              |
-| **Billing**         | Subscription plans, credit balance, plan management         |
-| **Audit Log**       | Activity trail viewer with pagination and filters           |
-| **Settings**        | User profile, password change, company profile, webhooks    |
+| Page                 | Description                                                 |
+| :------------------- | :---------------------------------------------------------- |
+| **Dashboard**        | KPI cards, scope breakdown chart, year-over-year trends     |
+| **Data Upload**      | Structured entry for Scope 1/2/3 activity data              |
+| **Reports**          | Paginated list with sorting, filtering, CSV/JSON/PDF export |
+| **Recommendations**  | AI-generated reduction strategies ranked by impact          |
+| **Questionnaires**   | Document upload → AI extraction → human review → PDF export |
+| **Scenarios**        | Interactive what-if builder with visual results             |
+| **Supply Chain**     | Supplier network management, Scope 3 propagation            |
+| **Compliance**       | Generate GHG Protocol / CDP / TCFD / SBTi reports           |
+| **Marketplace**      | Browse, purchase, create, and withdraw data listings        |
+| **Seller Dashboard** | Revenue summary, sales table, active listings               |
+| **Alerts**           | Emission threshold alerts with acknowledgement              |
+| **Billing**          | Subscription plans, credit balance, plan management         |
+| **Audit Log**        | Activity trail viewer with pagination and filters           |
+| **Settings**         | User profile, password change, company profile, webhooks    |
 
 **UI Features:** Toast notifications, confirmation dialogs, loading skeletons, breadcrumb navigation, mobile-responsive card tables, copy-to-clipboard, URL query state sync, dark/light theme toggle, accessibility (skip-to-content, focus indicators, reduced motion, ARIA labels).
 
@@ -652,7 +652,7 @@ The production stack includes PostgreSQL 16, resource limits, `no-new-privileges
 ```
 carbonscope/
 ├── api/                            # FastAPI platform backend
-│   ├── main.py                     # App entry point (14 routers, lifespan scheduler)
+│   ├── main.py                     # App entry point (18 routers, lifespan scheduler)
 │   ├── config.py                   # Env-based configuration + production enforcement
 │   ├── database.py                 # SQLAlchemy async (SQLite + PostgreSQL)
 │   ├── models.py                   # 19 models (see Data Models)
@@ -661,7 +661,7 @@ carbonscope/
 │   ├── deps.py                     # Dependencies: auth, plan gates, credits, admin
 │   ├── middleware.py               # Request ID, security headers, error handler
 │   ├── limiter.py                  # SlowAPI rate limiter
-│   ├── routes/                     # 14 route modules (see Platform API)
+│   ├── routes/                     # 18 route modules (see Platform API)
 │   └── services/                   # 19 service modules (see Architecture)
 ├── carbonscope/                    # Bittensor subnet core
 │   ├── protocol.py                 # CarbonSynapse (bt.Synapse)
@@ -681,7 +681,7 @@ carbonscope/
 ├── alembic/                        # Database migrations
 ├── data/emission_factors/          # EPA, eGRID, IEA, DEFRA JSON datasets
 ├── scripts/                        # Shell scripts (register, run miner/validator)
-├── tests/                          # 564 backend tests (pytest, 35 files)
+├── tests/                          # 611 backend tests (pytest, 36 files)
 ├── docker-compose.yml              # Development stack
 ├── docker-compose.prod.yml         # Production stack (PostgreSQL)
 ├── Dockerfile                      # Multi-stage (backend + frontend)

@@ -19,10 +19,10 @@ We aim to acknowledge reports within 48 hours and provide a resolution timeline 
 
 | Version | Supported |
 | :------ | :-------: |
+| 0.18.x  |    ✅     |
 | 0.17.x  |    ✅     |
 | 0.16.x  |    ✅     |
-| 0.15.x  |    ✅     |
-| < 0.15  |    ❌     |
+| < 0.16  |    ❌     |
 
 ---
 
@@ -41,6 +41,7 @@ We aim to acknowledge reports within 48 hours and provide a resolution timeline 
 | **Account Lockout**   | 5 failed attempts → 15-minute lockout                               |
 | **Password Reset**    | SHA-256 hashed tokens, 15-minute expiry, single-use                 |
 | **Password Strength** | Minimum 8 characters with complexity requirements                   |
+| **MFA (TOTP)**        | RFC 4226/6238 TOTP with backup codes, pure Python implementation    |
 
 ### Authorization
 
@@ -72,17 +73,17 @@ We aim to acknowledge reports within 48 hours and provide a resolution timeline 
 
 ### Rate Limiting
 
-| Scope                         | Limit        | Purpose                                        |
-| :---------------------------- | :----------- | :--------------------------------------------- |
-| Auth                          | 10/minute    | Prevent brute-force login attempts             |
-| Default                       | 60/minute    | General API abuse protection                   |
-| `/estimate`                   | 5/minute     | Protect expensive estimation operations        |
-| `/scenarios/*/compute`        | 5/minute     | Protect scenario computation engine            |
-| `/questionnaires/upload`      | 5/minute     | Limit file upload processing                   |
-| `/questionnaires/*/extract`   | 5/minute     | Protect expensive AI extraction                |
-| `/marketplace/*/purchase`     | 10/minute    | Limit purchase operations                      |
-| `/billing/subscription`       | 5/minute     | Protect subscription changes                   |
-| `/stripe/webhooks`            | 60/minute    | Stripe event ingestion                         |
+| Scope                       | Limit     | Purpose                                 |
+| :-------------------------- | :-------- | :-------------------------------------- |
+| Auth                        | 10/minute | Prevent brute-force login attempts      |
+| Default                     | 60/minute | General API abuse protection            |
+| `/estimate`                 | 5/minute  | Protect expensive estimation operations |
+| `/scenarios/*/compute`      | 5/minute  | Protect scenario computation engine     |
+| `/questionnaires/upload`    | 5/minute  | Limit file upload processing            |
+| `/questionnaires/*/extract` | 5/minute  | Protect expensive AI extraction         |
+| `/marketplace/*/purchase`   | 10/minute | Limit purchase operations               |
+| `/billing/subscription`     | 5/minute  | Protect subscription changes            |
+| `/stripe/webhooks`          | 60/minute | Stripe event ingestion                  |
 
 Rate limiting is IP-based (supports `X-Forwarded-For` when `TRUST_PROXY=true`).
 

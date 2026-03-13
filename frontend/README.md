@@ -233,21 +233,21 @@ npm run test:watch    # Watch mode for development
 
 ### Test Coverage
 
-| Test File                 | Coverage                                              |
-| :------------------------ | :---------------------------------------------------- |
-| `Breadcrumbs.test.tsx`    | Rendering, links, accessibility, separators           |
-| `ConfirmDialog.test.tsx`  | Open/close, confirm/cancel, variants, custom labels   |
-| `DataTable.test.tsx`      | Sorting, pagination, empty states, rendering          |
-| `FormField.test.tsx`      | Labels, errors, hints, children, accessibility        |
-| `Navbar.test.tsx`         | Navigation links, active states, mobile menu          |
-| `Skeleton.test.tsx`       | Skeleton variants, animation, sizing                  |
-| `Toast.test.tsx`          | Toast types, auto-dismiss, manual close               |
-| `api.test.ts`             | ApiError, auth headers, error handling                |
-| `api-new-methods.test.ts` | Credit ledger, delete account, supply chain, webhooks |
-| `LoginPage.test.tsx`             | Form submission, validation, error handling            |
-| `DashboardPage.test.tsx`         | KPI cards, API data rendering, empty states           |
-| `RecommendationsPage.test.tsx`   | Strategy listing, navigation, data display            |
-| `SellerDashboardPage.test.tsx`   | Revenue summary, sales table, pagination              |
+| Test File                      | Coverage                                              |
+| :----------------------------- | :---------------------------------------------------- |
+| `Breadcrumbs.test.tsx`         | Rendering, links, accessibility, separators           |
+| `ConfirmDialog.test.tsx`       | Open/close, confirm/cancel, variants, custom labels   |
+| `DataTable.test.tsx`           | Sorting, pagination, empty states, rendering          |
+| `FormField.test.tsx`           | Labels, errors, hints, children, accessibility        |
+| `Navbar.test.tsx`              | Navigation links, active states, mobile menu          |
+| `Skeleton.test.tsx`            | Skeleton variants, animation, sizing                  |
+| `Toast.test.tsx`               | Toast types, auto-dismiss, manual close               |
+| `api.test.ts`                  | ApiError, auth headers, error handling                |
+| `api-new-methods.test.ts`      | Credit ledger, delete account, supply chain, webhooks |
+| `LoginPage.test.tsx`           | Form submission, validation, error handling           |
+| `DashboardPage.test.tsx`       | KPI cards, API data rendering, empty states           |
+| `RecommendationsPage.test.tsx` | Strategy listing, navigation, data display            |
+| `SellerDashboardPage.test.tsx` | Revenue summary, sales table, pagination              |
 
 ### Writing Tests
 

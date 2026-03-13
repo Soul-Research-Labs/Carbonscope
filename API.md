@@ -1,6 +1,6 @@
 # CarbonScope — API Reference
 
-> Complete reference for the CarbonScope Platform API (80+ endpoints).
+> Complete reference for the CarbonScope Platform API (97+ endpoints).
 
 **Base URL:** `/api/v1/`  
 **Auth:** JWT Bearer token (`Authorization: Bearer <token>`) or httpOnly cookie  
@@ -19,6 +19,10 @@
 - [What-If Scenarios](#what-if-scenarios)
 - [Supply Chain](#supply-chain)
 - [Compliance Reporting](#compliance-reporting)
+- [PCAF Financed Emissions](#pcaf-financed-emissions)
+- [Data Reviews](#data-reviews)
+- [MFA (TOTP)](#mfa-totp)
+- [Industry Benchmarks](#industry-benchmarks)
 - [Billing & Subscriptions](#billing--subscriptions)
 - [Alerts](#alerts)
 - [Data Marketplace](#data-marketplace)
@@ -1051,6 +1055,239 @@ Supported frameworks: `ghg_protocol`, `cdp`, `tcfd`, `sbti`
 ```
 
 </details>
+
+---
+
+## PCAF Financed Emissions
+
+Endpoints at `/api/v1/pcaf`. Write operations (create portfolio, add/delete asset) require **Pro** or **Enterprise** plan.
+
+### Create Portfolio
+
+```
+POST /pcaf/portfolios
+Authorization: Bearer <token>
+```
+
+**Request Body** (`FinancedPortfolioCreate`):
+
+```json
+{ "name": "2024 Lending Portfolio", "year": 2024 }
+```
+
+**Response** `201` (`FinancedPortfolioOut`)
+
+### List Portfolios
+
+```
+GET /pcaf/portfolios?skip=0&limit=50
+Authorization: Bearer <token>
+```
+
+**Response** `200`: `{ "items": [...], "total": 2 }`
+
+### Portfolio Summary
+
+```
+GET /pcaf/portfolios/{portfolio_id}/summary
+Authorization: Bearer <token>
+```
+
+**Response** `200` (`PortfolioSummary`):
+
+```json
+{
+  "asset_count": 5,
+  "total_financed_emissions_tco2e": 12500.0,
+  "total_outstanding": 50000000.0,
+  "weighted_data_quality": 2.4,
+  "by_asset_class": { "business_loans": { "count": 3, "financed_emissions_tco2e": 8000.0 } }
+}
+```
+
+### Add Asset
+
+```
+POST /pcaf/portfolios/{portfolio_id}/assets
+Authorization: Bearer <token>
+```
+
+**Request Body** (`FinancedAssetCreate`):
+
+```json
+{
+  "asset_name": "Company A Loan",
+  "asset_class": "business_loans",
+  "outstanding_amount": 1000000,
+  "total_equity_debt": 10000000,
+  "investee_emissions_tco2e": 5000,
+  "data_quality_score": 2
+}
+```
+
+**Response** `201` — includes auto-calculated `attribution_factor` and `financed_emissions_tco2e`.
+
+### List Assets
+
+```
+GET /pcaf/portfolios/{portfolio_id}/assets?skip=0&limit=100
+Authorization: Bearer <token>
+```
+
+### Delete Asset
+
+```
+DELETE /pcaf/portfolios/{portfolio_id}/assets/{asset_id}
+Authorization: Bearer <token>
+```
+
+**Response** `204`
+
+---
+
+## Data Reviews
+
+Endpoints at `/api/v1/reviews`. State machine: `draft → submitted → approved/rejected`. Approve/reject require admin role.
+
+### Create Review
+
+```
+POST /reviews
+Authorization: Bearer <token>
+```
+
+**Request Body**: `{ "report_id": "<uuid>" }`
+
+**Response** `201` (`DataReviewOut`) — status: `draft`
+
+### List Reviews
+
+```
+GET /reviews?status_filter=submitted&skip=0&limit=50
+Authorization: Bearer <token>
+```
+
+### Get Review
+
+```
+GET /reviews/{review_id}
+Authorization: Bearer <token>
+```
+
+### Review Action
+
+```
+POST /reviews/{review_id}/action
+Authorization: Bearer <token>
+```
+
+**Request Body** (`DataReviewAction`):
+
+```json
+{ "action": "approve", "notes": "Verified and approved" }
+```
+
+Actions: `submit` (any user), `approve` / `reject` (admin only).
+
+---
+
+## MFA (TOTP)
+
+Endpoints at `/api/v1/auth/mfa`. Implements RFC 4226/6238 TOTP.
+
+### Status
+
+```
+GET /auth/mfa/status
+Authorization: Bearer <token>
+```
+
+**Response** `200`: `{ "mfa_enabled": false }`
+
+### Setup
+
+```
+POST /auth/mfa/setup
+Authorization: Bearer <token>
+```
+
+**Response** `200` (`MFASetupOut`):
+
+```json
+{
+  "secret": "JBSWY3DPEHPK3PXP...",
+  "provisioning_uri": "otpauth://totp/CarbonScope:user@example.com?...",
+  "backup_codes": ["a1b2c3d4", "e5f6g7h8", ...]
+}
+```
+
+### Verify (Activate)
+
+```
+POST /auth/mfa/verify
+Authorization: Bearer <token>
+```
+
+**Request Body**: `{ "totp_code": "123456" }`
+
+**Response** `200`: `{ "mfa_enabled": true }`
+
+### Validate (Login 2FA)
+
+```
+POST /auth/mfa/validate
+Authorization: Bearer <token>
+```
+
+**Request Body**: `{ "totp_code": "123456" }`
+
+**Response** `200`: `{ "valid": true }`
+
+### Disable
+
+```
+DELETE /auth/mfa/disable
+Authorization: Bearer <token>
+```
+
+**Request Body**: `{ "totp_code": "123456" }`
+
+**Response** `204`
+
+---
+
+## Industry Benchmarks
+
+Endpoints at `/api/v1/benchmarks`.
+
+### List Benchmarks
+
+```
+GET /benchmarks?industry=manufacturing&region=US&year=2024
+Authorization: Bearer <token>
+```
+
+**Response** `200`: `{ "items": [...], "total": 5 }`
+
+### Compare to Industry
+
+```
+GET /benchmarks/compare?report_id=<uuid>
+Authorization: Bearer <token>
+```
+
+**Response** `200` (`BenchmarkComparison`):
+
+```json
+{
+  "company_emissions": { "scope1": 1200, "scope2": 800, "scope3": 3000, "total": 5000 },
+  "industry_average": { "avg_scope1_tco2e": 1000, "avg_total_tco2e": 4100 },
+  "vs_average": { "scope1": 20.0, "scope2": null, "total": 21.95 },
+  "percentile_rank": "bottom_25"
+}
+```
+
+Ranking labels: `top_10` (≤ -30%), `top_25` (≤ -10%), `median` (± 10%), `bottom_25` (≤ +30%), `bottom_10` (> +30%).
 
 ---
 

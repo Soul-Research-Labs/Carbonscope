@@ -23,14 +23,14 @@
 
 ## Prerequisites
 
-| Requirement   | Version | Purpose                                       |
-| :------------ | :------ | :-------------------------------------------- |
-| Python        | 3.10+   | Backend runtime                               |
-| Node.js       | 18+     | Frontend build & runtime                      |
-| PostgreSQL    | 15+     | Production database (asyncpg driver)          |
-| Nginx         | 1.24+   | Reverse proxy with TLS termination            |
+| Requirement   | Version  | Purpose                                       |
+| :------------ | :------- | :-------------------------------------------- |
+| Python        | 3.10+    | Backend runtime                               |
+| Node.js       | 18+      | Frontend build & runtime                      |
+| PostgreSQL    | 15+      | Production database (asyncpg driver)          |
+| Nginx         | 1.24+    | Reverse proxy with TLS termination            |
 | Bittensor SDK | ≥ 10.1.0 | Subnet communication (if using subnet mode)   |
-| Redis         | 7+      | Optional — caching and rate limiting at scale |
+| Redis         | 7+       | Optional — caching and rate limiting at scale |
 
 ---
 

@@ -269,7 +269,7 @@ class SupplyChainLinkUpdate(BaseModel):
 
 class ComplianceReportRequest(BaseModel):
     report_id: str
-    framework: str = Field(pattern="^(ghg_protocol|cdp|tcfd|sbti)$")
+    framework: str = Field(pattern="^(ghg_protocol|cdp|tcfd|sbti|csrd|issb|secr)$")
 
 
 # ── Webhooks ────────────────────────────────────────────────────────
@@ -512,3 +512,133 @@ class DataPurchaseOut(BaseModel):
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+# ── PCAF Financed Emissions ─────────────────────────────────────────
+
+
+class FinancedAssetCreate(BaseModel):
+    asset_name: str = Field(min_length=1, max_length=255)
+    asset_class: str = Field(pattern="^(listed_equity|corporate_bonds|business_loans|project_finance|commercial_real_estate|mortgages|sovereign_debt)$")
+    outstanding_amount: float = Field(ge=0)
+    total_equity_debt: float = Field(gt=0)
+    investee_emissions_tco2e: float = Field(ge=0)
+    data_quality_score: int = Field(ge=1, le=5, default=3)
+    industry: str | None = None
+    region: str | None = None
+    notes: str | None = None
+
+
+class FinancedAssetOut(BaseModel):
+    id: str
+    portfolio_id: str
+    asset_name: str
+    asset_class: str
+    outstanding_amount: float
+    total_equity_debt: float
+    investee_emissions_tco2e: float
+    attribution_factor: float | None = None
+    financed_emissions_tco2e: float | None = None
+    data_quality_score: int
+    industry: str | None = None
+    region: str | None = None
+    notes: str | None = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class FinancedPortfolioCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=255)
+    year: int = Field(ge=2000, le=2030)
+
+
+class FinancedPortfolioOut(BaseModel):
+    id: str
+    company_id: str
+    name: str
+    year: int
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class PortfolioSummary(BaseModel):
+    portfolio: FinancedPortfolioOut
+    total_financed_emissions_tco2e: float
+    total_outstanding: float
+    weighted_data_quality: float
+    asset_count: int
+    by_asset_class: dict[str, Any]
+
+
+# ── Data Review & Approval ──────────────────────────────────────────
+
+
+class DataReviewCreate(BaseModel):
+    report_id: str
+
+
+class DataReviewAction(BaseModel):
+    action: str = Field(pattern="^(submit|approve|reject)$")
+    notes: str | None = None
+
+
+class DataReviewOut(BaseModel):
+    id: str
+    report_id: str
+    company_id: str
+    status: str
+    submitted_by: str | None = None
+    reviewed_by: str | None = None
+    submitted_at: datetime | None = None
+    reviewed_at: datetime | None = None
+    review_notes: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+# ── MFA (TOTP) ──────────────────────────────────────────────────────
+
+
+class MFASetupOut(BaseModel):
+    secret: str
+    provisioning_uri: str
+    backup_codes: list[str]
+
+
+class MFAVerifyRequest(BaseModel):
+    totp_code: str = Field(min_length=6, max_length=6, pattern="^[0-9]{6}$")
+
+
+class MFAStatusOut(BaseModel):
+    mfa_enabled: bool
+
+
+# ── Industry Benchmarks ─────────────────────────────────────────────
+
+
+class BenchmarkOut(BaseModel):
+    industry: str
+    region: str
+    year: int
+    avg_scope1_tco2e: float
+    avg_scope2_tco2e: float
+    avg_scope3_tco2e: float
+    avg_total_tco2e: float
+    avg_intensity_per_employee: float | None = None
+    avg_intensity_per_revenue: float | None = None
+    sample_size: int
+    source: str
+
+    model_config = {"from_attributes": True}
+
+
+class BenchmarkComparison(BaseModel):
+    company_emissions: dict[str, float]
+    industry_average: BenchmarkOut | None = None
+    percentile_rank: dict[str, str | None]
+    vs_average: dict[str, float | None]

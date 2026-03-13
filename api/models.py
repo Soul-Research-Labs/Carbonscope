@@ -113,6 +113,26 @@ class CreditReason(str, enum.Enum):
     plan_downgrade_adjustment = "plan_downgrade_adjustment"
 
 
+class PCAFAssetClass(str, enum.Enum):
+    """PCAF asset class categories for financed emissions."""
+    listed_equity = "listed_equity"
+    corporate_bonds = "corporate_bonds"
+    business_loans = "business_loans"
+    project_finance = "project_finance"
+    commercial_real_estate = "commercial_real_estate"
+    mortgages = "mortgages"
+    sovereign_debt = "sovereign_debt"
+
+
+class ReviewStatus(str, enum.Enum):
+    """Data review workflow status."""
+    draft = "draft"
+    submitted = "submitted"
+    in_review = "in_review"
+    approved = "approved"
+    rejected = "rejected"
+
+
 def _utcnow() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -510,3 +530,123 @@ class PasswordResetToken(Base):
     token_hash: str = Column(String(128), unique=True, nullable=False, index=True)
     expires_at: datetime = Column(DateTime(timezone=True), nullable=False)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+
+# ── PCAF Financed Emissions ─────────────────────────────────────────
+
+
+class FinancedPortfolio(Base):
+    """A financial institution's investment/lending portfolio for PCAF reporting."""
+    __tablename__ = "financed_portfolios"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
+    name: str = Column(String(255), nullable=False)
+    year: int = Column(Integer, nullable=False)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+    deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
+
+    __table_args__ = (
+        Index("ix_financed_portfolios_company_year", "company_id", "year"),
+    )
+
+    company = relationship("Company")
+    assets = relationship("FinancedAsset", back_populates="portfolio", cascade="all, delete-orphan")
+
+
+class FinancedAsset(Base):
+    """Individual asset/investment in a PCAF portfolio."""
+    __tablename__ = "financed_assets"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    portfolio_id: str = Column(String(32), ForeignKey("financed_portfolios.id", ondelete="CASCADE"), nullable=False, index=True)
+    asset_name: str = Column(String(255), nullable=False)
+    asset_class: str = Column(Enum(PCAFAssetClass, native_enum=False, length=50), nullable=False)
+    outstanding_amount: float = Column(Float, nullable=False)  # investment/loan amount
+    total_equity_debt: float = Column(Float, nullable=False)   # investee total equity+debt
+    investee_emissions_tco2e: float = Column(Float, nullable=False)  # investee reported or estimated GHG
+    attribution_factor: float | None = Column(Float, nullable=True)  # auto-calculated if null
+    financed_emissions_tco2e: float | None = Column(Float, nullable=True)  # auto-calculated
+    data_quality_score: int = Column(Integer, nullable=False, default=3)  # PCAF 1-5 scale (1=best)
+    industry: str | None = Column(String(100), nullable=True)
+    region: str | None = Column(String(10), nullable=True)
+    notes: str | None = Column(Text, nullable=True)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        CheckConstraint("outstanding_amount >= 0", name="ck_financed_assets_outstanding_non_negative"),
+        CheckConstraint("total_equity_debt > 0", name="ck_financed_assets_equity_debt_positive"),
+        CheckConstraint("investee_emissions_tco2e >= 0", name="ck_financed_assets_emissions_non_negative"),
+        CheckConstraint("data_quality_score >= 1 AND data_quality_score <= 5", name="ck_financed_assets_dq_range"),
+    )
+
+    portfolio = relationship("FinancedPortfolio", back_populates="assets")
+
+
+# ── Data Review & Approval Workflow ─────────────────────────────────
+
+
+class DataReview(Base):
+    """Track review/approval status of emission reports."""
+    __tablename__ = "data_reviews"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    report_id: str = Column(String(32), ForeignKey("emission_reports.id"), nullable=False, index=True)
+    company_id: str = Column(String(32), ForeignKey("companies.id"), nullable=False, index=True)
+    status: str = Column(Enum(ReviewStatus, native_enum=False, length=50), nullable=False, default=ReviewStatus.draft)
+    submitted_by: str | None = Column(String(32), ForeignKey("users.id"), nullable=True)
+    reviewed_by: str | None = Column(String(32), ForeignKey("users.id"), nullable=True)
+    submitted_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    reviewed_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
+    review_notes: str | None = Column(Text, nullable=True)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
+
+    company = relationship("Company")
+    report = relationship("EmissionReport")
+    submitter = relationship("User", foreign_keys=[submitted_by])
+    reviewer = relationship("User", foreign_keys=[reviewed_by])
+
+
+# ── MFA (TOTP) ──────────────────────────────────────────────────────
+
+
+class MFASecret(Base):
+    """TOTP secret for multi-factor authentication."""
+    __tablename__ = "mfa_secrets"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    user_id: str = Column(String(32), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True)
+    totp_secret: str = Column(String(64), nullable=False)
+    is_enabled: bool = Column(Boolean, nullable=False, default=False)
+    backup_codes: str | None = Column(Text, nullable=True)  # JSON array of hashed codes
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+    user = relationship("User")
+
+
+# ── Industry Benchmarks ─────────────────────────────────────────────
+
+
+class IndustryBenchmark(Base):
+    """Pre-loaded industry benchmark data for comparison."""
+    __tablename__ = "industry_benchmarks"
+
+    id: str = Column(String(32), primary_key=True, default=_new_id)
+    industry: str = Column(String(100), nullable=False, index=True)
+    region: str = Column(String(10), nullable=False, default="GLOBAL")
+    year: int = Column(Integer, nullable=False)
+    avg_scope1_tco2e: float = Column(Float, nullable=False, default=0.0)
+    avg_scope2_tco2e: float = Column(Float, nullable=False, default=0.0)
+    avg_scope3_tco2e: float = Column(Float, nullable=False, default=0.0)
+    avg_total_tco2e: float = Column(Float, nullable=False, default=0.0)
+    avg_intensity_per_employee: float | None = Column(Float, nullable=True)
+    avg_intensity_per_revenue: float | None = Column(Float, nullable=True)
+    sample_size: int = Column(Integer, nullable=False, default=0)
+    source: str = Column(String(255), nullable=False, default="CarbonScope aggregated data")
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+
+    __table_args__ = (
+        UniqueConstraint("industry", "region", "year", name="uq_benchmark_industry_region_year"),
+    )

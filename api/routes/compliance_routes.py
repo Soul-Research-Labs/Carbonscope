@@ -14,8 +14,11 @@ from api.models import Company, EmissionReport, User
 from api.schemas import ComplianceReportRequest
 from api.services.compliance import (
     generate_cdp_responses,
+    generate_csrd_report,
     generate_ghg_inventory,
+    generate_issb_report,
     generate_sbti_pathway,
+    generate_secr_report,
     generate_tcfd_disclosure,
 )
 from api.services.recommendations import generate_recommendations
@@ -102,6 +105,61 @@ async def create_compliance_report(
             scope2=report.scope2,
             scope3=report.scope3,
             total=report.total,
+        )
+    elif body.framework == "csrd":
+        return generate_csrd_report(
+            company_name=company.name,
+            industry=company.industry,
+            region=company.region,
+            year=report.year,
+            scope1=report.scope1,
+            scope2=report.scope2,
+            scope3=report.scope3,
+            total=report.total,
+            breakdown=report.breakdown,
+            sources=report.sources,
+            assumptions=report.assumptions,
+            confidence=report.confidence,
+            employee_count=company.employee_count,
+            revenue_usd=company.revenue_usd,
+        )
+    elif body.framework == "issb":
+        recs = generate_recommendations(
+            emissions={"scope1": report.scope1, "scope2": report.scope2, "scope3": report.scope3, "total": report.total},
+            breakdown=report.breakdown,
+            industry=company.industry,
+        )
+        return generate_issb_report(
+            company_name=company.name,
+            industry=company.industry,
+            region=company.region,
+            year=report.year,
+            scope1=report.scope1,
+            scope2=report.scope2,
+            scope3=report.scope3,
+            total=report.total,
+            breakdown=report.breakdown,
+            sources=report.sources,
+            confidence=report.confidence,
+            employee_count=company.employee_count,
+            revenue_usd=company.revenue_usd,
+            recommendations=recs,
+        )
+    elif body.framework == "secr":
+        return generate_secr_report(
+            company_name=company.name,
+            industry=company.industry,
+            region=company.region,
+            year=report.year,
+            scope1=report.scope1,
+            scope2=report.scope2,
+            scope3=report.scope3,
+            total=report.total,
+            breakdown=report.breakdown,
+            sources=report.sources,
+            confidence=report.confidence,
+            employee_count=company.employee_count,
+            revenue_usd=company.revenue_usd,
         )
 
     raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Unknown framework")

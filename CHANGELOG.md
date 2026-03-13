@@ -6,6 +6,55 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [0.18.0] — 2026-03-14 — Phase 24: Competitive Feature Parity
+
+### Added — Compliance Frameworks
+
+- **CSRD (ESRS E1)** compliance report generator — transition plans (E1_1), emission reduction targets (E1_4), gross GHG emissions (E1_6), removals & offsets (E1_7), internal carbon pricing (E1_8), energy consumption (E1_9), intensity metrics (per employee, per $M revenue).
+- **ISSB (IFRS S2)** compliance report generator — governance disclosures (paragraphs 6–7), strategy & risk/opportunity analysis (paragraph 10), risk management processes (paragraphs 25–26), cross-industry metrics (paragraph 29), emission reduction targets (paragraph 33).
+- **SECR (UK)** compliance report generator — UK GHG emissions breakdown (Scope 1+2 total), energy consumption, mandatory intensity ratio, DEFRA/BEIS methodology, energy efficiency narrative.
+- Compliance framework validation now accepts 7 frameworks: `ghg_protocol`, `cdp`, `tcfd`, `sbti`, `csrd`, `issb`, `secr`.
+
+### Added — PCAF Financed Emissions
+
+- `PCAFAssetClass` enum with 7 PCAF-defined asset classes (listed equity, corporate bonds, business loans, project finance, commercial real estate, mortgages, sovereign debt).
+- `FinancedPortfolio` and `FinancedAsset` ORM models with automatic attribution factor and financed emissions calculation.
+- PCAF calculation service (`api/services/pcaf.py`) — attribution factor, financed emissions, portfolio summary with weighted data quality scores and per-asset-class breakdown.
+- 6 PCAF API endpoints: create/list portfolios, portfolio summary, add/list/delete assets.
+- Pro/Enterprise plan gating on write operations; read operations available to all authenticated users.
+
+### Added — Data Review & Approval Workflows
+
+- `DataReview` model with `ReviewStatus` state machine (draft → submitted → approved/rejected, with resubmit from rejected).
+- 4 review endpoints: create review, list reviews (with status filter), get review, perform action (submit/approve/reject).
+- Admin-only approval/rejection with audit logging integration.
+- Duplicate review prevention per report (409 Conflict).
+
+### Added — Multi-Factor Authentication (TOTP)
+
+- Pure Python RFC 4226/6238 TOTP implementation — no external dependency (no pyotp).
+- `MFASecret` model storing TOTP secret, enablement state, and SHA-256 hashed backup codes.
+- 5 MFA endpoints: status check, setup (returns secret + provisioning URI + 8 backup codes), verify (activates MFA), validate (login 2FA check), disable.
+- ±1 time-step window for clock drift tolerance.
+
+### Added — Industry Benchmarking
+
+- `IndustryBenchmark` model with unique constraint on (industry, region, year).
+- 2 benchmark endpoints: list benchmarks (with industry/region/year filters), compare company emissions to industry average with percentile ranking (top_10/top_25/median/bottom_25/bottom_10).
+
+### Added — Testing
+
+- 47 new tests across 13 test classes covering all Phase 24 features (CSRD/ISSB/SECR, PCAF, reviews, MFA, benchmarks).
+- Total backend tests: 611 (36 files). Total frontend tests: 83 (14 files).
+
+### Changed — Infrastructure
+
+- 18 route modules registered (was 14): added pcaf_routes, review_routes, mfa_routes, benchmark_routes.
+- 21 service modules (was 19): added pcaf.py, mfa.py.
+- 5 new ORM models, 2 new enums, ~14 new Pydantic schemas.
+
+---
+
 ## [0.17.1] — 2026-03-13 — Phase 23: Gap Analysis & Documentation
 
 ### Fixed — Backend
