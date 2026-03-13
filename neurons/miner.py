@@ -12,6 +12,7 @@ import time
 import traceback
 
 import bittensor as bt
+from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from carbonscope.protocol import CarbonSynapse
 from carbonscope.emission_factors.scope1 import (
@@ -29,13 +30,83 @@ from carbonscope.emission_factors.scope3 import (
     fill_industry_defaults,
 )
 from carbonscope.utils import calc_data_completeness
+from carbonscope.emission_factors.loader import log_dataset_versions
+
+
+# ── Input validation schemas ────────────────────────────────────────
+
+VALID_INDUSTRIES = {
+    "manufacturing", "transportation", "technology", "retail",
+    "energy", "financial_services", "construction", "food_beverage", "healthcare",
+}
+
+VALID_FUEL_TYPES = {
+    "diesel", "gasoline", "natural_gas", "propane", "fuel_oil",
+    "kerosene", "lpg", "coal", "biomass",
+}
+
+
+class ProvidedDataInput(BaseModel):
+    fuel_use_liters: float = Field(default=0, ge=0, le=10_000_000)
+    fuel_type: str = "diesel"
+    natural_gas_m3: float = Field(default=0, ge=0, le=100_000_000)
+    electricity_kwh: float = Field(default=0, ge=0, le=1_000_000_000)
+    vehicle_km: float = Field(default=0, ge=0, le=100_000_000)
+    employee_count: int = Field(default=0, ge=0, le=1_000_000)
+    revenue_usd: float = Field(default=0, ge=0, le=1_000_000_000_000)
+    supplier_spend_usd: float = Field(default=0, ge=0, le=1_000_000_000_000)
+    shipping_ton_km: float = Field(default=0, ge=0, le=10_000_000_000)
+    office_sqm: float = Field(default=0, ge=0, le=100_000_000)
+    business_travel_usd: float = Field(default=0, ge=0, le=1_000_000_000)
+    waste_kg: float = Field(default=0, ge=0, le=1_000_000_000)
+    refrigerant_type: str | None = None
+    refrigerant_kg_leaked: float = Field(default=0, ge=0, le=1_000_000)
+    rec_kwh: float = Field(default=0, ge=0, le=1_000_000_000)
+
+    @field_validator("fuel_type")
+    @classmethod
+    def validate_fuel_type(cls, v: str) -> str:
+        v_lower = v.lower()
+        if v_lower not in VALID_FUEL_TYPES:
+            raise ValueError(f"Invalid fuel_type '{v}'. Valid: {sorted(VALID_FUEL_TYPES)}")
+        return v_lower
+
+    model_config = {"extra": "allow"}
+
+
+class QuestionnaireInput(BaseModel):
+    company: str = ""
+    industry: str = "manufacturing"
+    services_used: list[str] = []
+    provided_data: ProvidedDataInput = ProvidedDataInput()
+    region: str = "US"
+    year: int = Field(default=2025, ge=1990, le=2100)
+
+    @field_validator("industry")
+    @classmethod
+    def validate_industry(cls, v: str) -> str:
+        v_lower = v.lower()
+        if v_lower not in VALID_INDUSTRIES:
+            raise ValueError(f"Invalid industry '{v}'. Valid: {sorted(VALID_INDUSTRIES)}")
+        return v_lower
+
+    model_config = {"extra": "allow"}
 
 
 class CarbonMiner:
     """Bittensor miner that estimates corporate carbon emissions."""
 
+    # Per-hotkey rate limiting defaults (overridden by CLI args)
+    _RATE_LIMIT_MAX = 10
+    _RATE_LIMIT_WINDOW = 60  # seconds
+
     def __init__(self) -> None:
         self.config = self._get_config()
+        bt.logging.set_config(self.config.logging)
+
+        # Apply CLI rate limit overrides
+        self._RATE_LIMIT_MAX = getattr(self.config, "rate_limit_max", 10)
+        self._RATE_LIMIT_WINDOW = getattr(self.config, "rate_limit_window", 60)
         bt.logging.set_config(self.config.logging)
 
         self.wallet = bt.Wallet(config=self.config)
@@ -44,6 +115,11 @@ class CarbonMiner:
             netuid=self.config.netuid,
             network=self.subtensor.network,
         )
+
+        # Verify hotkey is registered
+        if self.wallet.hotkey.ss58_address not in self.metagraph.hotkeys:
+            bt.logging.error("Hotkey not registered in metagraph — register before starting miner")
+            raise RuntimeError("Miner hotkey not registered on subnet")
 
         bt.logging.info(f"Wallet: {self.wallet}")
         bt.logging.info(f"Subtensor: {self.subtensor}")
@@ -55,7 +131,14 @@ class CarbonMiner:
             blacklist_fn=self.blacklist,
         )
 
+        # Per-hotkey request tracking for rate limiting
+        from collections import deque
+        self._request_times: dict[str, deque] = {}
+
         bt.logging.info(f"Axon created on port {self.axon.port}")
+
+        # Log emission factor dataset versions at startup
+        log_dataset_versions()
 
     # ── Config ──────────────────────────────────────────────────────
 
@@ -63,6 +146,10 @@ class CarbonMiner:
     def _get_config() -> bt.Config:
         parser = argparse.ArgumentParser(description="CarbonScope Miner")
         parser.add_argument("--netuid", type=int, default=1, help="Subnet UID")
+        parser.add_argument("--rate_limit_max", type=int, default=10,
+                            help="Max requests per hotkey per rate limit window")
+        parser.add_argument("--rate_limit_window", type=int, default=60,
+                            help="Rate limit window in seconds")
         bt.Wallet.add_args(parser)
         bt.Subtensor.add_args(parser)
         bt.Axon.add_args(parser)
@@ -72,7 +159,7 @@ class CarbonMiner:
     # ── Blacklist ───────────────────────────────────────────────────
 
     def blacklist(self, synapse: CarbonSynapse) -> tuple[bool, str]:
-        """Reject requests from unregistered or non-validator hotkeys."""
+        """Reject requests from unregistered, non-validator, or rate-limited hotkeys."""
         caller = synapse.dendrite.hotkey
         if caller not in self.metagraph.hotkeys:
             return True, "Unregistered hotkey"
@@ -80,6 +167,20 @@ class CarbonMiner:
         uid = list(self.metagraph.hotkeys).index(caller)
         if not self.metagraph.validator_permit[uid]:
             return True, "Caller is not a validator"
+
+        # Per-hotkey rate limiting
+        from collections import deque
+        now = time.time()
+        if caller not in self._request_times:
+            self._request_times[caller] = deque()
+        times = self._request_times[caller]
+        # Remove entries outside the window
+        while times and times[0] < now - self._RATE_LIMIT_WINDOW:
+            times.popleft()
+        if len(times) >= self._RATE_LIMIT_MAX:
+            bt.logging.warning(f"Rate limited hotkey {caller}: {len(times)} requests in {self._RATE_LIMIT_WINDOW}s")
+            return True, "Rate limited"
+        times.append(now)
 
         return False, ""
 
@@ -89,20 +190,28 @@ class CarbonMiner:
         """Estimate corporate emissions from the questionnaire data."""
         try:
             return self._estimate(synapse)
-        except Exception:
-            bt.logging.error(f"Estimation failed:\n{traceback.format_exc()}")
-            # Signal error with negative confidence so validators can skip
+        except (ValueError, ValidationError) as e:
+            bt.logging.warning(f"Input validation failed: {e}")
             synapse.emissions = {"scope1": 0, "scope2": 0, "scope3": 0, "total": 0}
             synapse.confidence = -1.0
+            synapse.sources = []
+            synapse.assumptions = [f"Validation error: {e}"]
+            return synapse
+        except Exception:
+            bt.logging.error(f"Internal estimation error:\n{traceback.format_exc()}")
+            synapse.emissions = {"scope1": 0, "scope2": 0, "scope3": 0, "total": 0}
+            synapse.confidence = -2.0
             synapse.sources = []
             synapse.assumptions = ["Estimation failed due to internal error"]
             return synapse
 
     def _estimate(self, synapse: CarbonSynapse) -> CarbonSynapse:
-        q = synapse.questionnaire
-        data = q.get("provided_data", {})
-        industry = q.get("industry", "manufacturing")
-        region = q.get("region", "US")
+        # Validate input via Pydantic schema
+        validated = QuestionnaireInput(**synapse.questionnaire)
+        q = validated.model_dump()
+        data = q["provided_data"]
+        industry = q["industry"]
+        region = q["region"]
         ctx = synapse.context or {}
 
         assumptions: list[str] = []

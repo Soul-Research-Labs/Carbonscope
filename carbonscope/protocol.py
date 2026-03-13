@@ -6,9 +6,12 @@ questionnaires) and miners (who return Scope 1/2/3 emission estimates).
 
 from __future__ import annotations
 
+import hashlib
+import json
 from typing import ClassVar, Optional
 
 import bittensor as bt
+from pydantic import field_validator
 
 
 class CarbonSynapse(bt.Synapse):
@@ -92,6 +95,47 @@ class CarbonSynapse(bt.Synapse):
 
     methodology_version: Optional[str] = None
     """Methodology identifier (e.g. ``"ghg_protocol_v2025"``)."""
+
+    request_hash: Optional[str] = None
+    """SHA-256 hash of the questionnaire + emissions, set by the miner as proof
+    of computation.  Validators can verify: ``sha256(json(questionnaire) + json(emissions))``."""
+
+    def compute_request_hash(self) -> str:
+        """Compute the SHA-256 hash binding the request to the response."""
+        payload = json.dumps(self.questionnaire, sort_keys=True) + json.dumps(
+            self.emissions, sort_keys=True, default=str
+        )
+        return hashlib.sha256(payload.encode()).hexdigest()
+
+    # ── Field validators ────────────────────────────────────────────
+
+    @field_validator("confidence")
+    @classmethod
+    def clamp_confidence(cls, v: float | None) -> float | None:
+        if v is not None and v >= 0:
+            return max(0.0, min(v, 1.0))
+        return v  # Negative values are error codes (-1.0, -2.0)
+
+    @field_validator("emissions")
+    @classmethod
+    def check_emissions(cls, v: dict | None) -> dict | None:
+        if v is not None:
+            for key in ("scope1", "scope2", "scope3", "total"):
+                val = v.get(key)
+                if val is not None and val < 0:
+                    v[key] = 0.0
+        return v
+
+    @field_validator("breakdown")
+    @classmethod
+    def check_breakdown_keys(cls, v: dict | None) -> dict | None:
+        if v is not None:
+            allowed = {"scope1_detail", "scope2_detail", "scope3_detail"}
+            invalid = set(v.keys()) - allowed
+            if invalid:
+                for k in invalid:
+                    del v[k]
+        return v
 
     # ── Synapse config ──────────────────────────────────────────────
 

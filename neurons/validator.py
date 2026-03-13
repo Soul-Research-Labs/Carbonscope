@@ -8,6 +8,8 @@ anti-hallucination, benchmark), and sets weights on-chain via EMA.
 from __future__ import annotations
 
 import argparse
+import json
+import os
 import random
 import time
 import traceback
@@ -17,6 +19,9 @@ import bittensor as bt
 from carbonscope.protocol import CarbonSynapse
 from carbonscope.scoring import score_response
 from carbonscope.test_cases.generator import get_curated_cases, generate_synthetic_query
+
+# Path for persisting EMA scores across restarts
+_SCORES_FILE = os.getenv("VALIDATOR_SCORES_PATH", "validator_scores.json")
 
 
 class CarbonValidator:
@@ -42,18 +47,18 @@ class CarbonValidator:
         self.curated_cases = get_curated_cases()
         self.case_index = 0
 
-        # Moving average scores per miner UID — EMA α = 0.1
-        self.scores: dict[int, float] = {}
-        self.alpha = 0.1
+        # Moving average scores per miner UID
+        self.scores: dict[int, float] = self._load_scores()
+        self.alpha = getattr(self.config, "ema_alpha", 0.1)
 
         # Track how many blocks since last weight update
         self.last_weight_block = 0
 
         # Circuit breaker state
         self._consecutive_failures = 0
-        self._max_failures = 3
-        self._backoff_seconds = 2.0
-        self._max_backoff = 60.0
+        self._max_failures = getattr(self.config, "circuit_breaker_max_failures", 3)
+        self._backoff_seconds = getattr(self.config, "circuit_breaker_base_backoff", 2.0)
+        self._max_backoff = getattr(self.config, "circuit_breaker_max_backoff", 60.0)
 
     # ── Config ──────────────────────────────────────────────────────
 
@@ -65,6 +70,14 @@ class CarbonValidator:
                             help="Seconds between query rounds")
         parser.add_argument("--query_timeout", type=float, default=30.0,
                             help="Timeout for miner queries (seconds)")
+        parser.add_argument("--ema_alpha", type=float, default=0.1,
+                            help="EMA smoothing factor for scores (0.0–1.0)")
+        parser.add_argument("--circuit_breaker_max_failures", type=int, default=3,
+                            help="Consecutive failures before circuit breaker opens")
+        parser.add_argument("--circuit_breaker_base_backoff", type=float, default=2.0,
+                            help="Base backoff seconds for circuit breaker")
+        parser.add_argument("--circuit_breaker_max_backoff", type=float, default=60.0,
+                            help="Maximum backoff seconds for circuit breaker")
         bt.Wallet.add_args(parser)
         bt.Subtensor.add_args(parser)
         bt.logging.add_args(parser)
@@ -116,14 +129,36 @@ class CarbonValidator:
         )
         return result["final"]
 
+    # ── Score persistence ─────────────────────────────────────────────
+
+    def _load_scores(self) -> dict[int, float]:
+        """Load persisted EMA scores from disk."""
+        try:
+            with open(_SCORES_FILE) as f:
+                data = json.load(f)
+            scores = {int(k): float(v) for k, v in data.items()}
+            bt.logging.info(f"Loaded {len(scores)} persisted scores from {_SCORES_FILE}")
+            return scores
+        except (FileNotFoundError, json.JSONDecodeError, ValueError):
+            return {}
+
+    def _save_scores(self) -> None:
+        """Persist EMA scores to disk."""
+        try:
+            with open(_SCORES_FILE, "w") as f:
+                json.dump({str(k): v for k, v in self.scores.items()}, f)
+        except OSError:
+            bt.logging.warning("Failed to persist scores to disk")
+
     # ── Weight management ───────────────────────────────────────────
 
     def update_scores(self, uid: int, score: float) -> None:
-        """Update EMA score for a miner."""
+        """Update EMA score for a miner and persist to disk."""
         if uid in self.scores:
             self.scores[uid] = (1 - self.alpha) * self.scores[uid] + self.alpha * score
         else:
             self.scores[uid] = score
+        self._save_scores()
 
     def should_set_weights(self) -> bool:
         """Check if enough blocks have passed since last weight update."""
@@ -136,7 +171,11 @@ class CarbonValidator:
             return True
 
     def set_weights(self) -> None:
-        """Normalize scores and set weights on-chain."""
+        """Normalize scores and set weights on-chain with retry logic.
+
+        Miners with a score of exactly 0.0 receive an explicit weight of 0
+        (effectively banned from rewards until they improve).
+        """
         if not self.scores:
             return
 
@@ -147,25 +186,38 @@ class CarbonValidator:
         if total > 0:
             weights = [w / total for w in raw]
         else:
-            weights = [1.0 / len(uids)] * len(uids)
+            # All miners scored zero — assign uniform zero weights
+            weights = [0.0] * len(uids)
 
+        zero_count = sum(1 for w in raw if w == 0.0)
         bt.logging.info(
-            f"Setting weights for {len(uids)} miners. "
+            f"Setting weights for {len(uids)} miners ({zero_count} with zero score). "
             f"Top score: {max(raw):.3f}, Min: {min(raw):.3f}"
         )
 
-        try:
-            self.subtensor.set_weights(
-                wallet=self.wallet,
-                netuid=self.config.netuid,
-                uids=uids,
-                weights=weights,
-                wait_for_inclusion=True,
-            )
-            self.last_weight_block = self.subtensor.block
-            bt.logging.info("Weights set successfully.")
-        except Exception:
-            bt.logging.error(f"Failed to set weights:\n{traceback.format_exc()}")
+        retry_delays = [1, 2, 4]
+        for attempt in range(len(retry_delays) + 1):
+            try:
+                self.subtensor.set_weights(
+                    wallet=self.wallet,
+                    netuid=self.config.netuid,
+                    uids=uids,
+                    weights=weights,
+                    wait_for_inclusion=True,
+                )
+                self.last_weight_block = self.subtensor.block
+                bt.logging.info("Weights set successfully.")
+                return
+            except Exception:
+                if attempt < len(retry_delays):
+                    delay = retry_delays[attempt]
+                    bt.logging.warning(
+                        f"set_weights attempt {attempt + 1} failed, retrying in {delay}s:\n"
+                        f"{traceback.format_exc()}"
+                    )
+                    time.sleep(delay)
+                else:
+                    bt.logging.error(f"set_weights failed after {attempt + 1} attempts:\n{traceback.format_exc()}")
 
     # ── Main loop ───────────────────────────────────────────────────
 
@@ -199,31 +251,46 @@ class CarbonValidator:
                     f"Industry: {synapse.questionnaire.get('industry', '?')}"
                 )
 
-                # 4. Query all miners (with circuit breaker)
-                try:
-                    responses: list[CarbonSynapse] = self.dendrite.query(
-                        axons=miner_axons,
-                        synapse=synapse,
-                        timeout=self.config.query_timeout,
-                    )
-                    self._consecutive_failures = 0
-                    self._backoff_seconds = 2.0
-                except Exception:
-                    self._consecutive_failures += 1
-                    bt.logging.error(
-                        f"Query failed ({self._consecutive_failures}/{self._max_failures}):\n"
-                        f"{traceback.format_exc()}"
-                    )
-                    if self._consecutive_failures >= self._max_failures:
-                        backoff = min(self._backoff_seconds, self._max_backoff)
-                        bt.logging.warning(
-                            f"Circuit breaker: {self._consecutive_failures} consecutive failures. "
-                            f"Backing off {backoff:.0f}s..."
+                # 4. Query all miners (with circuit breaker + retry)
+                responses = None
+                query_retry_delays = [0.5, 1.0, 2.0]
+                for q_attempt in range(len(query_retry_delays) + 1):
+                    try:
+                        responses = self.dendrite.query(
+                            axons=miner_axons,
+                            synapse=synapse,
+                            timeout=self.config.query_timeout,
                         )
-                        time.sleep(backoff)
-                        self._backoff_seconds = min(self._backoff_seconds * 2, self._max_backoff)
-                    else:
-                        time.sleep(self.config.query_interval)
+                        self._consecutive_failures = 0
+                        self._backoff_seconds = 2.0
+                        break
+                    except Exception:
+                        if q_attempt < len(query_retry_delays):
+                            delay = query_retry_delays[q_attempt]
+                            bt.logging.warning(
+                                f"Query attempt {q_attempt + 1} failed, retrying in {delay}s:\n"
+                                f"{traceback.format_exc()}"
+                            )
+                            time.sleep(delay)
+                        else:
+                            self._consecutive_failures += 1
+                            bt.logging.error(
+                                f"Query failed after {q_attempt + 1} attempts "
+                                f"({self._consecutive_failures}/{self._max_failures}):\n"
+                                f"{traceback.format_exc()}"
+                            )
+                            if self._consecutive_failures >= self._max_failures:
+                                backoff = min(self._backoff_seconds, self._max_backoff)
+                                bt.logging.warning(
+                                    f"Circuit breaker: {self._consecutive_failures} consecutive failures. "
+                                    f"Backing off {backoff:.0f}s..."
+                                )
+                                time.sleep(backoff)
+                                self._backoff_seconds = min(self._backoff_seconds * 2, self._max_backoff)
+                            else:
+                                time.sleep(self.config.query_interval)
+
+                if responses is None:
                     continue
 
                 # 5. Score each response

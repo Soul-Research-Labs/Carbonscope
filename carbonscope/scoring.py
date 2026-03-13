@@ -20,6 +20,9 @@ W_COMPLETENESS = 0.15
 W_ANTI_HALLUCINATION = 0.15
 W_BENCHMARK = 0.05
 
+assert round(W_ACCURACY + W_COMPLIANCE + W_COMPLETENESS + W_ANTI_HALLUCINATION + W_BENCHMARK, 10) == 1.0, \
+    "Scoring weights must sum to 1.0"
+
 
 # ── Individual scoring functions ────────────────────────────────────
 
