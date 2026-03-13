@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user, require_admin
+from api.limiter import limiter
 from api.models import User
 from api.schemas import SupplyChainLinkCreate, SupplyChainLinkOut, SupplyChainLinkUpdate
 from api.services.supply_chain import (
@@ -24,7 +26,9 @@ router = APIRouter(prefix="/supply-chain", tags=["supply-chain"])
 
 
 @router.post("/links", response_model=SupplyChainLinkOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def add_supplier(
+    request: Request,
     body: SupplyChainLinkCreate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -50,7 +54,9 @@ async def add_supplier(
 
 
 @router.get("/suppliers")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_suppliers(
+    request: Request,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),
@@ -62,7 +68,9 @@ async def get_suppliers(
 
 
 @router.get("/buyers")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_buyers(
+    request: Request,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),
@@ -74,7 +82,9 @@ async def get_buyers(
 
 
 @router.get("/scope3-from-suppliers")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def scope3_from_suppliers(
+    request: Request,
     year: int | None = Query(default=None),
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -84,7 +94,9 @@ async def scope3_from_suppliers(
 
 
 @router.get("/links/{link_id}", response_model=SupplyChainLinkOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_link(
+    request: Request,
     link_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -107,7 +119,9 @@ async def get_link(
 
 
 @router.patch("/links/{link_id}", response_model=SupplyChainLinkOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_link(
+    request: Request,
     link_id: str,
     body: SupplyChainLinkUpdate,
     user: User = Depends(require_admin),
@@ -130,7 +144,9 @@ async def update_link(
 
 
 @router.delete("/links/{link_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def delete_link(
+    request: Request,
     link_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

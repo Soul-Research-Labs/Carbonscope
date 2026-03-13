@@ -21,6 +21,7 @@ from api.services.mfa import (
     hash_backup_code,
     verify_totp,
 )
+from api.services import audit
 
 router = APIRouter(prefix="/auth/mfa", tags=["mfa"])
 
@@ -79,6 +80,12 @@ async def setup_mfa(
 
     await db.commit()
 
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="mfa_setup", resource_type="mfa", resource_id=str(user.id),
+    )
+    await db.commit()
+
     return {
         "secret": secret,
         "provisioning_uri": uri,
@@ -106,6 +113,11 @@ async def verify_and_enable_mfa(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code")
 
     secret_row.is_enabled = True
+    await db.commit()
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="mfa_enabled", resource_type="mfa", resource_id=str(user.id),
+    )
     await db.commit()
     return {"mfa_enabled": True}
 
@@ -152,4 +164,9 @@ async def disable_mfa(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code")
 
     await db.delete(secret_row)
+    await db.commit()
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="mfa_disabled", resource_type="mfa", resource_id=str(user.id),
+    )
     await db.commit()

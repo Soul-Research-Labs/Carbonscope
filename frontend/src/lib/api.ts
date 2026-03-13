@@ -1063,3 +1063,188 @@ export async function getSupplyChainLink(
     `/supply-chain/links/${encodeURIComponent(linkId)}`,
   );
 }
+
+// ── PCAF (Financed Emissions) ────────────────────────────────────
+
+export interface FinancedPortfolio {
+  id: string;
+  company_id: string;
+  name: string;
+  year: number;
+  created_at: string;
+}
+
+export interface FinancedAsset {
+  id: string;
+  portfolio_id: string;
+  asset_name: string;
+  asset_class: string;
+  outstanding_amount: number;
+  total_equity_debt: number;
+  investee_emissions_tco2e: number;
+  attribution_factor: number;
+  financed_emissions_tco2e: number;
+  data_quality_score: number;
+  industry: string | null;
+  region: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+export interface PortfolioSummary {
+  portfolio: FinancedPortfolio;
+  total_financed_emissions: number;
+  weighted_data_quality: number;
+  asset_count: number;
+  by_asset_class: Record<string, number>;
+}
+
+export async function listPortfolios(params?: { limit?: number; offset?: number }) {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request<{ items: FinancedPortfolio[]; total: number }>(`/pcaf/portfolios${qs ? `?${qs}` : ""}`);
+}
+
+export async function createPortfolio(data: { name: string; year: number }) {
+  return request<FinancedPortfolio>("/pcaf/portfolios", { method: "POST", body: JSON.stringify(data) });
+}
+
+export async function getPortfolioSummary(portfolioId: string) {
+  return request<PortfolioSummary>(`/pcaf/portfolios/${encodeURIComponent(portfolioId)}/summary`);
+}
+
+export async function listPortfolioAssets(portfolioId: string, params?: { limit?: number; offset?: number }) {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request<{ items: FinancedAsset[]; total: number }>(`/pcaf/portfolios/${encodeURIComponent(portfolioId)}/assets${qs ? `?${qs}` : ""}`);
+}
+
+export async function addPortfolioAsset(portfolioId: string, data: {
+  asset_name: string;
+  asset_class: string;
+  outstanding_amount: number;
+  total_equity_debt: number;
+  investee_emissions_tco2e: number;
+  data_quality_score: number;
+  industry?: string;
+  region?: string;
+  notes?: string;
+}) {
+  return request<FinancedAsset>(`/pcaf/portfolios/${encodeURIComponent(portfolioId)}/assets`, {
+    method: "POST", body: JSON.stringify(data),
+  });
+}
+
+export async function deletePortfolioAsset(portfolioId: string, assetId: string) {
+  return request<void>(`/pcaf/portfolios/${encodeURIComponent(portfolioId)}/assets/${encodeURIComponent(assetId)}`, {
+    method: "DELETE",
+  });
+}
+
+// ── Data Reviews ─────────────────────────────────────────────────
+
+export interface DataReview {
+  id: string;
+  report_id: string;
+  company_id: string;
+  status: string;
+  reviewer_id: string | null;
+  reviewer_notes: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+}
+
+export async function listReviews(params?: { limit?: number; offset?: number }) {
+  const q = new URLSearchParams();
+  if (params?.limit != null) q.set("limit", String(params.limit));
+  if (params?.offset != null) q.set("offset", String(params.offset));
+  const qs = q.toString();
+  return request<{ items: DataReview[]; total: number }>(`/reviews${qs ? `?${qs}` : ""}`);
+}
+
+export async function createReview(reportId: string) {
+  return request<DataReview>("/reviews", { method: "POST", body: JSON.stringify({ report_id: reportId }) });
+}
+
+export async function getReview(reviewId: string) {
+  return request<DataReview>(`/reviews/${encodeURIComponent(reviewId)}`);
+}
+
+export async function reviewAction(reviewId: string, action: string, notes?: string) {
+  return request<DataReview>(`/reviews/${encodeURIComponent(reviewId)}/action`, {
+    method: "POST", body: JSON.stringify({ action, notes }),
+  });
+}
+
+// ── MFA ──────────────────────────────────────────────────────────
+
+export interface MFAStatus {
+  mfa_enabled: boolean;
+}
+
+export interface MFASetup {
+  secret: string;
+  provisioning_uri: string;
+  backup_codes: string[];
+}
+
+export async function getMFAStatus() {
+  return request<MFAStatus>("/auth/mfa/status");
+}
+
+export async function setupMFA() {
+  return request<MFASetup>("/auth/mfa/setup", { method: "POST" });
+}
+
+export async function verifyMFA(totpCode: string) {
+  return request<MFAStatus>("/auth/mfa/verify", {
+    method: "POST", body: JSON.stringify({ totp_code: totpCode }),
+  });
+}
+
+export async function validateMFA(totpCode: string) {
+  return request<MFAStatus>("/auth/mfa/validate", {
+    method: "POST", body: JSON.stringify({ totp_code: totpCode }),
+  });
+}
+
+export async function disableMFA(totpCode: string) {
+  return request<void>("/auth/mfa/disable", {
+    method: "DELETE", body: JSON.stringify({ totp_code: totpCode }),
+  });
+}
+
+// ── Benchmarks ───────────────────────────────────────────────────
+
+export interface IndustryBenchmark {
+  industry: string;
+  avg_scope1: number;
+  avg_scope2: number;
+  avg_scope3: number;
+  avg_total: number;
+  company_count: number;
+  your_total: number | null;
+  percentile: number | null;
+}
+
+export interface PeerComparison {
+  rank: number;
+  total_companies: number;
+  percentile: number;
+  you: { total: number; confidence: number };
+  average: number;
+  median: number;
+  best: number;
+}
+
+export async function getIndustryBenchmarks() {
+  return request<IndustryBenchmark>("/benchmarks/industry");
+}
+
+export async function getPeerComparison() {
+  return request<PeerComparison>("/benchmarks/peers");
+}

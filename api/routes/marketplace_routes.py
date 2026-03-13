@@ -19,6 +19,7 @@ from api.schemas import (
 from api.services.marketplace import browse_listings, create_listing, list_my_listings, purchase_listing, withdraw_listing, list_my_sales, get_seller_revenue
 from api.services import audit
 from api.limiter import limiter
+from api.config import RATE_LIMIT_DEFAULT
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,9 @@ router = APIRouter(prefix="/marketplace", tags=["marketplace"])
 
 
 @router.post("/listings", response_model=DataListingOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def create_data_listing(
+    request: Request,
     body: DataListingCreate,
     user: User = Depends(require_plan("marketplace")),
     db: AsyncSession = Depends(get_db),
@@ -50,7 +53,9 @@ async def create_data_listing(
 
 
 @router.get("/listings", response_model=PaginatedResponse[DataListingOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def browse_marketplace(
+    request: Request,
     industry: str | None = Query(None),
     region: str | None = Query(None),
     data_type: str | None = Query(None),
@@ -67,7 +72,9 @@ async def browse_marketplace(
 
 
 @router.get("/listings/{listing_id}", response_model=DataListingOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_listing(
+    request: Request,
     listing_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -148,7 +155,9 @@ async def purchase_data(
 
 
 @router.get("/my-listings", response_model=PaginatedResponse[DataListingOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_my_listings(
+    request: Request,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     user: User = Depends(get_current_user),
@@ -160,7 +169,9 @@ async def get_my_listings(
 
 
 @router.post("/listings/{listing_id}/withdraw", response_model=DataListingOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def withdraw_data_listing(
+    request: Request,
     listing_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -175,7 +186,9 @@ async def withdraw_data_listing(
 
 
 @router.get("/my-sales", response_model=PaginatedResponse[DataPurchaseOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_my_sales(
+    request: Request,
     limit: int = Query(20, ge=1, le=100),
     offset: int = Query(0, ge=0),
     user: User = Depends(get_current_user),
@@ -187,7 +200,9 @@ async def get_my_sales(
 
 
 @router.get("/my-revenue")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_my_revenue(
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

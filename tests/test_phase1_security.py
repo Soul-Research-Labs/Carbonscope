@@ -191,8 +191,13 @@ class TestDeactivatedUser:
 class TestMetricsEndpoint:
     """Verify the /metrics endpoint returns operational data."""
 
-    async def test_metrics_returns_data(self, client: AsyncClient):
+    async def test_metrics_requires_auth(self, client: AsyncClient):
+        """Unauthenticated access to /metrics should be rejected."""
         resp = await client.get("/metrics")
+        assert resp.status_code in (401, 403)
+
+    async def test_metrics_returns_data(self, auth_client: AsyncClient):
+        resp = await auth_client.get("/metrics")
         assert resp.status_code == 200
         data = resp.json()
         assert "uptime_seconds" in data

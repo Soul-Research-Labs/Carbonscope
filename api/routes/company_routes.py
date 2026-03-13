@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user, require_admin
+from api.limiter import limiter
 from api.models import Company, DataUpload, User, _utcnow
 from api.services.webhooks import dispatch_event
 from api.services import audit
@@ -27,7 +29,9 @@ router = APIRouter(tags=["company"])
 
 
 @router.get("/company", response_model=CompanyOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_company(
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -40,7 +44,9 @@ async def get_company(
 
 
 @router.patch("/company", response_model=CompanyOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_company(
+    request: Request,
     body: CompanyUpdate,
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -69,7 +75,9 @@ async def update_company(
 
 
 @router.post("/data", response_model=DataUploadOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def upload_data(
+    request: Request,
     body: DataUploadCreate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -94,7 +102,9 @@ async def upload_data(
 
 
 @router.get("/data", response_model=PaginatedResponse[DataUploadOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def list_data_uploads(
+    request: Request,
     year: int | None = Query(default=None),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
@@ -118,7 +128,9 @@ async def list_data_uploads(
 
 
 @router.get("/data/{upload_id}", response_model=DataUploadOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_data_upload(
+    request: Request,
     upload_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -138,7 +150,9 @@ async def get_data_upload(
 
 
 @router.patch("/data/{upload_id}", response_model=DataUploadOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_data_upload(
+    request: Request,
     upload_id: str,
     body: DataUploadUpdate,
     user: User = Depends(get_current_user),
@@ -170,7 +184,9 @@ async def update_data_upload(
 
 
 @router.delete("/data/{upload_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def delete_data_upload(
+    request: Request,
     upload_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

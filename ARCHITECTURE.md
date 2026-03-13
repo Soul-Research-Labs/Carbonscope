@@ -35,7 +35,7 @@ CarbonScope is a three-tier application built on top of the Bittensor decentrali
 │                        API Layer                                        │
 │  ┌──────────────────────────────────────────────────────────────────┐   │
 │  │  FastAPI Backend (Python 3.10+)                                  │   │
-│  │  18 Route Modules · 21 Services · 97+ Endpoints                  │   │
+│  │  18 Route Modules · 22 Services · 97+ Endpoints                  │   │
 │  │  JWT Auth · Rate Limiting · CORS · Security Headers              │   │
 │  └──────────────────────────────────────────────────────────────────┘   │
 ├─────────────────────────────────────────────────────────────────────────┤

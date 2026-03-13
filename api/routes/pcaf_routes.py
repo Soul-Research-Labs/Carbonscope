@@ -20,6 +20,7 @@ from api.schemas import (
     PortfolioSummary,
 )
 from api.services.pcaf import calculate_financed_emissions, summarise_portfolio
+from api.services import audit
 
 router = APIRouter(prefix="/pcaf", tags=["pcaf"])
 
@@ -44,6 +45,11 @@ async def create_portfolio(
     db.add(portfolio)
     await db.commit()
     await db.refresh(portfolio)
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="create", resource_type="pcaf_portfolio", resource_id=portfolio.id,
+    )
+    await db.commit()
     return portfolio
 
 
@@ -133,6 +139,11 @@ async def add_asset(
     db.add(asset)
     await db.commit()
     await db.refresh(asset)
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="create", resource_type="pcaf_asset", resource_id=asset.id,
+    )
+    await db.commit()
     return asset
 
 
@@ -176,6 +187,11 @@ async def delete_asset(
     if not asset:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Asset not found")
     await db.delete(asset)
+    await db.commit()
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="delete", resource_type="pcaf_asset", resource_id=asset_id,
+    )
     await db.commit()
 
 

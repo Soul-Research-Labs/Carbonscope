@@ -22,6 +22,7 @@ from api.services.compliance import (
     generate_tcfd_disclosure,
 )
 from api.services.recommendations import generate_recommendations
+from api.services import audit
 
 router = APIRouter(prefix="/compliance", tags=["compliance"])
 
@@ -52,6 +53,11 @@ async def create_compliance_report(
     # Deduct credits only after successful validation
     from api.services.subscriptions import deduct_operation_credits
     await deduct_operation_credits(db, user.company_id, "estimate")
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="generate", resource_type="compliance_report",
+        resource_id=body.report_id, detail=f"framework: {body.framework}",
+    )
     await db.commit()
 
     if body.framework == "ghg_protocol":

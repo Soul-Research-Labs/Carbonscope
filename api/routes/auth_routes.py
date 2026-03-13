@@ -131,6 +131,13 @@ async def register(request: Request, body: UserRegister, db: AsyncSession = Depe
 
     await db.commit()
     await db.refresh(user)
+
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="register", resource_type="user", resource_id=user.id,
+    )
+    await db.commit()
+
     return user
 
 
@@ -176,6 +183,12 @@ async def login(request: Request, body: UserLogin, db: AsyncSession = Depends(ge
     csrf = secrets.token_hex(32)
     await db.commit()
 
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="login", resource_type="user", resource_id=user.id,
+    )
+    await db.commit()
+
     response = Response(
         content=TokenWithRefresh(
             access_token=access, refresh_token=refresh, csrf_token=csrf,
@@ -215,7 +228,9 @@ async def update_profile(
 
 
 @router.post("/change-password", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_AUTH)
 async def change_password(
+    request: Request,
     body: PasswordChange,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -225,6 +240,7 @@ async def change_password(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
 
     user.hashed_password = hash_password(body.new_password)
+    await revoke_refresh_tokens(db, user.id)
     await audit.record(
         db, user_id=user.id, company_id=user.company_id,
         action="change_password", resource_type="user", resource_id=user.id,
@@ -347,4 +363,5 @@ async def reset_password(
     if user is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
     user.hashed_password = hash_password(body.new_password)
+    await revoke_refresh_tokens(db, user.id)
     await db.commit()

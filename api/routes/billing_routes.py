@@ -16,6 +16,7 @@ from api.schemas import (
     SubscriptionCreate,
     SubscriptionOut,
 )
+from api.services import audit
 from api.services.subscriptions import (
     PLAN_LIMITS,
     change_plan,
@@ -53,6 +54,11 @@ async def update_subscription(
         old_sub = await get_or_create_subscription(db, user.company_id)
         old_plan = old_sub.plan
         sub = await change_plan(db, user.company_id, body.plan)
+        await audit.record(
+            db, user_id=user.id, company_id=user.company_id,
+            action="update", resource_type="subscription", resource_id=str(sub.id),
+            detail=f"plan_change: {old_plan} -> {body.plan}",
+        )
         await db.commit()
         await db.refresh(sub)
 
@@ -83,7 +89,9 @@ async def get_credits(
 
 
 @router.get("/plans")
-async def list_plans():
+async def list_plans(
+    user: User = Depends(get_current_user),
+):
     """List available subscription plans and their limits."""
     return {
         plan: {k: v for k, v in limits.items()}
@@ -102,6 +110,11 @@ async def admin_grant_credits(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Amount must be positive")
 
     await grant_credits(db, user.company_id, amount, "manual_grant")
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="admin_grant_credits", resource_type="credits", resource_id=str(user.company_id),
+        detail=f"granted {amount} credits",
+    )
     balance = await get_credit_balance(db, user.company_id)
     sub = await get_or_create_subscription(db, user.company_id)
     await db.commit()

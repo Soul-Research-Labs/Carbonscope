@@ -54,6 +54,11 @@ async def create_review(
     db.add(review)
     await db.commit()
     await db.refresh(review)
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="create", resource_type="data_review", resource_id=review.id,
+    )
+    await db.commit()
     return review
 
 

@@ -23,7 +23,9 @@ from api.schemas import (
 )
 from api.services.questionnaire import extract_text, process_questionnaire
 from api.services.templates import get_template, list_templates
+from api.services import audit
 from api.limiter import limiter
+from api.config import RATE_LIMIT_DEFAULT
 
 router = APIRouter(prefix="/questionnaires", tags=["questionnaires"])
 
@@ -94,7 +96,9 @@ async def upload_questionnaire(
 
 
 @router.get("/", response_model=PaginatedResponse[QuestionnaireOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def list_questionnaires(
+    request: Request,
     status: str | None = Query(default=None, pattern="^(uploaded|extracting|extracted|reviewed|exported)$"),
     file_type: str | None = Query(default=None, pattern="^(pdf|xlsx|docx|csv)$"),
     sort_by: str = Query(default="created_at", pattern="^(created_at|updated_at|title)$"),
@@ -136,7 +140,9 @@ async def list_questionnaires(
 
 
 @router.get("/templates/", response_model=list)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_templates(
+    request: Request,
     user: User = Depends(get_current_user),
 ):
     """List available pre-built questionnaire templates."""
@@ -144,7 +150,9 @@ async def get_templates(
 
 
 @router.get("/templates/{template_id}")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_template_detail(
+    request: Request,
     template_id: str,
     user: User = Depends(get_current_user),
 ):
@@ -156,7 +164,9 @@ async def get_template_detail(
 
 
 @router.post("/templates/{template_id}/apply", response_model=QuestionnaireDetail)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def apply_template(
+    request: Request,
     template_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -235,7 +245,9 @@ async def apply_template(
 
 
 @router.get("/{questionnaire_id}", response_model=QuestionnaireDetail)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_questionnaire(
+    request: Request,
     questionnaire_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -308,7 +320,9 @@ async def extract_questions(
 
 
 @router.patch("/{questionnaire_id}/questions/{question_id}", response_model=QuestionOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_question(
+    request: Request,
     questionnaire_id: str,
     question_id: str,
     body: QuestionUpdate,
@@ -348,7 +362,9 @@ async def update_question(
 
 
 @router.delete("/{questionnaire_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def delete_questionnaire(
+    request: Request,
     questionnaire_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -369,7 +385,9 @@ async def delete_questionnaire(
 
 
 @router.patch("/{questionnaire_id}", response_model=QuestionnaireOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_questionnaire(
+    request: Request,
     questionnaire_id: str,
     body: QuestionnaireUpdate,
     user: User = Depends(get_current_user),
@@ -397,7 +415,9 @@ async def update_questionnaire(
 
 
 @router.get("/{questionnaire_id}/export/pdf")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def export_questionnaire_pdf(
+    request: Request,
     questionnaire_id: str,
     user: User = Depends(require_credits("pdf_export")),
     db: AsyncSession = Depends(get_db),

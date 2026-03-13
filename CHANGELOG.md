@@ -6,6 +6,47 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [0.19.0] — 2026-03-14 — Phase 25: Security Hardening & Frontend Parity
+
+### Added — Audit Logging
+
+- Audit trail on **all write operations**: register, login, MFA setup/verify/disable, PCAF create portfolio/add asset/delete asset, compliance report generation, review creation, admin credit grants, subscription updates.
+- Consistent `audit.record()` + `db.commit()` pattern across 8 route modules.
+
+### Added — Rate Limiting
+
+- Rate limiting applied to **all 18 route modules** (previously only 5 had coverage).
+- Added `@limiter.limit(RATE_LIMIT_DEFAULT)` + `Request` parameter to: company (7), supply chain (7), alert (3), webhook (5), AI (2), questionnaire (9), scenario (5), marketplace (7), audit (1) endpoints.
+- Change-password endpoint now rate-limited.
+
+### Fixed — Security
+
+- **`/metrics` endpoint** gated behind authentication (was publicly accessible).
+- **Webhook update** now requires admin role (`require_admin` instead of `get_current_user`).
+- **Session invalidation**: password change and password reset now revoke all refresh tokens.
+- **`/plans` endpoint** now requires authentication.
+- Fixed critical `NameError` in carbon_routes.py — `logger` was used but never imported.
+
+### Added — Frontend Pages
+
+- **PCAF page** (`/pcaf`): Portfolio management, asset CRUD, summary metrics (total emissions, data quality, asset count).
+- **Reviews page** (`/reviews`): Data review workflow with submit/approve/reject actions, status badges, create-from-report.
+- **MFA page** (`/mfa`): MFA status display, TOTP setup flow (secret, backup codes), verify, disable.
+- **Benchmarks page** (`/benchmarks`): Industry benchmarks comparison, peer ranking, industry selector.
+- API client extended with PCAF (7 functions), Reviews (4), MFA (5), Benchmarks (2) and associated TypeScript interfaces.
+
+### Added — Testing
+
+- 26 new backend tests in `test_phase25_hardening.py`: auth gates (4), audit logging (5), session invalidation (1), webhook auth (1), cross-company isolation (2), rate limiting (11), PCAF audit (1), review audit (1).
+- Total backend tests: **640** (35 files). Total frontend tests: 83 (14 files).
+
+### Changed — Documentation
+
+- Updated version badge, test counts, service counts, and page counts across README, ARCHITECTURE, CONTRIBUTING.
+- Updated changelog with Phase 25 summary.
+
+---
+
 ## [0.18.0] — 2026-03-14 — Phase 24: Competitive Feature Parity
 
 ### Added — Compliance Frameworks

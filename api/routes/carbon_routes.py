@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import io
+import logging
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from fastapi.responses import StreamingResponse
@@ -26,6 +27,8 @@ from api.schemas import (
 from api.services.subnet_bridge import estimate_emissions, estimate_emissions_local
 from api.services.webhooks import dispatch_event
 from api.services import audit
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["carbon"])
 

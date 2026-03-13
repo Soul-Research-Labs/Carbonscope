@@ -59,7 +59,9 @@ async def predict(
 
 
 @router.post("/audit-trail")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def audit_trail(
+    request: Request,
     body: AuditTrailRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -96,7 +98,9 @@ async def audit_trail(
 
 
 @router.get("/recommendations/{report_id}", response_model=RecommendationSummary)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_recommendations(
+    request: Request,
     report_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

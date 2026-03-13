@@ -97,7 +97,13 @@ class TestBillingSubscriptions:
         assert resp.json()["balance"] == 1000  # 100 initial + 900 upgrade delta
 
     async def test_list_plans_no_auth(self, client: AsyncClient):
+        """Unauthenticated access to /plans should be rejected."""
         resp = await client.get("/api/v1/billing/plans")
+        assert resp.status_code == 401
+
+    async def test_list_plans_authenticated(self, auth_client: AsyncClient):
+        """Authenticated users can list plans."""
+        resp = await auth_client.get("/api/v1/billing/plans")
         assert resp.status_code == 200
         data = resp.json()
         assert "free" in data

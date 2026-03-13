@@ -13,8 +13,8 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/node-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node 18+">
-  <img src="https://img.shields.io/badge/version-0.17.1-orange?style=flat-square" alt="Version 0.17.1">
-  <img src="https://img.shields.io/badge/tests-611%20backend%20%7C%2083%20frontend-brightgreen?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/version-0.19.0-orange?style=flat-square" alt="Version 0.19.0">
+  <img src="https://img.shields.io/badge/tests-640%20backend%20%7C%2083%20frontend-brightgreen?style=flat-square" alt="Tests">
   <img src="https://img.shields.io/badge/endpoints-97%2B-7B61FF?style=flat-square" alt="97+ API Endpoints">
   <img src="https://img.shields.io/badge/Bittensor-Subnet-000000?style=flat-square" alt="Bittensor Subnet">
 </p>
@@ -379,7 +379,7 @@ cd subtensor && docker compose down -v
 
 ## Running Tests
 
-### Backend Tests (611)
+### Backend Tests (640)
 
 ```bash
 pytest tests/ -v                                      # Full suite
@@ -662,7 +662,7 @@ carbonscope/
 │   ├── middleware.py               # Request ID, security headers, error handler
 │   ├── limiter.py                  # SlowAPI rate limiter
 │   ├── routes/                     # 18 route modules (see Platform API)
-│   └── services/                   # 19 service modules (see Architecture)
+│   └── services/                   # 21 service modules (see Architecture)
 ├── carbonscope/                    # Bittensor subnet core
 │   ├── protocol.py                 # CarbonSynapse (bt.Synapse)
 │   ├── scoring.py                  # 5-axis composite scoring engine
@@ -675,13 +675,13 @@ carbonscope/
 │   └── validator.py                # Bittensor Dendrite client
 ├── frontend/                       # Next.js 15 + React 19 dashboard
 │   └── src/
-│       ├── app/                    # App Router pages (22 routes)
+│       ├── app/                    # App Router pages (25 routes)
 │       ├── components/             # Reusable UI components
 │       └── lib/                    # API client, auth context, utilities
 ├── alembic/                        # Database migrations
 ├── data/emission_factors/          # EPA, eGRID, IEA, DEFRA JSON datasets
 ├── scripts/                        # Shell scripts (register, run miner/validator)
-├── tests/                          # 611 backend tests (pytest, 36 files)
+├── tests/                          # 640 backend tests (pytest, 35 files)
 ├── docker-compose.yml              # Development stack
 ├── docker-compose.prod.yml         # Production stack (PostgreSQL)
 ├── Dockerfile                      # Multi-stage (backend + frontend)
@@ -798,7 +798,7 @@ Set `SENTRY_DSN` to enable error tracking and performance monitoring. Adjust `SE
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
-**Latest — v0.17.0** : Completion & Polish): Responsive mobile tables, copy-to-clipboard, URL query state sync, Bittensor economic docs, E2E Playwright scaffolding, load test scripts, rate limit hardening, a11y improvements. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+**Latest — v0.19.0** (Phase 25: Security Hardening & Frontend Parity): Audit logging on all write operations, rate limiting on all routes, session invalidation on password change/reset, /metrics auth gate, webhook admin auth, 4 new frontend pages (PCAF, Reviews, MFA, Benchmarks). See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ---
 

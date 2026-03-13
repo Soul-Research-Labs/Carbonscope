@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, Request
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user, require_admin
+from api.limiter import limiter
 from api.models import AuditLog, User
 from api.schemas import AuditLogOut, PaginatedResponse
 
@@ -15,7 +17,9 @@ router = APIRouter(prefix="/audit-logs", tags=["audit"])
 
 
 @router.get("/", response_model=PaginatedResponse[AuditLogOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def list_audit_logs(
+    request: Request,
     action: str | None = Query(default=None),
     resource_type: str | None = Query(default=None),
     user_id: str | None = Query(default=None),

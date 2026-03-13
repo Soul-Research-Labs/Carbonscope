@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user, require_admin
+from api.limiter import limiter
 from api.models import User
 from api.schemas import PaginatedResponse, WebhookCreate, WebhookDeliveryOut, WebhookOut, WebhookOutPublic, WebhookToggle
 from api.services.webhooks import create_webhook, delete_webhook, list_deliveries, list_webhooks, toggle_webhook
@@ -16,7 +18,9 @@ router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 
 @router.post("/", response_model=WebhookOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def add_webhook(
+    request: Request,
     body: WebhookCreate,
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -34,7 +38,9 @@ async def add_webhook(
 
 
 @router.get("/", response_model=PaginatedResponse[WebhookOutPublic])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_webhooks(
+    request: Request,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),
@@ -46,10 +52,12 @@ async def get_webhooks(
 
 
 @router.patch("/{webhook_id}", response_model=WebhookOutPublic)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_webhook(
+    request: Request,
     webhook_id: str,
     body: WebhookToggle,
-    user: User = Depends(get_current_user),
+    user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
 ):
     """Enable or disable a webhook."""
@@ -64,7 +72,9 @@ async def update_webhook(
 
 
 @router.delete("/{webhook_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def remove_webhook(
+    request: Request,
     webhook_id: str,
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -80,7 +90,9 @@ async def remove_webhook(
 
 
 @router.get("/{webhook_id}/deliveries", response_model=PaginatedResponse[WebhookDeliveryOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_deliveries(
+    request: Request,
     webhook_id: str,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),

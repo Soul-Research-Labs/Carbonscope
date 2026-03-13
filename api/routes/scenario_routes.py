@@ -13,12 +13,15 @@ from api.schemas import PaginatedResponse, ScenarioCreate, ScenarioOut, Scenario
 from api.services import audit
 from api.services.scenarios import run_scenario
 from api.limiter import limiter
+from api.config import RATE_LIMIT_DEFAULT
 
 router = APIRouter(prefix="/scenarios", tags=["scenarios"])
 
 
 @router.post("/", response_model=ScenarioOut, status_code=status.HTTP_201_CREATED)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def create_scenario(
+    request: Request,
     body: ScenarioCreate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -52,7 +55,9 @@ async def create_scenario(
 
 
 @router.get("/", response_model=PaginatedResponse[ScenarioOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def list_scenarios(
+    request: Request,
     status: str | None = Query(default=None, pattern="^(draft|computed|archived)$"),
     sort_by: str = Query(default="created_at", pattern="^(created_at|updated_at|name)$"),
     order: str = Query(default="desc", pattern="^(asc|desc)$"),
@@ -86,7 +91,9 @@ async def list_scenarios(
 
 
 @router.get("/{scenario_id}", response_model=ScenarioOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_scenario(
+    request: Request,
     scenario_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -106,7 +113,9 @@ async def get_scenario(
 
 
 @router.patch("/{scenario_id}", response_model=ScenarioOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_scenario(
+    request: Request,
     scenario_id: str,
     body: ScenarioUpdate,
     user: User = Depends(get_current_user),
@@ -159,7 +168,9 @@ async def compute_scenario(
 
 
 @router.delete("/{scenario_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def delete_scenario(
+    request: Request,
     scenario_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),

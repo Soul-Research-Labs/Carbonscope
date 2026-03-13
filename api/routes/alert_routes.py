@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user
+from api.limiter import limiter
 from api.models import User
 from api.schemas import AlertOut, PaginatedResponse
 from api.services.alerts import acknowledge_alert, check_company_alerts, list_alerts
@@ -15,7 +17,9 @@ router = APIRouter(prefix="/alerts", tags=["alerts"])
 
 
 @router.get("", response_model=PaginatedResponse[AlertOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_alerts(
+    request: Request,
     unread_only: bool = Query(False),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -30,7 +34,9 @@ async def get_alerts(
 
 
 @router.post("/{alert_id}/acknowledge", response_model=AlertOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def ack_alert(
+    request: Request,
     alert_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -44,7 +50,9 @@ async def ack_alert(
 
 
 @router.post("/check", response_model=list[AlertOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def trigger_alert_check(
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):

@@ -279,8 +279,10 @@ class TestCrossCompanyIsolation:
             "new_password": "Newpassword456!",
         })
 
-        # B sees no audit logs from A
+        # B sees only their own audit logs (register + login), not A's
         client.headers["Authorization"] = f"Bearer {token_b}"
         resp = await client.get("/api/v1/audit-logs/")
         items = resp.json()["items"]
-        assert len(items) == 0
+        # B should not see A's change_password audit log
+        for item in items:
+            assert item["action"] != "change_password"
