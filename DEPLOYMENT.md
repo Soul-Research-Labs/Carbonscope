@@ -29,7 +29,7 @@
 | Node.js       | 18+     | Frontend build & runtime                      |
 | PostgreSQL    | 15+     | Production database (asyncpg driver)          |
 | Nginx         | 1.24+   | Reverse proxy with TLS termination            |
-| Bittensor SDK | ≥ 6.0.0 | Subnet communication (if using subnet mode)   |
+| Bittensor SDK | ≥ 10.1.0 | Subnet communication (if using subnet mode)   |
 | Redis         | 7+      | Optional — caching and rate limiting at scale |
 
 ---
@@ -554,7 +554,7 @@ kubectl apply -f k8s/ingress.yaml
 
 ```bash
 # Update image tag and apply
-kubectl -n carbonscope set image deployment/backend backend=ghcr.io/carbonscope/carbonscope:v0.16.0
+kubectl -n carbonscope set image deployment/backend backend=ghcr.io/carbonscope/carbonscope:v0.17.0
 kubectl -n carbonscope rollout status deployment/backend
 
 # Rollback if needed

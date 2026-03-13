@@ -76,7 +76,7 @@ carbonscope/
 │   ├── auth.py              #   JWT + bcrypt authentication
 │   ├── deps.py              #   Dependency injection (auth, plan gates, credits)
 │   ├── middleware.py         #   Request ID, logging, security headers
-│   ├── routes/              #   13 route modules
+│   ├── routes/              #   14 route modules
 │   └── services/            #   19 service modules
 ├── carbonscope/             # Bittensor subnet core
 │   ├── protocol.py          #   CarbonSynapse definition
@@ -85,11 +85,11 @@ carbonscope/
 ├── neurons/                 # Bittensor miner & validator
 ├── frontend/                # Next.js 15 dashboard
 │   └── src/
-│       ├── app/             #   App Router pages (18 routes)
+│       ├── app/             #   App Router pages (22 routes)
 │       ├── components/      #   Reusable UI components
 │       └── lib/             #   API client, auth context
 ├── alembic/                 # Database migrations
-├── tests/                   # Backend tests (491+)
+├── tests/                   # Backend tests (564+)
 └── data/                    # Emission factor JSON datasets
 ```
 
@@ -175,7 +175,7 @@ git rebase upstream/main
 ### Backend Tests (pytest)
 
 ```bash
-# Run full suite (491+ tests)
+# Run full suite (564 tests)
 pytest tests/ -v
 
 # Specific file
@@ -203,7 +203,7 @@ pytest tests/ -n auto
 ```bash
 cd frontend
 
-# Run full suite (65+ tests)
+# Run full suite (83 tests)
 npm test
 
 # Watch mode

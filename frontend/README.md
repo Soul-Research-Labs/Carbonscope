@@ -122,6 +122,7 @@ frontend/
 | `/upload`                     | Data Upload          | Structured entry form for Scope 1/2/3 activity data      |
 | `/reports`                    | Reports              | Paginated list with sorting, filtering, CSV/JSON export  |
 | `/reports/[id]`               | Report Detail        | Full report with breakdown, sources, PDF export          |
+| `/recommendations`            | Recommendations      | Report index for AI reduction strategies                 |
 | `/recommendations/[reportId]` | Recommendations      | AI-generated reduction strategies for a specific report  |
 | `/questionnaires`             | Questionnaires       | Document upload, template selection, extraction status   |
 | `/questionnaires/[id]`        | Questionnaire Detail | Review AI-extracted questions, edit answers, PDF export  |
@@ -129,6 +130,7 @@ frontend/
 | `/supply-chain`               | Supply Chain         | Supplier/buyer network, Scope 3 aggregation              |
 | `/compliance`                 | Compliance           | Generate GHG Protocol / CDP / TCFD / SBTi reports        |
 | `/marketplace`                | Marketplace          | Browse, purchase, list, and withdraw data listings       |
+| `/marketplace/seller`         | Seller Dashboard     | Revenue summary, sales table, active listings            |
 | `/alerts`                     | Alerts               | Emission threshold alerts with acknowledgement           |
 | `/billing`                    | Billing              | Subscription plans, credit balance, plan management      |
 | `/audit-logs`                 | Audit Logs           | Activity trail with pagination and action filters        |
@@ -218,7 +220,7 @@ function MyComponent() {
 ### Run Tests
 
 ```bash
-npm test              # Run full suite (65+ tests)
+npm test              # Run full suite (83 tests)
 npm run test:watch    # Watch mode for development
 ```
 
@@ -242,7 +244,10 @@ npm run test:watch    # Watch mode for development
 | `Toast.test.tsx`          | Toast types, auto-dismiss, manual close               |
 | `api.test.ts`             | ApiError, auth headers, error handling                |
 | `api-new-methods.test.ts` | Credit ledger, delete account, supply chain, webhooks |
-| `auto-refresh.test.ts`    | Token refresh on 401, retry logic                     |
+| `LoginPage.test.tsx`             | Form submission, validation, error handling            |
+| `DashboardPage.test.tsx`         | KPI cards, API data rendering, empty states           |
+| `RecommendationsPage.test.tsx`   | Strategy listing, navigation, data display            |
+| `SellerDashboardPage.test.tsx`   | Revenue summary, sales table, pagination              |
 
 ### Writing Tests
 
@@ -271,12 +276,15 @@ test("calls onConfirm when confirmed", async () => {
 
 ## UI Features
 
-- **Responsive layout** — Mobile-friendly with adaptive navigation
-- **Toast notifications** — Success, error, warning, info toasts
+- **Responsive layout** — Mobile-friendly with adaptive navigation and card-based data tables
+- **Toast notifications** — Success, error, warning, info toasts with auto-dismiss
 - **Confirmation dialogs** — All destructive actions require confirmation
-- **Loading skeletons** — Animated placeholders during data fetching
+- **Loading skeletons** — Animated placeholders during data fetching on all pages
 - **Breadcrumb navigation** — Trail on all detail/nested pages
-- **Accessibility** — Skip-to-content link, focus indicators, `prefers-reduced-motion` support
+- **Copy-to-clipboard** — One-click copy with "Copied!" feedback on webhook URLs
+- **URL query state sync** — Filter state persisted in URL params (marketplace, scenarios)
+- **Dark/light mode** — Persistent theme toggle with system preference detection
+- **Accessibility** — Skip-to-content link, focus indicators, `prefers-reduced-motion` support, `htmlFor`/`id` labels, ARIA attributes
 - **Error boundaries** — Graceful error handling on key routes
 
 ---

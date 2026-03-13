@@ -13,9 +13,9 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/node-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node 18+">
-  <img src="https://img.shields.io/badge/version-0.17.0-orange?style=flat-square" alt="Version 0.17.0">
-  <img src="https://img.shields.io/badge/tests-491%2B%20backend%20%7C%2065%2B%20frontend-brightgreen?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/endpoints-75%2B-7B61FF?style=flat-square" alt="75+ API Endpoints">
+  <img src="https://img.shields.io/badge/version-0.17.1-orange?style=flat-square" alt="Version 0.17.1">
+  <img src="https://img.shields.io/badge/tests-564%20backend%20%7C%2083%20frontend-brightgreen?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/endpoints-80%2B-7B61FF?style=flat-square" alt="80+ API Endpoints">
   <img src="https://img.shields.io/badge/Bittensor-Subnet-000000?style=flat-square" alt="Bittensor Subnet">
 </p>
 
@@ -34,7 +34,7 @@
 
 CarbonScope is a **Bittensor subnet** that combines decentralized AI with enterprise carbon accounting. Miners estimate corporate carbon emissions across Scope 1, 2, and 3 categories, while validators score report quality against the **GHG Protocol Corporate Standard** using curated benchmarks.
 
-The platform ships with a production-ready **FastAPI** backend (75+ endpoints), a **Next.js 15** dashboard, and a complete carbon management suite — covering emission estimation, compliance reporting, supply chain tracking, AI-powered document processing, and a data marketplace.
+The platform ships with a production-ready **FastAPI** backend (80+ endpoints), a **Next.js 15** dashboard, and a complete carbon management suite — covering emission estimation, compliance reporting, supply chain tracking, AI-powered document processing, and a data marketplace.
 
 ### Why CarbonScope?
 
@@ -88,7 +88,7 @@ The platform ships with a production-ready **FastAPI** backend (75+ endpoints), 
          │                                                             │
          │         ┌─────────────────────────────────────────┐         │
          └────────►│          FastAPI Backend                 │◄────────┘
-                   │  13 Route Modules · 75+ Endpoints        │
+                   │  14 Route Modules · 80+ Endpoints        │
                    │  JWT Auth · Rate Limiting · Audit Logs   │
                    └─────────────────────────────────────────┘
 ```
@@ -134,7 +134,7 @@ The platform ships with a production-ready **FastAPI** backend (75+ endpoints), 
 | :------------ | :------ | :------------------------------------------- |
 | Python        | 3.10+   | Backend & Bittensor subnet                   |
 | Node.js       | 18+     | Frontend dashboard                           |
-| Bittensor SDK | ≥ 6.0.0 | Subnet communication                         |
+| Bittensor SDK | ≥ 10.1.0 | Subnet communication                         |
 | PostgreSQL    | 15+     | Production database (SQLite for development) |
 
 ### 1. Install the Backend
@@ -229,6 +229,14 @@ alembic current                                     # Show current revision
 | `COOKIE_DOMAIN`               | —                                    | Cookie domain for cross-subdomain auth                    |
 | `COOKIE_SECURE`               | `true` (production)                  | HTTPS-only cookies                                        |
 | `COOKIE_SAMESITE`             | `lax`                                | Cookie SameSite policy                                    |
+| `APP_VERSION`                 | —                                    | App version string (Sentry releases, OTEL)                |
+| `SENTRY_DSN`                  | —                                    | Sentry DSN for error tracking & APM                       |
+| `SENTRY_TRACES_SAMPLE_RATE`   | `0.1`                                | Fraction of requests traced (0.0–1.0)                     |
+| `REDIS_URL`                   | —                                    | Redis URL (distributed rate limiting & caching)           |
+| `PROMETHEUS_ENABLED`          | `false`                              | Expose `/metrics` in Prometheus text format               |
+| `STRIPE_SECRET_KEY`           | —                                    | Stripe API key (subscription billing)                     |
+| `STRIPE_WEBHOOK_SECRET`       | —                                    | Stripe webhook signature secret                           |
+| `POSTGRES_PASSWORD`           | —                                    | PostgreSQL password (used by `docker-compose.prod.yml`)   |
 
 > A complete template is available in [`.env.example`](.env.example).
 
@@ -371,7 +379,7 @@ cd subtensor && docker compose down -v
 
 ## Running Tests
 
-### Backend Tests (491+)
+### Backend Tests (564)
 
 ```bash
 pytest tests/ -v                                      # Full suite
@@ -380,7 +388,7 @@ pytest tests/ --cov=api --cov-report=term-missing     # With coverage
 pytest tests/ -k "test_auth" -v                       # Pattern matching
 ```
 
-### Frontend Tests (65+)
+### Frontend Tests (83)
 
 ```bash
 cd frontend
@@ -389,7 +397,7 @@ npm run test:watch        # Watch mode for development
 ```
 
 <details>
-<summary><strong>Backend Test Coverage (28 test files)</strong></summary>
+<summary><strong>Backend Test Coverage (35 test files)</strong></summary>
 
 | File                                 | Coverage                                                    |
 | :----------------------------------- | :---------------------------------------------------------- |
@@ -421,24 +429,35 @@ npm run test:watch        # Watch mode for development
 | `test_scenario_routes.py`            | Scenario CRUD, compute, pagination                          |
 | `test_supply_chain_routes.py`        | Supply chain links, Scope 3 calculation, verification       |
 | `test_webhook_routes.py`             | Webhook CRUD, toggle, delivery logs, pagination             |
+| `test_phase21_coverage.py`           | Webhook retry exhaustion, marketplace emails, LLM fallback  |
+| `test_miner.py`                      | Miner input validation, rate limiting, error classification |
+| `test_validator.py`                  | Validator scoring, EMA persistence, weight setting          |
+| `test_phase13_14_hardening.py`       | Redis limiter, scheduler locks, token cleanup, indexes      |
+| `test_stripe_routes.py`              | Stripe webhook signature verification, event handling       |
+| `test_seller.py`                     | Marketplace seller dashboard, revenue, sales pagination     |
+| `test_phase11_12.py`                 | Sentry integration, Docker healthchecks, OTEL tracing       |
 
 </details>
 
 <details>
-<summary><strong>Frontend Test Coverage (10 test files)</strong></summary>
+<summary><strong>Frontend Test Coverage (14 test files, 83 tests)</strong></summary>
 
-| File                      | Coverage                                              |
-| :------------------------ | :---------------------------------------------------- |
-| `Breadcrumbs.test.tsx`    | Rendering, links, accessibility, separators           |
-| `ConfirmDialog.test.tsx`  | Open/close, confirm/cancel, variants, custom labels   |
-| `DataTable.test.tsx`      | Sorting, pagination, empty states, rendering          |
-| `FormField.test.tsx`      | Labels, errors, hints, children, accessibility        |
-| `Navbar.test.tsx`         | Navigation links, active states, mobile menu          |
-| `Skeleton.test.tsx`       | Skeleton variants, animation, sizing                  |
-| `Toast.test.tsx`          | Toast types, auto-dismiss, manual close               |
-| `api.test.ts`             | ApiError, auth headers, error handling                |
-| `api-new-methods.test.ts` | Credit ledger, delete account, supply chain, webhooks |
-| `auto-refresh.test.ts`    | Token refresh on 401, retry logic                     |
+| File                           | Coverage                                              |
+| :----------------------------- | :---------------------------------------------------- |
+| `Breadcrumbs.test.tsx`         | Rendering, links, accessibility, separators           |
+| `ConfirmDialog.test.tsx`       | Open/close, confirm/cancel, variants, custom labels   |
+| `DataTable.test.tsx`           | Sorting, pagination, empty states, mobile cards       |
+| `FormField.test.tsx`           | Labels, errors, hints, children, accessibility        |
+| `Navbar.test.tsx`              | Navigation links, active states, mobile menu          |
+| `Skeleton.test.tsx`            | Skeleton variants, animation, sizing                  |
+| `Toast.test.tsx`               | Toast types, auto-dismiss, manual close               |
+| `api.test.ts`                  | ApiError, auth headers, error handling                |
+| `api-new-methods.test.ts`      | Credit ledger, delete account, supply chain, webhooks |
+| `auto-refresh.test.ts`         | Token refresh on 401, retry logic                     |
+| `LoginPage.test.tsx`           | Form submission, validation, error handling           |
+| `DashboardPage.test.tsx`       | KPI cards, API data rendering, empty states           |
+| `RecommendationsPage.test.tsx` | Strategy listing, navigation, data display            |
+| `SellerDashboardPage.test.tsx` | Revenue summary, sales table, pagination              |
 
 </details>
 
@@ -446,7 +465,7 @@ npm run test:watch        # Watch mode for development
 
 ## Platform API
 
-The platform exposes **75+ RESTful endpoints** across 13 route modules. All endpoints are prefixed with `/api/v1/` and documented via OpenAPI.
+The platform exposes **80+ RESTful endpoints** across 14 route modules. All endpoints are prefixed with `/api/v1/` and documented via OpenAPI.
 
 ### Endpoint Summary
 
@@ -462,8 +481,9 @@ The platform exposes **75+ RESTful endpoints** across 13 route modules. All endp
 | **Compliance**        |     1     | GHG Protocol / CDP / TCFD / SBTi report generation                     |
 | **Billing**           |     6     | Subscription management, credits, plan comparison, ledger              |
 | **Alerts**            |     3     | Emission threshold monitoring, acknowledgement                         |
-| **Marketplace**       |     6     | Anonymized data listings, credit-based purchase                        |
+| **Marketplace**       |     8     | Anonymized data listings, credit-based purchase, seller dashboard      |
 | **Webhooks**          |     5     | HMAC-signed webhooks, delivery logs with retry info                    |
+| **Stripe**            |     1     | Stripe webhook endpoint for subscription events                        |
 | **Audit & Health**    |     2     | Audit logs (admin), health check                                       |
 
 > **Full Reference:** See [API.md](API.md) for the complete endpoint reference with request/response examples.
@@ -592,12 +612,13 @@ The **Next.js 15** dashboard (React 19, Tailwind CSS 4, Recharts) provides a com
 | **Supply Chain**    | Supplier network management, Scope 3 propagation            |
 | **Compliance**      | Generate GHG Protocol / CDP / TCFD / SBTi reports           |
 | **Marketplace**     | Browse, purchase, create, and withdraw data listings        |
+| **Seller Dashboard**| Revenue summary, sales table, active listings               |
 | **Alerts**          | Emission threshold alerts with acknowledgement              |
 | **Billing**         | Subscription plans, credit balance, plan management         |
 | **Audit Log**       | Activity trail viewer with pagination and filters           |
 | **Settings**        | User profile, password change, company profile, webhooks    |
 
-**UI Features:** Toast notifications, confirmation dialogs, loading skeletons, breadcrumb navigation, mobile-responsive layout, accessibility (skip-to-content, focus indicators, reduced motion).
+**UI Features:** Toast notifications, confirmation dialogs, loading skeletons, breadcrumb navigation, mobile-responsive card tables, copy-to-clipboard, URL query state sync, dark/light theme toggle, accessibility (skip-to-content, focus indicators, reduced motion, ARIA labels).
 
 > **Setup & Components:** See [frontend/README.md](frontend/README.md) for frontend development details.
 
@@ -631,7 +652,7 @@ The production stack includes PostgreSQL 16, resource limits, `no-new-privileges
 ```
 carbonscope/
 ├── api/                            # FastAPI platform backend
-│   ├── main.py                     # App entry point (13 routers, lifespan scheduler)
+│   ├── main.py                     # App entry point (14 routers, lifespan scheduler)
 │   ├── config.py                   # Env-based configuration + production enforcement
 │   ├── database.py                 # SQLAlchemy async (SQLite + PostgreSQL)
 │   ├── models.py                   # 19 models (see Data Models)
@@ -640,7 +661,7 @@ carbonscope/
 │   ├── deps.py                     # Dependencies: auth, plan gates, credits, admin
 │   ├── middleware.py               # Request ID, security headers, error handler
 │   ├── limiter.py                  # SlowAPI rate limiter
-│   ├── routes/                     # 13 route modules (see Platform API)
+│   ├── routes/                     # 14 route modules (see Platform API)
 │   └── services/                   # 19 service modules (see Architecture)
 ├── carbonscope/                    # Bittensor subnet core
 │   ├── protocol.py                 # CarbonSynapse (bt.Synapse)
@@ -654,13 +675,13 @@ carbonscope/
 │   └── validator.py                # Bittensor Dendrite client
 ├── frontend/                       # Next.js 15 + React 19 dashboard
 │   └── src/
-│       ├── app/                    # App Router pages (18 routes)
+│       ├── app/                    # App Router pages (22 routes)
 │       ├── components/             # Reusable UI components
 │       └── lib/                    # API client, auth context, utilities
 ├── alembic/                        # Database migrations
 ├── data/emission_factors/          # EPA, eGRID, IEA, DEFRA JSON datasets
 ├── scripts/                        # Shell scripts (register, run miner/validator)
-├── tests/                          # 491+ backend tests (pytest)
+├── tests/                          # 564 backend tests (pytest, 35 files)
 ├── docker-compose.yml              # Development stack
 ├── docker-compose.prod.yml         # Production stack (PostgreSQL)
 ├── Dockerfile                      # Multi-stage (backend + frontend)
@@ -777,7 +798,7 @@ Set `SENTRY_DSN` to enable error tracking and performance monitoring. Adjust `SE
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
-**Latest — v0.10.0** (Phase 11: Enterprise Hardening): Sentry APM integration, Docker healthchecks on all services, safety scanner in CI, frontend build step, operational runbook, dark mode toggle, webhook event coverage.
+**Latest — v0.17.0** : Completion & Polish): Responsive mobile tables, copy-to-clipboard, URL query state sync, Bittensor economic docs, E2E Playwright scaffolding, load test scripts, rate limit hardening, a11y improvements. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ---
 

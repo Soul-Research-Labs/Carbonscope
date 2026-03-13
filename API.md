@@ -1,6 +1,6 @@
 # CarbonScope — API Reference
 
-> Complete reference for the CarbonScope Platform API (75+ endpoints).
+> Complete reference for the CarbonScope Platform API (80+ endpoints).
 
 **Base URL:** `/api/v1/`  
 **Auth:** JWT Bearer token (`Authorization: Bearer <token>`) or httpOnly cookie  
@@ -1298,6 +1298,40 @@ Authorization: Bearer <token>
 
 ---
 
+### My Sales
+
+```
+GET /marketplace/my-sales?limit=50&offset=0
+Authorization: Bearer <token>
+```
+
+Returns purchases of your listings.
+
+**Response** `200` (`PaginatedResponse[DataPurchaseOut]`)
+
+---
+
+### My Revenue
+
+```
+GET /marketplace/my-revenue
+Authorization: Bearer <token>
+```
+
+Returns total revenue, sales count, and active listing count.
+
+**Response** `200` (`SellerRevenue`):
+
+```json
+{
+  "total_credits": 250,
+  "total_sales": 5,
+  "active_listings": 3
+}
+```
+
+---
+
 ### Withdraw Listing
 
 ```
@@ -1457,7 +1491,7 @@ No authentication required.
 ```json
 {
   "status": "ok",
-  "version": "0.16.0",
+  "version": "0.17.0",
   "database": "connected",
   "email": "configured",
   "bittensor": "local_mode"
@@ -1480,7 +1514,7 @@ No authentication required.
 {
   "uptime_seconds": 86400,
   "total_requests": 15234,
-  "version": "0.16.0"
+  "version": "0.17.0"
 }
 ```
 
@@ -1563,11 +1597,17 @@ All errors follow a consistent format:
 
 ### Rate Limits
 
-| Scope       | Limit     |
-| :---------- | :-------- |
-| Auth        | 10/minute |
-| Default     | 60/minute |
-| `/estimate` | 5/minute  |
+| Scope                       | Limit     |
+| :-------------------------- | :-------- |
+| Auth                        | 10/minute |
+| Default                     | 60/minute |
+| `/estimate`                 | 5/minute  |
+| `/scenarios/*/compute`      | 5/minute  |
+| `/questionnaires/upload`    | 5/minute  |
+| `/questionnaires/*/extract` | 5/minute  |
+| `/marketplace/*/purchase`   | 10/minute |
+| `/billing/subscription`     | 5/minute  |
+| `/stripe/webhooks`          | 60/minute |
 
 Rate limit headers are included in responses:
 

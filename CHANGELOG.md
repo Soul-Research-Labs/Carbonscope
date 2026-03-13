@@ -6,6 +6,40 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [0.17.1] — 2026-03-13 — Phase 23: Gap Analysis & Documentation
+
+### Fixed — Backend
+
+- Added `request: Request` parameter to all rate-limited endpoints (scenario compute, marketplace purchase, questionnaire upload/extract) — required by slowapi.
+- Added rate limit decorators on compute-heavy endpoints: scenario compute (5/min), marketplace purchase (10/min), questionnaire upload (5/min), questionnaire extract (5/min).
+- Deprecated unused synchronous `email.py` service module (replaced by `email_async.py` in production routes).
+
+### Fixed — Frontend
+
+- Replaced `alert()` with `useToast()` in marketplace purchase flow.
+- Added `htmlFor`/`id` accessibility labels on marketplace create form (4 input pairs) and settings webhook section (2 input pairs).
+- Added `PageSkeleton` loading state on upload page (was returning `null` during auth check).
+
+### Fixed — Configuration
+
+- Added `APP_VERSION` and `TRUST_PROXY` to `.env.example`.
+
+### Fixed — Documentation
+
+- Updated test counts: 564 backend (35 files) → 83 frontend (14 files) across README, CONTRIBUTING, frontend/README.
+- Updated route module count: 13 → 14 (added `stripe_routes`) across README, ARCHITECTURE, CONTRIBUTING.
+- Updated endpoint count: 75+ → 80+ across README, ARCHITECTURE, API.md.
+- Updated page route count: 18 → 22 across ARCHITECTURE, CONTRIBUTING, frontend/README.
+- Updated Bittensor SDK requirement: ≥ 6.0.0 → ≥ 10.1.0 across README, DEPLOYMENT.
+- Updated API.md: expanded rate limits table (9 scopes), added marketplace seller endpoints (my-sales, my-revenue), fixed version strings in health/metrics responses.
+- Updated SECURITY.md: added v0.16.x and v0.17.x to supported versions, expanded rate limiting table with all 9 rate-limited scopes.
+- Updated DEPLOYMENT.md: Kubernetes rollout example uses v0.17.0 image tag.
+- Updated CHANGELOG.md: added Phase 23 entry, fixed release dates.
+- Updated frontend/README.md: test counts (83), page routes (22), added seller dashboard and new page entries.
+- Added missing env vars to README table: `APP_VERSION`, `SENTRY_DSN`, `SENTRY_TRACES_SAMPLE_RATE`, `REDIS_URL`, `PROMETHEUS_ENABLED`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `POSTGRES_PASSWORD`.
+
+---
+
 ## [0.17.0] — 2026-03-13 — Phase 22: Completion & Polish
 
 ### Added — Frontend

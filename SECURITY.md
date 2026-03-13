@@ -19,6 +19,8 @@ We aim to acknowledge reports within 48 hours and provide a resolution timeline 
 
 | Version | Supported |
 | :------ | :-------: |
+| 0.17.x  |    ✅     |
+| 0.16.x  |    ✅     |
 | 0.15.x  |    ✅     |
 | < 0.15  |    ❌     |
 
@@ -70,12 +72,17 @@ We aim to acknowledge reports within 48 hours and provide a resolution timeline 
 
 ### Rate Limiting
 
-| Scope       | Limit        | Purpose                                 |
-| :---------- | :----------- | :-------------------------------------- |
-| Auth        | 10/minute    | Prevent brute-force login attempts      |
-| Default     | 60/minute    | General API abuse protection            |
-| `/estimate` | 5/minute     | Protect expensive estimation operations |
-| AI/Parse    | Rate-limited | Protect expensive LLM-powered endpoints |
+| Scope                         | Limit        | Purpose                                        |
+| :---------------------------- | :----------- | :--------------------------------------------- |
+| Auth                          | 10/minute    | Prevent brute-force login attempts             |
+| Default                       | 60/minute    | General API abuse protection                   |
+| `/estimate`                   | 5/minute     | Protect expensive estimation operations        |
+| `/scenarios/*/compute`        | 5/minute     | Protect scenario computation engine            |
+| `/questionnaires/upload`      | 5/minute     | Limit file upload processing                   |
+| `/questionnaires/*/extract`   | 5/minute     | Protect expensive AI extraction                |
+| `/marketplace/*/purchase`     | 10/minute    | Limit purchase operations                      |
+| `/billing/subscription`       | 5/minute     | Protect subscription changes                   |
+| `/stripe/webhooks`            | 60/minute    | Stripe event ingestion                         |
 
 Rate limiting is IP-based (supports `X-Forwarded-For` when `TRUST_PROXY=true`).
 
