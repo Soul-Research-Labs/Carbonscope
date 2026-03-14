@@ -17,6 +17,7 @@ from api.config import (
     COOKIE_SAMESITE,
     COOKIE_SECURE,
     RATE_LIMIT_AUTH,
+    RATE_LIMIT_MFA_VALIDATE,
 )
 from api.database import get_db
 from api.deps import get_current_user, get_mfa_pending_user
@@ -142,7 +143,7 @@ async def verify_and_enable_mfa(
 
 
 @router.post("/validate", response_model=MFAValidateResponse)
-@limiter.limit(RATE_LIMIT_AUTH)
+@limiter.limit(RATE_LIMIT_MFA_VALIDATE)
 async def validate_totp(
     request: Request,
     body: MFAVerifyRequest,

@@ -73,6 +73,7 @@ ALLOWED_ORIGINS: list[str] = [
 # ── Rate Limiting ───────────────────────────────────────────────────
 
 RATE_LIMIT_AUTH: str = os.getenv("RATE_LIMIT_AUTH", "10/minute")
+RATE_LIMIT_MFA_VALIDATE: str = os.getenv("RATE_LIMIT_MFA_VALIDATE", "5/minute")
 RATE_LIMIT_DEFAULT: str = os.getenv("RATE_LIMIT_DEFAULT", "60/minute")
 TRUST_PROXY: bool = os.getenv("TRUST_PROXY", "false").lower() in ("true", "1", "yes")
 
