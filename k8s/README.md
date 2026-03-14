@@ -13,10 +13,14 @@
 # 1. Create namespace
 kubectl apply -f k8s/namespace.yaml
 
-# 2. Configure secrets (edit with real base64-encoded values first!)
-#    echo -n "your-secret-value" | base64
-vi k8s/secrets.yaml
-kubectl apply -f k8s/secrets.yaml
+# 2. Configure secrets using a local untracked file
+cp k8s/secrets.local.example.yaml k8s/secrets.local.yaml
+vi k8s/secrets.local.yaml
+kubectl apply -f k8s/secrets.local.yaml
+
+# Alternative: apply tracked template only in ephemeral/dev contexts
+# vi k8s/secrets.yaml
+# kubectl apply -f k8s/secrets.yaml
 
 # 3. Apply ConfigMap
 kubectl apply -f k8s/configmap.yaml
