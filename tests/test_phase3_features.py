@@ -140,9 +140,9 @@ class TestHealthCheck:
 
 @pytest.mark.asyncio
 class TestMetrics:
-    async def test_metrics_requires_auth(self, client: AsyncClient):
+    async def test_metrics_public_access(self, client: AsyncClient):
         resp = await client.get("/metrics")
-        assert resp.status_code in (401, 403)
+        assert resp.status_code == 200
 
     async def test_metrics_endpoint(self, auth_client: AsyncClient):
         resp = await auth_client.get("/metrics")

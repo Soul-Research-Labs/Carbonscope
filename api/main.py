@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import os
+import threading
 import time
 from contextlib import asynccontextmanager
 
@@ -37,10 +38,12 @@ from api.routes.review_routes import router as review_router
 from api.routes.mfa_routes import router as mfa_router
 from api.routes.benchmark_routes import router as benchmark_router
 
+from api import __version__ as APP_VERSION
+
 logger = logging.getLogger(__name__)
 
-APP_VERSION = "0.18.0"
 _start_time: float = 0.0
+_metrics_lock = threading.Lock()
 _request_count: int = 0
 _request_errors: int = 0
 _status_counts: dict[int, int] = {}
@@ -164,19 +167,22 @@ async def health():
 @app.middleware("http")
 async def _count_requests(request: Request, call_next):
     global _request_count, _request_errors
-    _request_count += 1
+    with _metrics_lock:
+        _request_count += 1
     response = await call_next(request)
-    status_bucket = response.status_code
-    _status_counts[status_bucket] = _status_counts.get(status_bucket, 0) + 1
-    if response.status_code >= 500:
-        _request_errors += 1
+    with _metrics_lock:
+        status_bucket = response.status_code
+        _status_counts[status_bucket] = _status_counts.get(status_bucket, 0) + 1
+        if response.status_code >= 500:
+            _request_errors += 1
     return response
 
 
 @app.get("/metrics")
-async def metrics(request: Request, _user = Depends(get_current_user)):
-    """Operational metrics. Returns Prometheus text format when Accept header
-    contains 'text/plain' or PROMETHEUS_ENABLED is set, otherwise JSON."""
+async def metrics(request: Request):
+    """Operational metrics (unauthenticated for Prometheus scraping).
+    Returns Prometheus text format when Accept header contains 'text/plain'
+    or PROMETHEUS_ENABLED is set, otherwise JSON."""
     uptime = time.monotonic() - _start_time if _start_time else 0
 
     accept = request.headers.get("accept", "")

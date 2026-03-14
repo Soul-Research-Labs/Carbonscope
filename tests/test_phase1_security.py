@@ -191,10 +191,10 @@ class TestDeactivatedUser:
 class TestMetricsEndpoint:
     """Verify the /metrics endpoint returns operational data."""
 
-    async def test_metrics_requires_auth(self, client: AsyncClient):
-        """Unauthenticated access to /metrics should be rejected."""
+    async def test_metrics_public_access(self, client: AsyncClient):
+        """Unauthenticated access to /metrics is allowed (Prometheus scraping)."""
         resp = await client.get("/metrics")
-        assert resp.status_code in (401, 403)
+        assert resp.status_code == 200
 
     async def test_metrics_returns_data(self, auth_client: AsyncClient):
         resp = await auth_client.get("/metrics")

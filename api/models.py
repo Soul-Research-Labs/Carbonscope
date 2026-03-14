@@ -218,7 +218,7 @@ class EmissionReport(Base):
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
     company_id: str = Column(String(32), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
-    data_upload_id: str | None = Column(String(32), ForeignKey("data_uploads.id"), nullable=True)
+    data_upload_id: str | None = Column(String(32), ForeignKey("data_uploads.id", ondelete="SET NULL"), nullable=True)
     year: int = Column(Integer, nullable=False)
 
     # Results from Bittensor subnet
