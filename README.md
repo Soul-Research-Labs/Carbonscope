@@ -13,8 +13,8 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/node-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node 18+">
-  <img src="https://img.shields.io/badge/version-0.20.0-orange?style=flat-square" alt="Version 0.20.0">
-  <img src="https://img.shields.io/badge/tests-647%20backend%20%7C%2099%20frontend-brightgreen?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/version-0.21.0-orange?style=flat-square" alt="Version 0.21.0">
+  <img src="https://img.shields.io/badge/tests-729%20backend%20%7C%20142%20frontend-brightgreen?style=flat-square" alt="Tests">
   <img src="https://img.shields.io/badge/endpoints-97%2B-7B61FF?style=flat-square" alt="97+ API Endpoints">
   <img src="https://img.shields.io/badge/Bittensor-Subnet-000000?style=flat-square" alt="Bittensor Subnet">
 </p>
@@ -379,7 +379,7 @@ cd subtensor && docker compose down -v
 
 ## Running Tests
 
-### Backend Tests (647)
+### Backend Tests (729)
 
 ```bash
 pytest tests/ -v                                      # Full suite
@@ -388,7 +388,7 @@ pytest tests/ --cov=api --cov-report=term-missing     # With coverage
 pytest tests/ -k "test_auth" -v                       # Pattern matching
 ```
 
-### Frontend Tests (83)
+### Frontend Tests (142)
 
 ```bash
 cd frontend
@@ -397,7 +397,7 @@ npm run test:watch        # Watch mode for development
 ```
 
 <details>
-<summary><strong>Backend Test Coverage (35 test files)</strong></summary>
+<summary><strong>Backend Test Coverage (42 test files)</strong></summary>
 
 | File                                 | Coverage                                                    |
 | :----------------------------------- | :---------------------------------------------------------- |
@@ -436,11 +436,20 @@ npm run test:watch        # Watch mode for development
 | `test_stripe_routes.py`              | Stripe webhook signature verification, event handling       |
 | `test_seller.py`                     | Marketplace seller dashboard, revenue, sales pagination     |
 | `test_phase11_12.py`                 | Sentry integration, Docker healthchecks, OTEL tracing       |
+| `test_phase24_features.py`           | PCAF, reviews, MFA service, CSRD/ISSB/SECR compliance       |
+| `test_phase25_hardening.py`          | Audit logging, rate limiting on all routes                  |
+| `test_phase26_mfa_races.py`          | MFA login enforcement, registration race conditions         |
+| `test_phase27_security_hardening.py` | TOTP encryption, cascade deletes, soft delete, indexes      |
+| `test_reviews_service.py`            | Review service: create, list, get, state machine            |
+| `test_benchmarks_service.py`         | Benchmark comparison, percentile ranking, boundaries        |
+| `test_pdf_export.py`                 | PDF generation for reports and questionnaires               |
+| `test_url_validator.py`              | SSRF protection: scheme, hostname, private IP, DNS          |
+| `test_templates.py`                  | Questionnaire template catalog: list, get, parametrized     |
 
 </details>
 
 <details>
-<summary><strong>Frontend Test Coverage (14 test files, 83 tests)</strong></summary>
+<summary><strong>Frontend Test Coverage (25 test files, 142 tests)</strong></summary>
 
 | File                           | Coverage                                              |
 | :----------------------------- | :---------------------------------------------------- |
@@ -458,6 +467,17 @@ npm run test:watch        # Watch mode for development
 | `DashboardPage.test.tsx`       | KPI cards, API data rendering, empty states           |
 | `RecommendationsPage.test.tsx` | Strategy listing, navigation, data display            |
 | `SellerDashboardPage.test.tsx` | Revenue summary, sales table, pagination              |
+| `PCAFPage.test.tsx`            | Portfolio list, asset table, data rendering            |
+| `ReviewsPage.test.tsx`         | Review list, create form, status display              |
+| `MFAPage.test.tsx`             | MFA status, setup, QR code, disable flow              |
+| `BenchmarksPage.test.tsx`      | Benchmark metrics, industry comparison                |
+| `SettingsPage.test.tsx`        | Profile, company, webhooks, password sections         |
+| `UploadPage.test.tsx`          | Form rendering, submit/error, scope labels            |
+| `CompliancePage.test.tsx`      | Framework buttons, generate, error handling            |
+| `AlertsPage.test.tsx`          | Alert list, severity, run check, unread filter        |
+| `AuditLogsPage.test.tsx`       | Table rendering, empty state, error, accessibility    |
+| `QuestionnairesPage.test.tsx`  | Tabs, list, templates, apply template                 |
+| `AuthContext.test.tsx`          | JWT decoding, localStorage, login/logout/register     |
 
 </details>
 
@@ -681,7 +701,7 @@ carbonscope/
 ├── alembic/                        # Database migrations
 ├── data/emission_factors/          # EPA, eGRID, IEA, DEFRA JSON datasets
 ├── scripts/                        # Shell scripts (register, run miner/validator)
-├── tests/                          # 647 backend tests (pytest, 36 files)
+├── tests/                          # 729 backend tests (pytest, 42 files)
 ├── docker-compose.yml              # Development stack
 ├── docker-compose.prod.yml         # Production stack (PostgreSQL)
 ├── Dockerfile                      # Multi-stage (backend + frontend)
@@ -784,7 +804,7 @@ Set `SENTRY_DSN` to enable error tracking and performance monitoring. Adjust `SE
 | Document                                 | Description                                                               |
 | :--------------------------------------- | :------------------------------------------------------------------------ |
 | [README.md](README.md)                   | Project overview, quick start, and feature summary (this file)            |
-| [API.md](API.md)                         | Complete API reference — all 75+ endpoints with request/response examples |
+| [API.md](API.md)                         | Complete API reference — all 95+ endpoints with request/response examples |
 | [ARCHITECTURE.md](ARCHITECTURE.md)       | System design, data flow, database schema, service architecture           |
 | [DEPLOYMENT.md](DEPLOYMENT.md)           | Production deployment guide (Nginx, Docker, systemd, TLS, scaling)        |
 | [CONTRIBUTING.md](CONTRIBUTING.md)       | Development workflow, code style, testing, and PR process                 |
@@ -798,7 +818,7 @@ Set `SENTRY_DSN` to enable error tracking and performance monitoring. Adjust `SE
 
 See [CHANGELOG.md](CHANGELOG.md) for the full version history.
 
-**Latest — v0.20.0** (Phase 26: MFA Enforcement, Race Conditions & Migrations): MFA login enforcement with two-token flow, race condition fixes for registration and marketplace, Alembic migration for 5 Phase 24 tables, 16 new frontend tests, 7 new backend tests. See [CHANGELOG.md](CHANGELOG.md) for the full history.
+**Latest — v0.21.0** (Phases 27–32: Security, Services, Coverage & Infrastructure): TOTP encryption at rest, CASCADE deletes, service layer extraction (reviews, benchmarks), 80+ new backend tests, 43+ new frontend tests, security headers, E2E expansion. See [CHANGELOG.md](CHANGELOG.md) for the full history.
 
 ---
 
