@@ -198,6 +198,7 @@ class DataUpload(Base):
     provided_data: dict = Column(JSON, nullable=False, default=dict)
     notes: str | None = Column(Text, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
 
     company = relationship("Company", back_populates="data_uploads")
@@ -237,6 +238,7 @@ class EmissionReport(Base):
 
     notes: str | None = Column(Text, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
 
     company = relationship("Company", back_populates="emission_reports")
@@ -249,6 +251,7 @@ class SupplyChainLink(Base):
     __tablename__ = "supply_chain_links"
     __table_args__ = (
         UniqueConstraint("buyer_company_id", "supplier_company_id", name="uq_supply_chain_buyer_supplier"),
+        Index("ix_supply_chain_links_status", "status"),
     )
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
@@ -259,6 +262,7 @@ class SupplyChainLink(Base):
     status: str = Column(Enum(SupplyChainStatus, native_enum=False, length=50), default=SupplyChainStatus.pending)
     notes: str | None = Column(Text, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
 
     buyer = relationship("Company", foreign_keys=[buyer_company_id])
@@ -278,6 +282,7 @@ class Webhook(Base):
     secret: str = Column(String(255), nullable=False)
     active: bool = Column(Boolean, nullable=False, default=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
 
     company = relationship("Company")
@@ -323,7 +328,7 @@ class AuditLog(Base):
     )
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
-    user_id: str = Column(String(32), ForeignKey("users.id"), nullable=False, index=True)
+    user_id: str = Column(String(32), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     company_id: str = Column(String(32), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
     action: str = Column(String(100), nullable=False)
     resource_type: str = Column(String(100), nullable=False)
@@ -456,6 +461,7 @@ class Alert(Base):
     acknowledged_at: datetime | None = Column(DateTime(timezone=True), nullable=True)
     metadata_json: dict | None = Column(JSON, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow, index=True)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     company = relationship("Company")
 
@@ -479,6 +485,7 @@ class DataListing(Base):
     anonymized_data: dict = Column(JSON, nullable=False, default=dict)
     status: str = Column(Enum(DataListingStatus, native_enum=False, length=50), default=DataListingStatus.active)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
     deleted_at: datetime | None = Column(DateTime(timezone=True), nullable=True, default=None)
 
     seller = relationship("Company")
@@ -495,7 +502,7 @@ class DataPurchase(Base):
     listing_id: str = Column(String(32), ForeignKey("data_listings.id"), nullable=False, index=True)
     buyer_company_id: str = Column(String(32), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
     price_credits: int = Column(Integer, nullable=False)
-    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    created_at: datetime = Column(DateTime(timezone=True), default=_utcnow, index=True)
 
     listing = relationship("DataListing")
 
@@ -581,6 +588,7 @@ class FinancedAsset(Base):
     region: str | None = Column(String(10), nullable=True)
     notes: str | None = Column(Text, nullable=True)
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     __table_args__ = (
         CheckConstraint("outstanding_amount >= 0", name="ck_financed_assets_outstanding_non_negative"),
@@ -633,6 +641,7 @@ class MFASecret(Base):
     is_enabled: bool = Column(Boolean, nullable=False, default=False)
     backup_codes: str | None = Column(Text, nullable=True)  # JSON array of hashed codes
     created_at: datetime = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at: datetime = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
     user = relationship("User")
 

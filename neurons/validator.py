@@ -49,7 +49,8 @@ class CarbonValidator:
 
         # Moving average scores per miner UID
         self.scores: dict[int, float] = self._load_scores()
-        self.alpha = getattr(self.config, "ema_alpha", 0.1)
+        raw_alpha = getattr(self.config, "ema_alpha", 0.1)
+        self.alpha = max(0.0, min(1.0, float(raw_alpha)))
 
         # Track how many blocks since last weight update
         self.last_weight_block = 0
@@ -143,10 +144,12 @@ class CarbonValidator:
             return {}
 
     def _save_scores(self) -> None:
-        """Persist EMA scores to disk."""
+        """Persist EMA scores to disk atomically (write-then-rename)."""
+        tmp = _SCORES_FILE + ".tmp"
         try:
-            with open(_SCORES_FILE, "w") as f:
+            with open(tmp, "w") as f:
                 json.dump({str(k): v for k, v in self.scores.items()}, f)
+            os.replace(tmp, _SCORES_FILE)
         except OSError:
             bt.logging.warning("Failed to persist scores to disk")
 
@@ -261,8 +264,11 @@ class CarbonValidator:
                             synapse=synapse,
                             timeout=self.config.query_timeout,
                         )
+                        # Reset circuit breaker on success
                         self._consecutive_failures = 0
-                        self._backoff_seconds = 2.0
+                        self._backoff_seconds = getattr(
+                            self.config, "circuit_breaker_base_backoff", 2.0
+                        )
                         break
                     except Exception:
                         if q_attempt < len(query_retry_delays):

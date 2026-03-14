@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models import AuditLog
@@ -28,3 +29,29 @@ async def record(
             detail=detail,
         )
     )
+
+
+async def list_logs(
+    db: AsyncSession,
+    *,
+    company_id: str,
+    action: str | None = None,
+    resource_type: str | None = None,
+    user_id: str | None = None,
+    limit: int = 50,
+    offset: int = 0,
+) -> dict:
+    """List audit log entries for a company with optional filters and pagination."""
+    base = select(AuditLog).where(AuditLog.company_id == company_id)
+    if action is not None:
+        base = base.where(AuditLog.action == action)
+    if resource_type is not None:
+        base = base.where(AuditLog.resource_type == resource_type)
+    if user_id is not None:
+        base = base.where(AuditLog.user_id == user_id)
+
+    total = (await db.execute(select(func.count()).select_from(base.subquery()))).scalar() or 0
+    rows = (await db.execute(
+        base.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset)
+    )).scalars().all()
+    return {"items": rows, "total": total, "limit": limit, "offset": offset}

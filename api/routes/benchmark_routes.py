@@ -3,16 +3,15 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user
 from api.limiter import limiter
-from api.models import IndustryBenchmark, User
+from api.models import User
 from api.schemas import BenchmarkComparison, BenchmarkOut, PaginatedResponse
-from api.services.benchmarks import BenchmarkError, compare_to_industry as svc_compare
+from api.services.benchmarks import BenchmarkError, compare_to_industry as svc_compare, list_benchmarks as svc_list
 
 router = APIRouter(prefix="/benchmarks", tags=["benchmarks"])
 
@@ -30,20 +29,7 @@ async def list_benchmarks(
     db: AsyncSession = Depends(get_db),
 ):
     """List available industry benchmarks, optionally filtered."""
-    base = select(IndustryBenchmark)
-    if industry:
-        base = base.where(IndustryBenchmark.industry == industry)
-    if region:
-        base = base.where(IndustryBenchmark.region == region)
-    if year:
-        base = base.where(IndustryBenchmark.year == year)
-
-    total_q = select(func.count()).select_from(base.subquery())
-    total = (await db.execute(total_q)).scalar() or 0
-    rows = (await db.execute(
-        base.order_by(IndustryBenchmark.year.desc(), IndustryBenchmark.industry).offset(offset).limit(limit)
-    )).scalars().all()
-    return {"items": rows, "total": total, "limit": limit, "offset": offset}
+    return await svc_list(db, industry=industry, region=region, year=year, limit=limit, offset=offset)
 
 
 @router.get("/compare", response_model=BenchmarkComparison)

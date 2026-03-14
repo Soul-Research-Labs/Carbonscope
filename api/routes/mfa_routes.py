@@ -104,7 +104,7 @@ async def setup_mfa(
         db, user_id=user.id, company_id=user.company_id,
         action="mfa_setup", resource_type="mfa", resource_id=str(user.id),
     )
-    await db.commit()
+    await db.flush()
 
     return {
         "secret": secret,
@@ -133,7 +133,6 @@ async def verify_and_enable_mfa(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code")
 
     secret_row.is_enabled = True
-    await db.commit()
     await audit.record(
         db, user_id=user.id, company_id=user.company_id,
         action="mfa_enabled", resource_type="mfa", resource_id=str(user.id),
@@ -169,7 +168,6 @@ async def validate_totp(
     access = create_access_token(user.id, user.company_id)
     refresh = await create_refresh_token(db, user.id, user.company_id)
     csrf = secrets.token_hex(32)
-    await db.commit()
 
     await audit.record(
         db, user_id=user.id, company_id=user.company_id,
@@ -216,7 +214,6 @@ async def disable_mfa(
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid TOTP code")
 
     await db.delete(secret_row)
-    await db.commit()
     await audit.record(
         db, user_id=user.id, company_id=user.company_id,
         action="mfa_disabled", resource_type="mfa", resource_id=str(user.id),

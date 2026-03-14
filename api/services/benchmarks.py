@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.models import Company, EmissionReport, IndustryBenchmark
@@ -32,6 +32,32 @@ def _rank_label(pct_diff: float) -> str:
     if pct_diff <= 30:
         return "bottom_25"
     return "bottom_10"
+
+
+async def list_benchmarks(
+    db: AsyncSession,
+    *,
+    industry: str | None = None,
+    region: str | None = None,
+    year: int | None = None,
+    limit: int = 20,
+    offset: int = 0,
+) -> dict:
+    """List available industry benchmarks with optional filters and pagination."""
+    base = select(IndustryBenchmark)
+    if industry:
+        base = base.where(IndustryBenchmark.industry == industry)
+    if region:
+        base = base.where(IndustryBenchmark.region == region)
+    if year:
+        base = base.where(IndustryBenchmark.year == year)
+
+    total = (await db.execute(select(func.count()).select_from(base.subquery()))).scalar() or 0
+    rows = (await db.execute(
+        base.order_by(IndustryBenchmark.year.desc(), IndustryBenchmark.industry)
+        .offset(offset).limit(limit)
+    )).scalars().all()
+    return {"items": rows, "total": total, "limit": limit, "offset": offset}
 
 
 async def compare_to_industry(

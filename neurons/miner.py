@@ -99,6 +99,7 @@ class CarbonMiner:
     # Per-hotkey rate limiting defaults (overridden by CLI args)
     _RATE_LIMIT_MAX = 10
     _RATE_LIMIT_WINDOW = 60  # seconds
+    _MAX_TRACKED_HOTKEYS = 1000  # bound rate limiter memory
 
     def __init__(self) -> None:
         self.config = self._get_config()
@@ -168,10 +169,14 @@ class CarbonMiner:
         if not self.metagraph.validator_permit[uid]:
             return True, "Caller is not a validator"
 
-        # Per-hotkey rate limiting
+        # Per-hotkey rate limiting (bounded)
         from collections import deque
         now = time.time()
         if caller not in self._request_times:
+            # Evict oldest entries if at capacity
+            if len(self._request_times) >= self._MAX_TRACKED_HOTKEYS:
+                oldest_key = next(iter(self._request_times))
+                del self._request_times[oldest_key]
             self._request_times[caller] = deque()
         times = self._request_times[caller]
         # Remove entries outside the window
@@ -344,6 +349,9 @@ class CarbonMiner:
         synapse.assumptions = assumptions or ["Standard GHG Protocol methodology applied"]
         synapse.methodology_version = "ghg_protocol_v2025"
 
+        # Compute request hash (binds request to response for auditability)
+        synapse.request_hash = synapse.compute_request_hash()
+
         bt.logging.info(
             f"Estimated emissions: S1={scope1:.1f} S2={scope2:.1f} S3={scope3:.1f} "
             f"Total={total:.1f} kgCO2e (confidence={confidence:.2f})"
@@ -362,6 +370,10 @@ class CarbonMiner:
         try:
             while True:
                 self.metagraph.sync(subtensor=self.subtensor)
+                # Verify hotkey is still registered after metagraph sync
+                if self.wallet.hotkey.ss58_address not in self.metagraph.hotkeys:
+                    bt.logging.error("Hotkey deregistered from subnet — shutting down miner")
+                    break
                 bt.logging.debug(f"Metagraph synced. Neurons: {self.metagraph.n}")
                 time.sleep(120)  # Sync every ~10 blocks
         except KeyboardInterrupt:

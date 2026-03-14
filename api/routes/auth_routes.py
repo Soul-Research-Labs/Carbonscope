@@ -199,7 +199,6 @@ async def login(request: Request, body: UserLogin, db: AsyncSession = Depends(ge
     if mfa_row is not None:
         # MFA is enabled: issue a short-lived mfa_pending token instead
         mfa_token = create_mfa_pending_token(user.id, user.company_id)
-        await db.commit()
 
         await audit.record(
             db, user_id=user.id, company_id=user.company_id,
@@ -218,7 +217,6 @@ async def login(request: Request, body: UserLogin, db: AsyncSession = Depends(ge
     access = create_access_token(user.id, user.company_id)
     refresh = await create_refresh_token(db, user.id, user.company_id)
     csrf = secrets.token_hex(32)
-    await db.commit()
 
     await audit.record(
         db, user_id=user.id, company_id=user.company_id,
@@ -259,6 +257,11 @@ async def update_profile(
     for key, value in updates.items():
         setattr(user, key, value)
 
+    await audit.record(
+        db, user_id=user.id, company_id=user.company_id,
+        action="update_profile", resource_type="user", resource_id=user.id,
+        detail=f"Updated fields: {', '.join(updates.keys())}",
+    )
     await db.commit()
     await db.refresh(user)
     return user

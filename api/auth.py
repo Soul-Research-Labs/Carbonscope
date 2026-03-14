@@ -45,6 +45,10 @@ def verify_password(plain: str, hashed: str) -> bool:
 # ── JWT helpers ─────────────────────────────────────────────────────
 
 
+# JWT issuer for audience/issuer validation
+JWT_ISSUER = "carbonscope"
+
+
 def create_access_token(user_id: str, company_id: str) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
@@ -53,6 +57,7 @@ def create_access_token(user_id: str, company_id: str) -> str:
         "exp": expire,
         "type": "access",
         "jti": uuid.uuid4().hex,
+        "iss": JWT_ISSUER,
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -70,6 +75,7 @@ def create_mfa_pending_token(user_id: str, company_id: str) -> str:
         "exp": expire,
         "type": "mfa_pending",
         "jti": uuid.uuid4().hex,
+        "iss": JWT_ISSUER,
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -136,7 +142,11 @@ async def is_token_revoked(db: AsyncSession, jti: str) -> bool:
 
 def decode_access_token(token: str) -> dict:
     """Decode and validate a JWT. Raises jwt.PyJWTError on failure."""
-    return jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+    return jwt.decode(
+        token, SECRET_KEY, algorithms=[ALGORITHM],
+        issuer=JWT_ISSUER,
+        options={"require": ["exp", "sub", "iss"]},
+    )
 
 
 # ── Password reset ──────────────────────────────────────────────────

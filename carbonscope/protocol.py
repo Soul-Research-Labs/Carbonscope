@@ -120,10 +120,12 @@ class CarbonSynapse(bt.Synapse):
     @classmethod
     def check_emissions(cls, v: dict | None) -> dict | None:
         if v is not None:
+            cleaned = dict(v)
             for key in ("scope1", "scope2", "scope3", "total"):
-                val = v.get(key)
+                val = cleaned.get(key)
                 if val is not None and val < 0:
-                    v[key] = 0.0
+                    cleaned[key] = 0.0
+            return cleaned
         return v
 
     @field_validator("breakdown")
@@ -131,10 +133,7 @@ class CarbonSynapse(bt.Synapse):
     def check_breakdown_keys(cls, v: dict | None) -> dict | None:
         if v is not None:
             allowed = {"scope1_detail", "scope2_detail", "scope3_detail"}
-            invalid = set(v.keys()) - allowed
-            if invalid:
-                for k in invalid:
-                    del v[k]
+            return {k: val for k, val in v.items() if k in allowed}
         return v
 
     # ── Synapse config ──────────────────────────────────────────────

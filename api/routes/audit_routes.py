@@ -3,15 +3,15 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, Request
-from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.config import RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user, require_admin
 from api.limiter import limiter
-from api.models import AuditLog, User
+from api.models import User
 from api.schemas import AuditLogOut, PaginatedResponse
+from api.services.audit import list_logs
 
 router = APIRouter(prefix="/audit-logs", tags=["audit"])
 
@@ -29,18 +29,8 @@ async def list_audit_logs(
     db: AsyncSession = Depends(get_db),
 ):
     """List audit log entries for the current user's company."""
-    base = select(AuditLog).where(AuditLog.company_id == user.company_id)
-    if action is not None:
-        base = base.where(AuditLog.action == action)
-    if resource_type is not None:
-        base = base.where(AuditLog.resource_type == resource_type)
-    if user_id is not None:
-        base = base.where(AuditLog.user_id == user_id)
-
-    total_result = await db.execute(select(func.count()).select_from(base.subquery()))
-    total = total_result.scalar() or 0
-
-    result = await db.execute(
-        base.order_by(AuditLog.created_at.desc()).limit(limit).offset(offset)
+    return await list_logs(
+        db, company_id=user.company_id,
+        action=action, resource_type=resource_type, user_id=user_id,
+        limit=limit, offset=offset,
     )
-    return PaginatedResponse(items=result.scalars().all(), total=total, limit=limit, offset=offset)

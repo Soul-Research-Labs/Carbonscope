@@ -53,7 +53,9 @@ async def create_estimate(
 
 
 @router.get("/reports", response_model=PaginatedResponse[EmissionReportOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def list_reports(
+    request: Request,
     year: int | None = Query(default=None),
     confidence_min: float | None = Query(default=None, ge=0, le=1),
     sort_by: str = Query(default="created_at", pattern="^(created_at|year|total|confidence)$"),
@@ -76,7 +78,9 @@ async def list_reports(
 
 
 @router.get("/reports/export")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def export_reports(
+    request: Request,
     format: str = Query(default="csv", pattern="^(csv|json)$"),
     year: int | None = Query(default=None),
     user: User = Depends(get_current_user),
@@ -94,7 +98,9 @@ async def export_reports(
 
 
 @router.get("/reports/{report_id}", response_model=EmissionReportOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_report(
+    request: Request,
     report_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -107,7 +113,9 @@ async def get_report(
 
 
 @router.patch("/reports/{report_id}", response_model=EmissionReportOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def update_report(
+    request: Request,
     report_id: str,
     body: ReportUpdate,
     user: User = Depends(get_current_user),
@@ -124,7 +132,9 @@ async def update_report(
 
 
 @router.get("/reports/{report_id}/export/pdf")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def export_report_pdf(
+    request: Request,
     report_id: str,
     user: User = Depends(require_credits("pdf_export")),
     db: AsyncSession = Depends(get_db),
@@ -142,7 +152,9 @@ async def export_report_pdf(
 
 
 @router.delete("/reports/{report_id}", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def delete_report(
+    request: Request,
     report_id: str,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -158,7 +170,9 @@ async def delete_report(
 
 
 @router.get("/dashboard", response_model=DashboardSummary)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def dashboard(
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
