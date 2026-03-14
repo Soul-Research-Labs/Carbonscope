@@ -321,6 +321,35 @@ class TestMarketplace:
         resp = await auth_client.post("/api/v1/marketplace/listings/nonexistent/purchase")
         assert resp.status_code == 400
 
+    async def test_duplicate_purchase_does_not_double_deduct_credits(self, auth_client: AsyncClient):
+        """A duplicate purchase rejection must not mutate buyer credits again."""
+        # Seller setup
+        await _upgrade_plan(auth_client, "pro")
+        report_id = await _create_report(auth_client)
+        create_resp = await auth_client.post("/api/v1/marketplace/listings", json={
+            "title": "Priced Listing",
+            "data_type": "emission_report",
+            "report_id": report_id,
+            "price_credits": 25,
+        })
+        listing_id = create_resp.json()["id"]
+
+        # Buyer setup (switches Authorization header on the same test client)
+        buyer_client = await _register_second_user(auth_client)
+        await _upgrade_plan(buyer_client, "pro")
+
+        bal_before = (await buyer_client.get("/api/v1/billing/credits")).json()["balance"]
+
+        first = await buyer_client.post(f"/api/v1/marketplace/listings/{listing_id}/purchase")
+        assert first.status_code in (200, 201)
+        bal_after_first = (await buyer_client.get("/api/v1/billing/credits")).json()["balance"]
+        assert bal_after_first == bal_before - 25
+
+        second = await buyer_client.post(f"/api/v1/marketplace/listings/{listing_id}/purchase")
+        assert second.status_code == 400
+        bal_after_second = (await buyer_client.get("/api/v1/billing/credits")).json()["balance"]
+        assert bal_after_second == bal_after_first
+
     async def test_listing_data_type_validation(self, auth_client: AsyncClient):
         """Invalid data_type should fail schema validation."""
         await _upgrade_plan(auth_client, "pro")

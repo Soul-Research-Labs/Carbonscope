@@ -144,12 +144,6 @@ async def purchase_listing(
     if existing.scalar_one_or_none() is not None:
         raise ValueError("Already purchased this listing")
 
-    # Deduct credits from buyer
-    if listing.price_credits > 0:
-        await deduct_credits(db, buyer_company_id, listing.price_credits, "marketplace_purchase_usage")
-        # Credit the seller
-        await grant_credits(db, listing.seller_company_id, listing.price_credits, "marketplace_sale")
-
     purchase = DataPurchase(
         listing_id=listing_id,
         buyer_company_id=buyer_company_id,
@@ -161,6 +155,11 @@ async def purchase_listing(
     except IntegrityError:
         await db.rollback()
         raise ValueError("Already purchased this listing")
+
+    # Only mutate credits after purchase uniqueness is validated.
+    if listing.price_credits > 0:
+        await deduct_credits(db, buyer_company_id, listing.price_credits, "marketplace_purchase_usage")
+        await grant_credits(db, listing.seller_company_id, listing.price_credits, "marketplace_sale")
     return purchase
 
 
