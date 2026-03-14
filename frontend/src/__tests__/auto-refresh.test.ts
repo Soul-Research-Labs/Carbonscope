@@ -13,7 +13,11 @@ describe("Auto token refresh", () => {
         return Promise.resolve({
           ok: true,
           status: 200,
-          json: () => Promise.resolve({ access_token: "new-token" }),
+          json: () =>
+            Promise.resolve({
+              access_token: "new-token",
+              refresh_token: "new-refresh-token",
+            }),
         });
       }
       callCount++;
@@ -36,7 +40,10 @@ describe("Auto token refresh", () => {
 
     vi.stubGlobal("fetch", mockFetch);
     vi.stubGlobal("localStorage", {
-      getItem: vi.fn().mockReturnValue("expired-token"),
+      getItem: vi.fn((key: string) => {
+        if (key === "refresh_token") return "expired-refresh-token";
+        return "expired-token";
+      }),
       setItem: vi.fn(),
       removeItem: vi.fn(),
     });
@@ -47,8 +54,16 @@ describe("Auto token refresh", () => {
     expect(result).toEqual({ id: "123", email: "test@test.com" });
     // Should have called: original request, refresh, retry
     expect(mockFetch).toHaveBeenCalledTimes(3);
+    const [, refreshInit] = mockFetch.mock.calls[1];
+    expect(refreshInit.body).toBe(
+      JSON.stringify({ refresh_token: "expired-refresh-token" }),
+    );
     // Token should be saved
     expect(localStorage.setItem).toHaveBeenCalledWith("token", "new-token");
+    expect(localStorage.setItem).toHaveBeenCalledWith(
+      "refresh_token",
+      "new-refresh-token",
+    );
   });
 
   it("clears auth state when refresh also fails with 401", async () => {
@@ -69,6 +84,7 @@ describe("Auto token refresh", () => {
     const { getProfile } = await import("@/lib/api");
     await expect(getProfile()).rejects.toThrow("Session expired");
     expect(localStorage.removeItem).toHaveBeenCalledWith("token");
+    expect(localStorage.removeItem).toHaveBeenCalledWith("refresh_token");
     expect(localStorage.removeItem).toHaveBeenCalledWith("user");
   });
 

@@ -63,14 +63,23 @@ function getCsrfToken(): string | null {
 let refreshPromise: Promise<string> | null = null;
 
 async function doRefresh(): Promise<string> {
+  const refreshToken = localStorage.getItem("refresh_token");
+  if (!refreshToken) {
+    throw new ApiError(401, "Session expired");
+  }
+
   const res = await fetchWithRetry(`${BASE}/auth/refresh`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refresh_token: refreshToken }),
     credentials: "include",
   });
   if (!res.ok) throw new ApiError(res.status, "Session expired");
   const data = await res.json();
   localStorage.setItem("token", data.access_token);
+  if (typeof data.refresh_token === "string" && data.refresh_token.length > 0) {
+    localStorage.setItem("refresh_token", data.refresh_token);
+  }
   return data.access_token;
 }
 
@@ -119,6 +128,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       // If refresh also failed, clear auth state
       if (err instanceof ApiError && err.status === 401) {
         localStorage.removeItem("token");
+        localStorage.removeItem("refresh_token");
         localStorage.removeItem("user");
       }
       throw err;
@@ -164,6 +174,9 @@ export interface User {
 
 export interface Token {
   access_token: string;
+  refresh_token?: string;
+  csrf_token?: string | null;
+  mfa_required?: boolean;
   token_type: string;
 }
 
@@ -1343,7 +1356,9 @@ export async function getIndustryBenchmarks(industry?: string) {
   const params = new URLSearchParams();
   if (industry) params.set("industry", industry);
   const qs = params.toString();
-  return request<IndustryBenchmark>(`/benchmarks/industry${qs ? `?${qs}` : ""}`);
+  return request<IndustryBenchmark>(
+    `/benchmarks/industry${qs ? `?${qs}` : ""}`,
+  );
 }
 
 export async function getPeerComparison() {

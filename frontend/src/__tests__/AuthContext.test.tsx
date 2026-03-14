@@ -98,7 +98,11 @@ describe("AuthProvider", () => {
 
   it("login stores token and navigates to dashboard", async () => {
     const token = makeToken({ sub: "user-1", company_id: "comp-1" });
-    mockLogin.mockResolvedValue({ access_token: token });
+    mockLogin.mockResolvedValue({
+      access_token: token,
+      refresh_token: "refresh-1",
+      token_type: "bearer",
+    });
 
     render(
       <AuthProvider>
@@ -113,6 +117,7 @@ describe("AuthProvider", () => {
 
     expect(mockLogin).toHaveBeenCalledWith("a@b.com", "pw");
     expect(localStorage.getItem("token")).toBe(token);
+    expect(localStorage.getItem("refresh_token")).toBe("refresh-1");
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 
@@ -136,12 +141,14 @@ describe("AuthProvider", () => {
     });
 
     expect(localStorage.getItem("token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
     expect(localStorage.getItem("user")).toBeNull();
     expect(mockPush).toHaveBeenCalledWith("/login");
   });
 
   it("logout succeeds even if API call fails", async () => {
     localStorage.setItem("token", "t");
+    localStorage.setItem("refresh_token", "rt");
     localStorage.setItem("user", JSON.stringify({ id: "u1" }));
     mockLogoutApi.mockRejectedValue(new Error("Server down"));
 
@@ -157,6 +164,7 @@ describe("AuthProvider", () => {
     });
 
     expect(localStorage.getItem("token")).toBeNull();
+    expect(localStorage.getItem("refresh_token")).toBeNull();
     expect(mockPush).toHaveBeenCalledWith("/login");
   });
 
@@ -170,7 +178,11 @@ describe("AuthProvider", () => {
     };
     const token = makeToken({ sub: "u2", company_id: "c1" });
     mockRegister.mockResolvedValue(user);
-    mockLogin.mockResolvedValue({ access_token: token });
+    mockLogin.mockResolvedValue({
+      access_token: token,
+      refresh_token: "refresh-2",
+      token_type: "bearer",
+    });
 
     render(
       <AuthProvider>
@@ -186,6 +198,7 @@ describe("AuthProvider", () => {
     expect(mockRegister).toHaveBeenCalled();
     expect(mockLogin).toHaveBeenCalledWith("a@b.com", "pw");
     expect(localStorage.getItem("token")).toBe(token);
+    expect(localStorage.getItem("refresh_token")).toBe("refresh-2");
     expect(mockPush).toHaveBeenCalledWith("/dashboard");
   });
 });

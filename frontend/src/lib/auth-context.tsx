@@ -34,6 +34,22 @@ interface AuthState {
 
 const AuthContext = createContext<AuthState | null>(null);
 
+function decodeBase64UrlPayload(raw: string): Record<string, unknown> {
+  const base64 = raw.replace(/-/g, "+").replace(/_/g, "/");
+  const padded = base64.padEnd(base64.length + ((4 - (base64.length % 4)) % 4), "=");
+  const decoded = atob(padded);
+  return JSON.parse(decoded) as Record<string, unknown>;
+}
+
+function syncClientAuthCookie(token: string | null): void {
+  if (typeof document === "undefined") return;
+  if (!token) {
+    document.cookie = "cs_access_token=; Path=/; Max-Age=0; SameSite=Lax";
+    return;
+  }
+  document.cookie = `cs_access_token=${encodeURIComponent(token)}; Path=/; SameSite=Lax`;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
@@ -46,6 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const savedUser = localStorage.getItem("user");
     if (saved && savedUser) {
       setToken(saved);
+      syncClientAuthCookie(saved);
       try {
         setUser(JSON.parse(savedUser));
       } catch {
@@ -59,18 +76,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (email: string, password: string) => {
       const resp = await apiLogin(email, password);
       localStorage.setItem("token", resp.access_token);
+      if (resp.refresh_token) {
+        localStorage.setItem("refresh_token", resp.refresh_token);
+      }
       setToken(resp.access_token);
+      syncClientAuthCookie(resp.access_token);
 
       // Decode JWT payload — handle base64url encoding (RFC 7519)
       const raw = resp.access_token.split(".")[1];
-      const base64 = raw.replace(/-/g, "+").replace(/_/g, "/");
-      const jsonStr = Buffer.from(base64, "base64").toString("utf-8");
-      const payload = JSON.parse(jsonStr);
+      const payload = decodeBase64UrlPayload(raw);
       const u: User = {
-        id: payload.sub,
+        id: String(payload.sub ?? ""),
         email,
         full_name: "",
-        company_id: payload.company_id,
+        company_id: String(payload.company_id ?? ""),
         role: "",
       };
       localStorage.setItem("user", JSON.stringify(u));
@@ -93,9 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Auto-login after registration
       const resp = await apiLogin(data.email, data.password);
       localStorage.setItem("token", resp.access_token);
+      if (resp.refresh_token) {
+        localStorage.setItem("refresh_token", resp.refresh_token);
+      }
       localStorage.setItem("user", JSON.stringify(u));
       setToken(resp.access_token);
       setUser(u);
+      syncClientAuthCookie(resp.access_token);
       router.push("/dashboard");
     },
     [router],
@@ -108,7 +131,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Proceed with local cleanup even if server-side logout fails
     }
     localStorage.removeItem("token");
+    localStorage.removeItem("refresh_token");
     localStorage.removeItem("user");
+    syncClientAuthCookie(null);
     setToken(null);
     setUser(null);
     router.push("/login");

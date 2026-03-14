@@ -25,7 +25,9 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token = request.cookies.get("access_token")?.value;
+  const token =
+    request.cookies.get("access_token")?.value ??
+    request.cookies.get("cs_access_token")?.value;
   const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
 
   // Unauthenticated user trying to access protected route → redirect to login
