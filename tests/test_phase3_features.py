@@ -140,6 +140,24 @@ class TestHealthCheck:
         assert "db_pool" in data
         assert isinstance(data["db_pool"], str)
 
+    async def test_health_has_redis_field(self, client: AsyncClient):
+        resp = await client.get("/health")
+        data = resp.json()
+        assert "redis" in data
+        assert data["redis"] in ("not_configured", "connected", "unavailable")
+
+    async def test_health_degraded_when_redis_unavailable(self, client: AsyncClient, monkeypatch):
+        import api.main as main_mod
+
+        async def _unavailable() -> str:
+            return "unavailable"
+
+        monkeypatch.setattr(main_mod, "_check_redis_health", _unavailable)
+        resp = await client.get("/health")
+        data = resp.json()
+        assert data["redis"] == "unavailable"
+        assert data["status"] == "degraded"
+
 
 # ── Metrics endpoint ───────────────────────────────────────────────
 

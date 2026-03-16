@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import threading
@@ -63,6 +64,31 @@ def _validate_production_smtp() -> None:
     if REQUIRE_SMTP_IN_PRODUCTION:
         raise RuntimeError(f"{msg}; set SMTP_HOST/SMTP_USER/SMTP_PASSWORD")
     logger.warning("%s — email notifications will be disabled", msg)
+
+
+async def _check_redis_health() -> str:
+    """Return Redis health state for /health endpoint."""
+    redis_url = os.getenv("REDIS_URL", "")
+    if not redis_url:
+        return "not_configured"
+
+    try:
+        from redis.asyncio import from_url
+
+        client = from_url(redis_url)
+        try:
+            await asyncio.wait_for(client.ping(), timeout=1.0)
+            return "connected"
+        finally:
+            close = getattr(client, "aclose", None)
+            if callable(close):
+                await close()
+            else:
+                close = getattr(client, "close", None)
+                if callable(close):
+                    await close()
+    except Exception:
+        return "unavailable"
 
 
 @asynccontextmanager
@@ -168,8 +194,9 @@ async def health():
     from api.config import ESTIMATION_MODE, BT_NETWORK
     checks["bittensor"] = f"{ESTIMATION_MODE}/{BT_NETWORK}"
     checks["db_pool"] = get_db_pool_status()
+    checks["redis"] = await _check_redis_health()
 
-    all_ok = checks["database"] == "connected"
+    all_ok = checks["database"] == "connected" and checks["redis"] != "unavailable"
     return {
         "status": "ok" if all_ok else "degraded",
         "version": APP_VERSION,
