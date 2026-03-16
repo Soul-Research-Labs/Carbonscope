@@ -67,6 +67,9 @@ RATE_LIMIT_DEFAULT=60/minute
 # ── JWT ─────────────────────────────────────────────────
 ACCESS_TOKEN_EXPIRE_MINUTES=60
 
+# ── Database observability ─────────────────────────────
+DB_SLOW_QUERY_MS=500               # Warn when query duration exceeds threshold
+
 # ── Bittensor (subnet mode) ────────────────────────────
 ESTIMATION_MODE=subnet              # or "local" for built-in engine
 BT_NETWORK=finney

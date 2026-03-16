@@ -1769,10 +1769,11 @@ No authentication required.
 ```json
 {
   "status": "ok",
-  "version": "0.17.0",
+  "version": "0.23.0",
   "database": "connected",
   "email": "configured",
-  "bittensor": "local_mode"
+  "bittensor": "local/test",
+  "db_pool": "sqlite/no_pool"
 }
 ```
 
@@ -1792,7 +1793,13 @@ No authentication required.
 {
   "uptime_seconds": 86400,
   "total_requests": 15234,
-  "version": "0.17.0"
+  "total_errors": 3,
+  "status_codes": {
+    "200": 15190,
+    "401": 28,
+    "500": 3
+  },
+  "version": "0.23.0"
 }
 ```
 
