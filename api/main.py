@@ -14,7 +14,7 @@ from fastapi.responses import PlainTextResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from api.config import ALLOWED_ORIGINS, ENV
+from api.config import ALLOWED_ORIGINS, ENV, REQUIRE_SMTP_IN_PRODUCTION
 from api.database import get_db, init_db
 from api.limiter import limiter
 from api.middleware import register_middleware
@@ -61,8 +61,14 @@ async def lifespan(app: FastAPI):
     # Warn if SMTP is not configured in production
     if ENV == "production":
         import os as _os
-        if not (_os.getenv("SMTP_HOST") and _os.getenv("SMTP_USER") and _os.getenv("SMTP_PASSWORD")):
-            logger.warning("SMTP not configured — email notifications will be disabled in production")
+        smtp_configured = bool(
+            _os.getenv("SMTP_HOST") and _os.getenv("SMTP_USER") and _os.getenv("SMTP_PASSWORD")
+        )
+        if not smtp_configured:
+            msg = "SMTP not configured in production"
+            if REQUIRE_SMTP_IN_PRODUCTION:
+                raise RuntimeError(f"{msg}; set SMTP_HOST/SMTP_USER/SMTP_PASSWORD")
+            logger.warning("%s — email notifications will be disabled", msg)
 
     from api.services.scheduler import start_scheduler, stop_scheduler
 

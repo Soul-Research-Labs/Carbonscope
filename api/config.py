@@ -128,3 +128,6 @@ if TOTP_ENCRYPTION_KEY == _DEFAULT_TOTP_KEY and ENV == "production":
 # ── Email / SMTP ────────────────────────────────────────────────────
 # Configured in api/services/email.py via env vars:
 #   SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD, EMAIL_FROM
+REQUIRE_SMTP_IN_PRODUCTION: bool = os.getenv(
+    "REQUIRE_SMTP_IN_PRODUCTION", "false"
+).lower() in ("true", "1", "yes")
