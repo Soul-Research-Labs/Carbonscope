@@ -8,7 +8,7 @@ import threading
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import Depends, FastAPI, Request
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -18,7 +18,6 @@ from api.config import ALLOWED_ORIGINS, ENV
 from api.database import get_db, init_db
 from api.limiter import limiter
 from api.middleware import register_middleware
-from api.deps import get_current_user
 from api.routes.auth_routes import router as auth_router
 from api.routes.company_routes import router as company_router
 from api.routes.carbon_routes import router as carbon_router
@@ -181,9 +180,8 @@ async def _count_requests(request: Request, call_next):
 @app.get("/metrics")
 async def metrics(
     request: Request,
-    _user=Depends(get_current_user),
 ):
-    """Operational metrics (authenticated endpoint).
+    """Operational metrics endpoint.
     Returns Prometheus text format when Accept header contains 'text/plain'
     or PROMETHEUS_ENABLED is set, otherwise JSON."""
     uptime = time.monotonic() - _start_time if _start_time else 0
