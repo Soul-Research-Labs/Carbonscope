@@ -21,6 +21,14 @@ test_engine = create_async_engine(TEST_DATABASE_URL, echo=False)
 TestSessionLocal = async_sessionmaker(test_engine, class_=AsyncSession, expire_on_commit=False)
 
 
+def _reset_limiter_state() -> None:
+    """Reset SlowAPI in-memory counters to avoid cross-test contamination."""
+    storage = getattr(limiter, "_storage", None)
+    cache = getattr(storage, "_cache", None)
+    if isinstance(cache, dict):
+        cache.clear()
+
+
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.new_event_loop()
@@ -38,9 +46,11 @@ async def setup_db():
         await conn.execute(text("PRAGMA foreign_keys=OFF"))
         await conn.run_sync(Base.metadata.create_all)
     # Disable rate limits for tests so they don't interfere
+    _reset_limiter_state()
     limiter.enabled = False
     yield
     limiter.enabled = True
+    _reset_limiter_state()
     async with test_engine.begin() as conn:
         await conn.execute(text("PRAGMA foreign_keys=OFF"))
         await conn.run_sync(Base.metadata.drop_all)
