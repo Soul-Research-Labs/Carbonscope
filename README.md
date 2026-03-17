@@ -13,9 +13,9 @@
   <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-blue.svg?style=flat-square" alt="License: MIT"></a>
   <img src="https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white" alt="Python 3.10+">
   <img src="https://img.shields.io/badge/node-18%2B-339933?style=flat-square&logo=node.js&logoColor=white" alt="Node 18+">
-  <img src="https://img.shields.io/badge/version-0.24.1-orange?style=flat-square" alt="Version 0.24.1">
-  <img src="https://img.shields.io/badge/tests-740%20backend%20%7C%20142%20frontend-brightgreen?style=flat-square" alt="Tests">
-  <img src="https://img.shields.io/badge/endpoints-99%2B-7B61FF?style=flat-square" alt="99+ API Endpoints">
+  <img src="https://img.shields.io/badge/version-0.24.2-orange?style=flat-square" alt="Version 0.24.2">
+  <img src="https://img.shields.io/badge/tests-745%20backend%20%7C%20142%20frontend-brightgreen?style=flat-square" alt="Tests">
+  <img src="https://img.shields.io/badge/endpoints-100%2B-7B61FF?style=flat-square" alt="100+ API Endpoints">
   <img src="https://img.shields.io/badge/Bittensor-Subnet-000000?style=flat-square" alt="Bittensor Subnet">
 </p>
 
@@ -34,7 +34,7 @@
 
 CarbonScope is a **Bittensor subnet** that combines decentralized AI with enterprise carbon accounting. Miners estimate corporate carbon emissions across Scope 1, 2, and 3 categories, while validators score report quality against the **GHG Protocol Corporate Standard** using curated benchmarks.
 
-The platform ships with a production-ready **FastAPI** backend (99+ endpoints), a **Next.js 15** dashboard, and a complete carbon management suite — covering emission estimation, compliance reporting, supply chain tracking, AI-powered document processing, and a data marketplace.
+The platform ships with a production-ready **FastAPI** backend (100+ endpoints), a **Next.js 15** dashboard, and a complete carbon management suite — covering emission estimation, compliance reporting, supply chain tracking, AI-powered document processing, and a data marketplace.
 
 ### Why CarbonScope?
 
@@ -83,7 +83,7 @@ The platform ships with a production-ready **FastAPI** backend (99+ endpoints), 
              v
   ┌─────────────────────────────────────────┐
   │            FastAPI Backend              │
-  │      18 Route Modules · 99+ Endpoints   │
+  │      19 Route Modules · 100+ Endpoints   │
   │   JWT Auth · Rate Limiting · Audit Logs │
   └──────────┬─────────────────────┬────────┘
              │                     │
@@ -384,7 +384,7 @@ cd subtensor && docker compose down -v
 
 ## Running Tests
 
-### Backend Tests (729)
+### Backend Tests (745)
 
 ```bash
 pytest tests/ -v                                      # Full suite
@@ -402,7 +402,7 @@ npm run test:watch        # Watch mode for development
 ```
 
 <details>
-<summary><strong>Backend Test Coverage (42 test files)</strong></summary>
+<summary><strong>Backend Test Coverage (43 test files)</strong></summary>
 
 | File                                 | Coverage                                                    |
 | :----------------------------------- | :---------------------------------------------------------- |
@@ -450,11 +450,12 @@ npm run test:watch        # Watch mode for development
 | `test_pdf_export.py`                 | PDF generation for reports and questionnaires               |
 | `test_url_validator.py`              | SSRF protection: scheme, hostname, private IP, DNS          |
 | `test_templates.py`                  | Questionnaire template catalog: list, get, parametrized     |
+| `test_startup_policy.py`            | Production startup enforcement, config validation           |
 
 </details>
 
 <details>
-<summary><strong>Frontend Test Coverage (25 test files, 142 tests)</strong></summary>
+<summary><strong>Frontend Test Coverage (26 test files, 142 tests)</strong></summary>
 
 | File                           | Coverage                                              |
 | :----------------------------- | :---------------------------------------------------- |
@@ -490,7 +491,7 @@ npm run test:watch        # Watch mode for development
 
 ## Platform API
 
-The platform exposes **99+ RESTful endpoints** across 18 route modules. All endpoints are prefixed with `/api/v1/` and documented via OpenAPI.
+The platform exposes **100+ RESTful endpoints** across 19 route modules. All endpoints are prefixed with `/api/v1/` and documented via OpenAPI.
 
 ### Endpoint Summary
 
@@ -509,7 +510,12 @@ The platform exposes **99+ RESTful endpoints** across 18 route modules. All endp
 | **Marketplace**       |     8     | Anonymized data listings, credit-based purchase, seller dashboard      |
 | **Webhooks**          |     5     | HMAC-signed webhooks, delivery logs with retry info                    |
 | **Stripe**            |     1     | Stripe webhook endpoint for subscription events                        |
-| **Audit & Health**    |     2     | Audit logs (admin), health check                                       |
+| **PCAF**              |     6     | Financed emissions portfolios, asset management, calculations          |
+| **Reviews**           |     4     | Data review workflow (create, list, approve/reject)                    |
+| **MFA**               |     5     | TOTP setup, verify, disable, status check                             |
+| **Benchmarks**        |     2     | Industry benchmark comparison and percentile ranking                   |
+| **Events (SSE)**      |     1     | Server-Sent Events subscription for real-time push                     |
+| **Audit & Health**    |     4     | Audit logs (admin), health check, liveness probe, detailed health      |
 
 > **Full Reference:** See [API.md](docs/API.md) for the complete endpoint reference with request/response examples.
 
@@ -517,7 +523,7 @@ The platform exposes **99+ RESTful endpoints** across 18 route modules. All endp
 
 ## Data Models
 
-The platform uses **19 SQLAlchemy models** with full async support, soft deletes, and CHECK constraints.
+The platform uses **24 SQLAlchemy models** with full async support, soft deletes, and CHECK constraints.
 
 | Model                     | Description                                                                       |
 | :------------------------ | :-------------------------------------------------------------------------------- |
@@ -540,6 +546,11 @@ The platform uses **19 SQLAlchemy models** with full async support, soft deletes
 | **RefreshToken**          | Persistent refresh token (SHA-256 hashed, single-use rotation)                    |
 | **RevokedToken**          | Access token blacklist (JTI-based, for logout)                                    |
 | **PasswordResetToken**    | Short-lived password reset token (15-minute expiry)                               |
+| **FinancedPortfolio**     | PCAF financed emissions portfolio (asset class, methodology)                      |
+| **FinancedAsset**         | Individual financed asset within a portfolio (attribution, emissions)              |
+| **DataReview**            | Data review workflow record (status, reviewer, comments)                          |
+| **MFASecret**             | Encrypted TOTP secret for multi-factor authentication (Fernet at rest)            |
+| **IndustryBenchmark**     | Industry benchmark data for percentile comparison                                 |
 
 > **Schema Details:** See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for database relationships, constraints, and ER diagrams.
 
@@ -677,17 +688,17 @@ The production stack includes PostgreSQL 16, resource limits, `no-new-privileges
 ```
 carbonscope/
 ├── api/                            # FastAPI platform backend
-│   ├── main.py                     # App entry point (18 routers, lifespan scheduler)
+│   ├── main.py                     # App entry point (19 routers, lifespan scheduler)
 │   ├── config.py                   # Env-based configuration + production enforcement
 │   ├── database.py                 # SQLAlchemy async (SQLite + PostgreSQL)
-│   ├── models.py                   # 19 models (see Data Models)
+│   ├── models.py                   # 24 models (see Data Models)
 │   ├── schemas.py                  # Pydantic request/response schemas
 │   ├── auth.py                     # JWT + bcrypt + refresh/reset tokens
 │   ├── deps.py                     # Dependencies: auth, plan gates, credits, admin
 │   ├── middleware.py               # Request ID, security headers, error handler
 │   ├── limiter.py                  # SlowAPI rate limiter
-│   ├── routes/                     # 18 route modules (see Platform API)
-│   └── services/                   # 21 service modules (see Architecture)
+│   ├── routes/                     # 19 route modules (see Platform API)
+│   └── services/                   # 26 service modules (see Architecture)
 ├── carbonscope/                    # Bittensor subnet core
 │   ├── protocol.py                 # CarbonSynapse (bt.Synapse)
 │   ├── scoring.py                  # 5-axis composite scoring engine
@@ -700,13 +711,13 @@ carbonscope/
 │   └── validator.py                # Bittensor Dendrite client
 ├── frontend/                       # Next.js 15 + React 19 dashboard
 │   └── src/
-│       ├── app/                    # App Router pages (25 routes)
+│       ├── app/                    # App Router pages (26 routes)
 │       ├── components/             # Reusable UI components
 │       └── lib/                    # API client, auth context, utilities
 ├── alembic/                        # Database migrations
 ├── data/emission_factors/          # EPA, eGRID, IEA, DEFRA JSON datasets
 ├── scripts/                        # Shell scripts (register, run miner/validator)
-├── tests/                          # 729 backend tests (pytest, 42 files)
+├── tests/                          # 745 backend tests (pytest, 43 files)
 ├── docker-compose.yml              # Development stack
 ├── docker-compose.prod.yml         # Production stack (PostgreSQL)
 ├── Dockerfile                      # Multi-stage (backend + frontend)
@@ -774,7 +785,8 @@ alembic current
 
 | Endpoint       | Purpose                                                            |
 | :------------- | :----------------------------------------------------------------- |
-| `GET /health`  | Liveness check — returns `200` with version, uptime, DB status     |
+| `GET /health/live` | Liveness check — returns `200` if process is running (no dependency checks) |
+| `GET /health`  | Readiness check — returns `200` with version and DB connectivity status     |
 | `GET /metrics` | Prometheus text format — request counts, error rates, status codes |
 
 Connect Prometheus to scrape `/metrics` every 15s. Import the Grafana dashboard from `docs/grafana-dashboard.json` (if available) or create panels for `carbonscope_requests_total`, `carbonscope_errors_total`, and `carbonscope_http_requests_by_status`.
@@ -809,7 +821,7 @@ Set `SENTRY_DSN` to enable error tracking and performance monitoring. Adjust `SE
 | Document                                 | Description                                                               |
 | :--------------------------------------- | :------------------------------------------------------------------------ |
 | [README.md](README.md)                   | Project overview, quick start, and feature summary (this file)            |
-| [API.md](docs/API.md)                    | Complete API reference — all 95+ endpoints with request/response examples |
+| [API.md](docs/API.md)                    | Complete API reference — all 100+ endpoints with request/response examples |
 | [ARCHITECTURE.md](docs/ARCHITECTURE.md)  | System design, data flow, database schema, service architecture           |
 | [DEPLOYMENT.md](docs/DEPLOYMENT.md)      | Production deployment guide (Nginx, Docker, systemd, TLS, scaling)        |
 | [CONTRIBUTING.md](docs/CONTRIBUTING.md)  | Development workflow, code style, testing, and PR process                 |
@@ -823,7 +835,7 @@ Set `SENTRY_DSN` to enable error tracking and performance monitoring. Adjust `SE
 
 See [CHANGELOG.md](docs/CHANGELOG.md) for the full version history.
 
-**Latest — v0.22.0** (Phases 39–49: Code Quality, Security & Service Layer): Thread-safe metrics, service layer extraction (carbon, company, AI, scenarios), security headers, schema validation hardening, CI/CD improvements, GitHub templates. See [CHANGELOG.md](docs/CHANGELOG.md) for the full history.
+**Latest — v0.24.2** (Security Hardening Round 3): K8s probe splitting, pagination bounds, PII masking, deprecated fixture removal, architecture refresh. See [CHANGELOG.md](docs/CHANGELOG.md) for the full history.
 
 ---
 
