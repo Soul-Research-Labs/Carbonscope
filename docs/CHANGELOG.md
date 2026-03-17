@@ -6,6 +6,31 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [0.24.2] — 2025-07-25 — Security Hardening Round 3
+
+### Fixed
+
+- **Unbounded pagination**: Added `Query(ge=, le=)` bounds on `limit`/`offset` params in `review_routes`, `benchmark_routes`, and `pcaf_routes` to prevent excessive resource consumption
+- **Deprecated pytest fixture**: Removed session-scoped `event_loop` fixture (deprecated in pytest-asyncio), replaced with `asyncio_default_fixture_loop_scope = "session"` in pyproject.toml
+- **Email PII in logs**: Production log messages now mask email addresses (`u***@example.com`) via `_mask_email()` helper
+- **Frontend version mismatch**: Synced `frontend/package.json` version from `0.1.0` to `0.24.2`
+- **K8s liveness probe**: Split health probes — liveness now uses `/health/live` (no DB check) to prevent unnecessary pod restarts during transient DB outages
+- **K8s ServiceMonitor**: Fixed label selector mismatch (`app: carbonscope, component: backend` → `app: backend`) and added missing port name `http` to backend Service
+
+### Added
+
+- **`/health/live` endpoint**: Lightweight liveness probe that returns 200 if the process is running (no dependency checks)
+- **Startup probe**: Added `startupProbe` to backend Deployment with 60s window for cold starts
+- **K8s deployment docs**: New Kubernetes section in ARCHITECTURE.md with probe, HPA, and monitoring tables
+
+### Changed
+
+- **ARCHITECTURE.md**: Refreshed with accurate counts — 19 route modules, 26 services, 100+ endpoints, 26 pages, 24 models, 11 soft-delete models
+- Middleware stack diagram updated to include `RequestBodyLimitMiddleware`
+- Security controls table expanded with MFA, PII masking, and request body limit entries
+
+---
+
 ## [0.24.1] — 2026-03-18 — Security Hardening Round 2
 
 ### Fixed
