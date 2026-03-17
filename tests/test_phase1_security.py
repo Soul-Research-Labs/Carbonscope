@@ -189,12 +189,12 @@ class TestDeactivatedUser:
 
 @pytest.mark.asyncio
 class TestMetricsEndpoint:
-    """Verify the /metrics endpoint returns operational data."""
+    """Verify the /metrics endpoint requires admin authentication."""
 
-    async def test_metrics_public_access(self, client: AsyncClient):
-        """Unauthenticated access to /metrics is allowed."""
+    async def test_metrics_rejects_unauthenticated(self, client: AsyncClient):
+        """Unauthenticated access to /metrics is rejected."""
         resp = await client.get("/metrics")
-        assert resp.status_code == 200
+        assert resp.status_code == 401
 
     async def test_metrics_returns_data(self, auth_client: AsyncClient):
         resp = await auth_client.get("/metrics")
@@ -208,9 +208,15 @@ class TestMetricsEndpoint:
 
 @pytest.mark.asyncio
 class TestHealthEndpoint:
-    """Verify health endpoint returns current APP_VERSION."""
+    """Verify health endpoint returns current APP_VERSION without sensitive details."""
 
     async def test_health_version(self, client: AsyncClient):
         resp = await client.get("/health")
         assert resp.status_code == 200
-        assert resp.json()["version"] == APP_VERSION
+        data = resp.json()
+        assert data["version"] == APP_VERSION
+        # Sensitive fields must NOT appear in the public health check
+        assert "db_pool" not in data
+        assert "redis" not in data
+        assert "bittensor" not in data
+        assert "email" not in data

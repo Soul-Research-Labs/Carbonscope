@@ -9,7 +9,7 @@ import threading
 import time
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, Request
+from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 from slowapi import _rate_limit_exceeded_handler
@@ -17,6 +17,7 @@ from slowapi.errors import RateLimitExceeded
 
 from api.config import ALLOWED_ORIGINS, ENV, REQUIRE_SMTP_IN_PRODUCTION
 from api.database import get_db, get_db_pool_status, init_db
+from api.deps import require_admin
 from api.limiter import limiter
 from api.middleware import register_middleware
 from api.routes.auth_routes import router as auth_router
@@ -173,12 +174,30 @@ app.include_router(events_router, prefix="/api/v1")
 
 @app.get("/health")
 async def health():
-    """Health check — tests DB connectivity and reports service status."""
+    """Health check — lightweight liveness probe (no sensitive details)."""
+    from sqlalchemy import text as sa_text
+
+    db_ok = False
+    try:
+        async for session in get_db():
+            await session.execute(sa_text("SELECT 1"))
+            db_ok = True
+            break
+    except Exception:
+        pass
+
+    return {
+        "status": "ok" if db_ok else "degraded",
+        "version": APP_VERSION,
+    }
+
+
+@app.get("/health/detail")
+async def health_detail(_admin=Depends(require_admin)):
+    """Detailed health check — admin-only. Exposes infrastructure status."""
     from sqlalchemy import text as sa_text
 
     checks: dict[str, str] = {}
-
-    # Database
     try:
         async for session in get_db():
             await session.execute(sa_text("SELECT 1"))
@@ -187,22 +206,16 @@ async def health():
     except Exception:
         checks["database"] = "unavailable"
 
-    # Email (SMTP config present)
     smtp_host = os.getenv("SMTP_HOST", "")
     checks["email"] = "configured" if smtp_host else "not_configured"
 
-    # Bittensor (config present, not a live check)
     from api.config import ESTIMATION_MODE, BT_NETWORK
     checks["bittensor"] = f"{ESTIMATION_MODE}/{BT_NETWORK}"
     checks["db_pool"] = get_db_pool_status()
     checks["redis"] = await _check_redis_health()
 
     all_ok = checks["database"] == "connected" and checks["redis"] != "unavailable"
-    return {
-        "status": "ok" if all_ok else "degraded",
-        "version": APP_VERSION,
-        **checks,
-    }
+    return {"status": "ok" if all_ok else "degraded", "version": APP_VERSION, **checks}
 
 
 @app.middleware("http")
@@ -222,6 +235,7 @@ async def _count_requests(request: Request, call_next):
 @app.get("/metrics")
 async def metrics(
     request: Request,
+    _admin=Depends(require_admin),
 ):
     """Operational metrics endpoint.
     Returns Prometheus text format when Accept header contains 'text/plain'
