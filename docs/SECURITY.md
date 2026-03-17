@@ -93,11 +93,11 @@ Rate limiting is IP-based (supports `X-Forwarded-For` when `TRUST_PROXY=true`).
 
 ### Health & Diagnostics
 
-| Endpoint           | Access        | Detail                                                  |
-| :----------------- | :------------ | :------------------------------------------------------ |
-| `GET /health`      | Public        | Returns `{"status": "healthy"}` only (no internals)     |
-| `GET /health/detail` | Admin-only  | Full system info (DB, Redis, versions) behind auth gate |
-| `GET /metrics`     | Admin-only    | Prometheus-compatible application metrics                |
+| Endpoint             | Access     | Detail                                                  |
+| :------------------- | :--------- | :------------------------------------------------------ |
+| `GET /health`        | Public     | Returns `{"status": "healthy"}` only (no internals)     |
+| `GET /health/detail` | Admin-only | Full system info (DB, Redis, versions) behind auth gate |
+| `GET /metrics`       | Admin-only | Prometheus-compatible application metrics               |
 
 ### Audit & Monitoring
 

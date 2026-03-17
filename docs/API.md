@@ -1831,10 +1831,10 @@ Requires authentication (Bearer token or cookie). Opens an SSE stream for real-t
 
 **Event types:**
 
-| Event               | Data                                              |
-| :------------------- | :------------------------------------------------ |
-| `alert.created`      | `{"alert_id": "...", "metric": "...", ...}`       |
-| `alert.acknowledged` | `{"alert_id": "...", "acknowledged_by": "..."}`   |
+| Event                | Data                                            |
+| :------------------- | :---------------------------------------------- |
+| `alert.created`      | `{"alert_id": "...", "metric": "...", ...}`     |
+| `alert.acknowledged` | `{"alert_id": "...", "acknowledged_by": "..."}` |
 
 **Example:**
 
