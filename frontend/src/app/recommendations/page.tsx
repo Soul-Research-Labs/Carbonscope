@@ -24,7 +24,9 @@ export default function RecommendationsIndexPage() {
       setFetching(true);
       listReports({ limit: 50, sortBy: "created_at", order: "desc" })
         .then((res) => setReports(res.items))
-        .catch((e) => setError(e instanceof Error ? e.message : "Failed to load reports"))
+        .catch((e) =>
+          setError(e instanceof Error ? e.message : "Failed to load reports"),
+        )
         .finally(() => setFetching(false));
     }
   }, [user, loading, router]);

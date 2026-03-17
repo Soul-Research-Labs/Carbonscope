@@ -24,7 +24,11 @@ export default function RecommendationsPage() {
     if (user && reportId) {
       getRecommendations(reportId)
         .then(setData)
-        .catch((e) => setError(e instanceof Error ? e.message : "Failed to load recommendations"));
+        .catch((e) =>
+          setError(
+            e instanceof Error ? e.message : "Failed to load recommendations",
+          ),
+        );
     }
   }, [user, loading, router, reportId]);
 
