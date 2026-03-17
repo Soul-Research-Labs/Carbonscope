@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/Skeleton";
+import { useEventSource } from "@/hooks/useEventSource";
 import {
   listAlerts,
   acknowledgeAlert,
@@ -48,6 +49,16 @@ export default function AlertsPage() {
     }
     if (user) fetchAlerts();
   }, [user, loading, router, fetchAlerts]);
+
+  // Auto-refresh when backend pushes SSE events
+  const sseHandlers = useMemo(
+    () => ({
+      "alert.created": () => fetchAlerts(),
+      "alert.acknowledged": () => fetchAlerts(),
+    }),
+    [fetchAlerts],
+  );
+  useEventSource(sseHandlers, !!user);
 
   async function handleAcknowledge(id: string) {
     try {

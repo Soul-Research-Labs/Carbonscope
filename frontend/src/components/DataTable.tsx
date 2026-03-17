@@ -37,12 +37,17 @@ export function DataTable<T extends Record<string, unknown>>({
   return (
     <div className="overflow-x-auto">
       {/* Desktop table */}
-      <table className="hidden sm:table min-w-full divide-y divide-[var(--card-border)]">
+      <table
+        className="hidden sm:table min-w-full divide-y divide-[var(--card-border)]"
+        role="table"
+        aria-label="Data table"
+      >
         <thead className="bg-[var(--card)]">
           <tr>
             {columns.map((col) => (
               <th
                 key={col.key}
+                scope="col"
                 className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wider text-[var(--muted)]"
               >
                 {col.header}
@@ -80,7 +85,7 @@ export function DataTable<T extends Record<string, unknown>>({
       </table>
 
       {/* Mobile card layout */}
-      <div className="sm:hidden space-y-3">
+      <div className="sm:hidden space-y-3" role="list" aria-label="Data list">
         {loading ? (
           <div className="space-y-3">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -101,6 +106,7 @@ export function DataTable<T extends Record<string, unknown>>({
           data.map((row, i) => (
             <div
               key={(row.id as string) ?? i}
+              role="listitem"
               className="rounded-lg border border-[var(--card-border)] bg-[var(--card)] p-4 space-y-2"
             >
               {columns.map((col) => (
@@ -122,8 +128,11 @@ export function DataTable<T extends Record<string, unknown>>({
       </div>
 
       {hasPagination && totalPages > 1 && (
-        <div className="flex items-center justify-between border-t border-[var(--card-border)] px-4 py-3">
-          <span className="text-sm text-[var(--muted)]">
+        <nav
+          aria-label="Table pagination"
+          className="flex items-center justify-between border-t border-[var(--card-border)] px-4 py-3"
+        >
+          <span className="text-sm text-[var(--muted)]" aria-live="polite">
             Page {currentPage} of {totalPages} ({total} items)
           </span>
           <div className="flex gap-2">
@@ -131,6 +140,7 @@ export function DataTable<T extends Record<string, unknown>>({
               disabled={currentPage <= 1}
               onClick={() => onPageChange(offset - limit)}
               className="rounded border px-3 py-1 text-sm disabled:opacity-40"
+              aria-label={`Go to previous page, page ${currentPage - 1}`}
             >
               Previous
             </button>
@@ -138,11 +148,12 @@ export function DataTable<T extends Record<string, unknown>>({
               disabled={currentPage >= totalPages}
               onClick={() => onPageChange(offset + limit)}
               className="rounded border px-3 py-1 text-sm disabled:opacity-40"
+              aria-label={`Go to next page, page ${currentPage + 1}`}
             >
               Next
             </button>
           </div>
-        </div>
+        </nav>
       )}
     </div>
   );

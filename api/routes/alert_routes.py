@@ -12,6 +12,7 @@ from api.limiter import limiter
 from api.models import User
 from api.schemas import AlertOut, PaginatedResponse
 from api.services.alerts import acknowledge_alert, check_company_alerts, list_alerts
+from api.services.event_bus import publish as publish_event
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
@@ -46,6 +47,7 @@ async def ack_alert(
     if alert is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Alert not found")
     await db.commit()
+    publish_event(user.company_id, "alert.acknowledged", {"alert_id": alert_id})
     return alert
 
 
@@ -59,4 +61,6 @@ async def trigger_alert_check(
     """Manually trigger alert checks for the current company."""
     new_alerts = await check_company_alerts(db, user.company_id)
     await db.commit()
+    if new_alerts:
+        publish_event(user.company_id, "alert.created", {"count": len(new_alerts)})
     return new_alerts

@@ -18,6 +18,10 @@ cp k8s/secrets.local.example.yaml k8s/secrets.local.yaml
 vi k8s/secrets.local.yaml
 kubectl apply -f k8s/secrets.local.yaml
 
+# Alternative: use External Secrets Operator (recommended for production)
+# Install operator: https://external-secrets.io/latest/introduction/getting-started/
+# Then apply: kubectl apply -f k8s/external-secrets.yaml
+
 # Alternative: apply tracked template only in ephemeral/dev contexts
 # vi k8s/secrets.yaml
 # kubectl apply -f k8s/secrets.yaml

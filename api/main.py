@@ -37,6 +37,7 @@ from api.routes.pcaf_routes import router as pcaf_router
 from api.routes.review_routes import router as review_router
 from api.routes.mfa_routes import router as mfa_router
 from api.routes.benchmark_routes import router as benchmark_router
+from api.routes.events_routes import router as events_router
 
 from api import __version__ as APP_VERSION
 
@@ -167,6 +168,7 @@ app.include_router(pcaf_router, prefix="/api/v1")
 app.include_router(review_router, prefix="/api/v1")
 app.include_router(mfa_router, prefix="/api/v1")
 app.include_router(benchmark_router, prefix="/api/v1")
+app.include_router(events_router, prefix="/api/v1")
 
 
 @app.get("/health")

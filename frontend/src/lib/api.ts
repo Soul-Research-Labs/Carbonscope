@@ -1353,3 +1353,6 @@ export async function getIndustryBenchmarks(industry?: string) {
 export async function getPeerComparison() {
   return request<PeerComparison>("/benchmarks/peers");
 }
+
+/** SSE endpoint URL for real-time events. */
+export const SSE_EVENTS_URL = `${BASE}/events/subscribe`;

@@ -19,6 +19,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.database import async_session
 from api.models import Alert, Company, EmissionReport, RefreshToken, RevokedToken, PasswordResetToken
 from api.services.alerts import check_company_alerts
+from api.services.event_bus import publish as publish_event
 
 logger = logging.getLogger(__name__)
 
@@ -126,12 +127,18 @@ async def _run_periodic_checks() -> None:
                         new_alerts = await check_company_alerts(db, company_id)
 
                         # Filter out duplicates
+                        kept = 0
                         for alert in new_alerts:
                             meta = alert.metadata_json or {}
                             if meta.get("latest_report_id") in existing_ids:
                                 await db.delete(alert)
                             else:
                                 total_alerts += 1
+                                kept += 1
+
+                        # Notify connected SSE clients
+                        if kept > 0:
+                            publish_event(company_id, "alert.created", {"count": kept})
                     except Exception:
                         logger.exception("Alert check failed for company %s", company_id)
 

@@ -6,6 +6,27 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [0.24.0] — 2026-03-17 — Phase 3 & 4: Real-Time Events, Accessibility, DevOps Hardening
+
+### Added
+
+- **SSE (Server-Sent Events)** endpoint (`GET /api/v1/events/subscribe`) for real-time push notifications:
+  - In-process pub/sub event bus (`api/services/event_bus.py`) scoped per company
+  - Events: `alert.created`, `alert.acknowledged`
+  - Frontend `useEventSource` hook with auto-reconnect
+  - Alerts page auto-refreshes when backend pushes events
+- **ExternalSecrets CRD** (`k8s/external-secrets.yaml`) — pull secrets from HashiCorp Vault instead of static K8s secrets
+- **S3 offsite backup replication** — optional `BACKUP_S3_BUCKET` config for cross-region durability
+- **CI security hardening** — npm audit for frontend dependencies + TruffleHog secret scanning
+
+### Changed
+
+- **DataTable accessibility** — `role="table"`, `scope="col"` on headers, pagination wrapped in `<nav aria-label>`, page counter with `aria-live="polite"`, Previous/Next buttons with descriptive `aria-label`
+- **Mobile DataTable** — card layout now uses `role="list"` / `role="listitem"` for screen readers
+- Scheduler publishes SSE events when new alerts are created (no more manual-only refresh)
+- `k8s/secrets.yaml` deprecated in favor of `external-secrets.yaml`
+- Architecture docs updated: service layer 21 → 22 modules
+
 ## [0.23.2] — 2026-03-16 — Patch: Release Metadata Version Synchronization
 
 ### Fixed

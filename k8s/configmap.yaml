@@ -19,3 +19,5 @@ data:
   BT_NETWORK: "test"
   BT_NETUID: "1"
   REDIS_URL: "redis://redis:6379/0"
+  # Optional: S3 bucket for offsite backup replication (leave empty to skip)
+  BACKUP_S3_BUCKET: ""
