@@ -66,21 +66,19 @@ export default function SettingsPage() {
       return;
     }
     if (user) {
-      getProfile()
-        .then((p) => {
+      Promise.all([getProfile(), getCompany()])
+        .then(([p, c]) => {
           setProfile(p);
           setFullName(p.full_name);
           setEmail(p.email);
+          setCompany(c);
+          setName(c.name);
+          setIndustry(c.industry);
+          setRegion(c.region);
+          setEmployeeCount(c.employee_count?.toString() ?? "");
+          setRevenueUsd(c.revenue_usd?.toString() ?? "");
         })
-        .catch(() => setProfileErr("Failed to load profile"));
-      getCompany().then((c) => {
-        setCompany(c);
-        setName(c.name);
-        setIndustry(c.industry);
-        setRegion(c.region);
-        setEmployeeCount(c.employee_count?.toString() ?? "");
-        setRevenueUsd(c.revenue_usd?.toString() ?? "");
-      });
+        .catch(() => setProfileErr("Failed to load settings"));
     }
   }, [user, loading, router]);
 
