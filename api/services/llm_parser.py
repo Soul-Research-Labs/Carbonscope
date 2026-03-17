@@ -108,7 +108,7 @@ def parse_text_rule_based(text: str) -> dict[str, Any]:
 
 # ── LLM-based extraction ────────────────────────────────────────────
 
-_EXTRACT_PROMPT = """You are a carbon accounting data extraction expert. Extract structured operational data from the following text.
+_EXTRACT_PROMPT_PREFIX = """You are a carbon accounting data extraction expert. Extract structured operational data from the following text.
 
 Return ONLY a JSON object with these possible keys (omit any not found):
 - electricity_kwh: annual electricity consumption in kWh
@@ -127,7 +127,9 @@ Return ONLY a JSON object with these possible keys (omit any not found):
 - steam_mmbtu: annual steam/heating in MMBtu
 
 Text to parse:
-{text}
+<user_input>"""
+
+_EXTRACT_PROMPT_SUFFIX = """</user_input>
 
 JSON:"""
 
@@ -144,7 +146,7 @@ async def parse_unstructured_text(text: str) -> dict[str, Any]:
 
     try:
         provider = "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "openai"
-        prompt = _EXTRACT_PROMPT.format(text=text[:4000])  # Limit input size
+        prompt = _EXTRACT_PROMPT_PREFIX + text[:4000] + _EXTRACT_PROMPT_SUFFIX
 
         def _call() -> str:
             if provider == "anthropic":
