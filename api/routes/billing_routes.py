@@ -5,6 +5,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from api.config import RATE_LIMIT_AUTH, RATE_LIMIT_DEFAULT
 from api.database import get_db
 from api.deps import get_current_user, require_admin
 from api.limiter import limiter
@@ -31,7 +32,9 @@ router = APIRouter(prefix="/billing", tags=["billing"])
 
 
 @router.get("/subscription", response_model=SubscriptionOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_subscription(
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -73,7 +76,9 @@ async def update_subscription(
 
 
 @router.get("/credits", response_model=CreditBalanceOut)
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_credits(
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
@@ -89,7 +94,9 @@ async def get_credits(
 
 
 @router.get("/plans")
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def list_plans(
+    request: Request,
     user: User = Depends(get_current_user),
 ):
     """List available subscription plans and their limits."""
@@ -100,7 +107,9 @@ async def list_plans(
 
 
 @router.post("/credits/grant", response_model=CreditBalanceOut)
+@limiter.limit(RATE_LIMIT_AUTH)
 async def admin_grant_credits(
+    request: Request,
     amount: int,
     user: User = Depends(require_admin),
     db: AsyncSession = Depends(get_db),
@@ -129,7 +138,9 @@ async def admin_grant_credits(
 
 
 @router.get("/credits/ledger", response_model=PaginatedResponse[CreditLedgerOut])
+@limiter.limit(RATE_LIMIT_DEFAULT)
 async def get_credit_history(
+    request: Request,
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
     user: User = Depends(get_current_user),

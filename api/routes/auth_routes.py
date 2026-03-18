@@ -235,13 +235,16 @@ async def login(request: Request, body: UserLogin, db: AsyncSession = Depends(ge
 
 
 @router.get("/me", response_model=UserOut)
-async def get_profile(user: User = Depends(get_current_user)):
+@limiter.limit(RATE_LIMIT_AUTH)
+async def get_profile(request: Request, user: User = Depends(get_current_user)):
     """Get the current user's profile."""
     return user
 
 
 @router.patch("/me", response_model=UserOut)
+@limiter.limit(RATE_LIMIT_AUTH)
 async def update_profile(
+    request: Request,
     body: UserProfileUpdate,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
@@ -289,7 +292,9 @@ async def change_password(
 
 
 @router.delete("/me", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_AUTH)
 async def delete_account(
+    request: Request,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
