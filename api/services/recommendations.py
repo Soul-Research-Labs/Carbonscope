@@ -6,7 +6,10 @@ reduction pathways with estimated CO2 savings and cost impact.
 
 from __future__ import annotations
 
+import logging
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 # ── Reduction strategies database ────────────────────────────────────
@@ -193,6 +196,7 @@ def generate_recommendations(
             if not strategy["applicable_when"](provided_data, breakdown):
                 continue
         except Exception:
+            logger.warning("Strategy %s evaluation failed", strategy.get("name", "unknown"), exc_info=True)
             continue
 
         scope_val = scope_map.get(strategy["scope"], 0)
