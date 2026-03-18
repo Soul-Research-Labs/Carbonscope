@@ -10,6 +10,7 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
 
 from api.deps import get_current_user
+from api.limiter import limiter
 from api.models import User
 from api.services.event_bus import Subscription
 
@@ -37,6 +38,7 @@ async def _event_stream(company_id: str):
 
 
 @router.get("/subscribe")
+@limiter.limit("10/minute")
 async def subscribe(
     request: Request,
     user: User = Depends(get_current_user),
