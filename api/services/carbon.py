@@ -116,14 +116,15 @@ async def create_estimate(
     from api.services.subscriptions import deduct_operation_credits
     await deduct_operation_credits(db, company_id, "estimate")
 
-    await db.commit()
-    await db.refresh(report)
-
+    # Record audit entry BEFORE commit so report + ledger + audit are atomic
     from api.services import audit
     await audit.record(
         db, user_id=user_id, company_id=company_id,
         action="create", resource_type="emission_report", resource_id=report.id,
     )
+
+    await db.commit()
+    await db.refresh(report)
 
     from api.services.webhooks import dispatch_event
     await dispatch_event(db, company_id, "report.created", {

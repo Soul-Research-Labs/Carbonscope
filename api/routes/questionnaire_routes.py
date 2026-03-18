@@ -307,6 +307,7 @@ async def extract_questions(
     # Deduct credits only after extraction succeeded
     from api.services.subscriptions import deduct_operation_credits
     await deduct_operation_credits(db, user.company_id, "questionnaire_extract")
+    await db.commit()
 
     # Re-fetch with questions
     result = await db.execute(

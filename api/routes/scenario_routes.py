@@ -130,6 +130,7 @@ async def compute_scenario(
     # Deduct credits only after computation succeeded
     from api.services.subscriptions import deduct_operation_credits
     await deduct_operation_credits(db, user.company_id, "scenario_compute")
+    await db.commit()
 
     return scenario
 

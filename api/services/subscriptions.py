@@ -242,7 +242,7 @@ async def deduct_operation_credits(db: AsyncSession, company_id: str, operation:
     cost = CREDIT_COSTS.get(operation, 0)
     if cost > 0:
         await deduct_credits(db, company_id, cost, f"{operation}_usage")
-        await db.commit()
+        await db.flush()  # stage the ledger row without committing — caller owns the transaction
 
 
 async def get_credit_ledger(
