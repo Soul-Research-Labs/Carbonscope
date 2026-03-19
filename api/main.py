@@ -180,7 +180,7 @@ async def health_live():
 
 @app.get("/health")
 async def health():
-    """Readiness probe — checks DB connectivity (no sensitive details)."""
+    """Readiness probe — checks DB and Redis connectivity (no sensitive details)."""
     from sqlalchemy import text as sa_text
 
     db_ok = False
@@ -192,8 +192,11 @@ async def health():
     except Exception:
         logger.debug("Health check DB probe failed", exc_info=True)
 
+    redis_status = await _check_redis_health()
+    redis_ok = redis_status in ("connected", "not_configured")
+
     return {
-        "status": "ok" if db_ok else "degraded",
+        "status": "ok" if (db_ok and redis_ok) else "degraded",
         "version": APP_VERSION,
     }
 
