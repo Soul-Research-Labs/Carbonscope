@@ -31,6 +31,113 @@ Thank you for your interest in contributing to CarbonScope! This document covers
 
 ---
 
+## Quick Start Walkthrough (First Contribution)
+
+New to the project? Follow this end-to-end example of adding a simple API change. The whole loop takes about 10 minutes.
+
+### 0. Verify your environment
+
+```bash
+# Backend
+python --version          # 3.10+
+source .venv/bin/activate # or create: python -m venv .venv
+pip install -r requirements.txt
+
+# Frontend
+node --version            # 18+
+cd frontend && npm ci && cd ..
+
+# Sanity check — run a fast test
+pytest tests/test_carbon_api.py -x -q
+cd frontend && npx vitest run --reporter=dot && cd ..
+```
+
+### 1. Pick an issue
+
+Look for issues labelled `good first issue` or `help wanted`. If none exist, pick any small improvement (fix a typo, add a missing test, improve an error message).
+
+### 2. Create a branch
+
+```bash
+git checkout -b fix/improve-health-message
+```
+
+### 3. Make the change
+
+Example: improve the `/health` endpoint message.
+
+Edit `api/main.py` and update the response message (or add a field to a schema in `api/schemas.py`).
+
+### 4. Add a test
+
+Create or update a test in `tests/`:
+
+```python
+@pytest.mark.asyncio
+async def test_health_response_shape(client):
+    r = await client.get("/health")
+    assert r.status_code == 200
+    data = r.json()
+    assert "status" in data
+```
+
+### 5. Run tests locally
+
+```bash
+# Backend
+pytest tests/ -x -q --tb=short
+
+# Frontend (if you touched frontend code)
+cd frontend && npx vitest run && cd ..
+```
+
+### 6. Lint
+
+```bash
+ruff check api/ tests/ --select E,F,W --ignore E501
+cd frontend && npx next lint && cd ..
+```
+
+### 7. Commit & push
+
+```bash
+git add -A
+git commit -m "Improve health endpoint response message"
+git push origin fix/improve-health-message
+```
+
+### 8. Open a PR
+
+Go to GitHub and open a pull request against `main`. CI will run automatically. Fill in the PR template with what you changed and how to test it.
+
+---
+
+## Key Architecture Decisions (for new contributors)
+
+| Area | Decision | Why |
+|---|---|---|
+| **Async everywhere** | All DB ops use `async`/`await` with SQLAlchemy 2.0 | High-concurrency API; avoids thread pools |
+| **SQLite for dev, PostgreSQL for prod** | `DATABASE_URL` env var switches between them | Zero-config local dev; production-grade in deployment |
+| **Local + Subnet estimation** | `ESTIMATION_MODE` toggles between built-in engine and Bittensor miners | Develop without Bittensor; production uses decentralized scoring |
+| **Rate limiting in middleware** | `slowapi` with per-route limits | Prevents abuse; limits cleared in test fixtures |
+| **JWT + HttpOnly cookies** | Access token in cookie, refresh token rotation | Secure by default; no localStorage token storage |
+| **Alembic for migrations** | All schema changes go through versioned migration files | Auditable, reversible, CI-tested up/downgrade path |
+
+### Where to find things
+
+| I want to... | Look at... |
+|---|---|
+| Add an API endpoint | `api/routes/` → create a route module, register in `api/main.py` |
+| Add a database table | `api/models.py` → add model, then `alembic revision --autogenerate` |
+| Add a frontend page | `frontend/src/app/<route>/page.tsx` |
+| Add an API client function | `frontend/src/lib/api.ts` |
+| Write a backend test | `tests/test_<feature>.py` using `auth_client` fixture |
+| Write a frontend test | `frontend/src/__tests__/<Component>.test.tsx` |
+| Update emission factors | `data/emission_factors/` JSON files |
+| Configure env vars | `api/config.py` (backend), `.env.example` (reference) |
+
+---
+
 ## Development Setup
 
 ### Backend
