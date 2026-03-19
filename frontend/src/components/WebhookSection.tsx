@@ -66,20 +66,23 @@ export default function WebhookSection() {
     }
   }, []);
 
-  const handleRetry = useCallback(async (webhookId: string, deliveryId: string) => {
-    setRetryingId(deliveryId);
-    setError("");
-    try {
-      const updated = await retryDelivery(webhookId, deliveryId);
-      setDeliveries((prev) =>
-        prev.map((d) => (d.id === deliveryId ? updated : d)),
-      );
-    } catch {
-      setError("Failed to retry delivery");
-    } finally {
-      setRetryingId(null);
-    }
-  }, []);
+  const handleRetry = useCallback(
+    async (webhookId: string, deliveryId: string) => {
+      setRetryingId(deliveryId);
+      setError("");
+      try {
+        const updated = await retryDelivery(webhookId, deliveryId);
+        setDeliveries((prev) =>
+          prev.map((d) => (d.id === deliveryId ? updated : d)),
+        );
+      } catch {
+        setError("Failed to retry delivery");
+      } finally {
+        setRetryingId(null);
+      }
+    },
+    [],
+  );
 
   return (
     <div className="mt-10">
@@ -296,7 +299,9 @@ export default function WebhookSection() {
                       <td className="py-1">
                         <span
                           className={
-                            d.success ? "text-green-400" : "text-[var(--danger)]"
+                            d.success
+                              ? "text-green-400"
+                              : "text-[var(--danger)]"
                           }
                         >
                           {d.success ? "OK" : d.error || "Failed"}

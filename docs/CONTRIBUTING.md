@@ -114,27 +114,27 @@ Go to GitHub and open a pull request against `main`. CI will run automatically. 
 
 ## Key Architecture Decisions (for new contributors)
 
-| Area | Decision | Why |
-|---|---|---|
-| **Async everywhere** | All DB ops use `async`/`await` with SQLAlchemy 2.0 | High-concurrency API; avoids thread pools |
-| **SQLite for dev, PostgreSQL for prod** | `DATABASE_URL` env var switches between them | Zero-config local dev; production-grade in deployment |
-| **Local + Subnet estimation** | `ESTIMATION_MODE` toggles between built-in engine and Bittensor miners | Develop without Bittensor; production uses decentralized scoring |
-| **Rate limiting in middleware** | `slowapi` with per-route limits | Prevents abuse; limits cleared in test fixtures |
-| **JWT + HttpOnly cookies** | Access token in cookie, refresh token rotation | Secure by default; no localStorage token storage |
-| **Alembic for migrations** | All schema changes go through versioned migration files | Auditable, reversible, CI-tested up/downgrade path |
+| Area                                    | Decision                                                               | Why                                                              |
+| --------------------------------------- | ---------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| **Async everywhere**                    | All DB ops use `async`/`await` with SQLAlchemy 2.0                     | High-concurrency API; avoids thread pools                        |
+| **SQLite for dev, PostgreSQL for prod** | `DATABASE_URL` env var switches between them                           | Zero-config local dev; production-grade in deployment            |
+| **Local + Subnet estimation**           | `ESTIMATION_MODE` toggles between built-in engine and Bittensor miners | Develop without Bittensor; production uses decentralized scoring |
+| **Rate limiting in middleware**         | `slowapi` with per-route limits                                        | Prevents abuse; limits cleared in test fixtures                  |
+| **JWT + HttpOnly cookies**              | Access token in cookie, refresh token rotation                         | Secure by default; no localStorage token storage                 |
+| **Alembic for migrations**              | All schema changes go through versioned migration files                | Auditable, reversible, CI-tested up/downgrade path               |
 
 ### Where to find things
 
-| I want to... | Look at... |
-|---|---|
-| Add an API endpoint | `api/routes/` → create a route module, register in `api/main.py` |
-| Add a database table | `api/models.py` → add model, then `alembic revision --autogenerate` |
-| Add a frontend page | `frontend/src/app/<route>/page.tsx` |
-| Add an API client function | `frontend/src/lib/api.ts` |
-| Write a backend test | `tests/test_<feature>.py` using `auth_client` fixture |
-| Write a frontend test | `frontend/src/__tests__/<Component>.test.tsx` |
-| Update emission factors | `data/emission_factors/` JSON files |
-| Configure env vars | `api/config.py` (backend), `.env.example` (reference) |
+| I want to...               | Look at...                                                          |
+| -------------------------- | ------------------------------------------------------------------- |
+| Add an API endpoint        | `api/routes/` → create a route module, register in `api/main.py`    |
+| Add a database table       | `api/models.py` → add model, then `alembic revision --autogenerate` |
+| Add a frontend page        | `frontend/src/app/<route>/page.tsx`                                 |
+| Add an API client function | `frontend/src/lib/api.ts`                                           |
+| Write a backend test       | `tests/test_<feature>.py` using `auth_client` fixture               |
+| Write a frontend test      | `frontend/src/__tests__/<Component>.test.tsx`                       |
+| Update emission factors    | `data/emission_factors/` JSON files                                 |
+| Configure env vars         | `api/config.py` (backend), `.env.example` (reference)               |
 
 ---
 

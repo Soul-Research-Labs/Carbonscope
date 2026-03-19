@@ -195,9 +195,7 @@ describe("RegisterPage", () => {
     render(<RegisterPage />);
 
     fireEvent.click(screen.getByRole("button", { name: /create account/i }));
-    expect(
-      await screen.findByText("Registration failed"),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("Registration failed")).toBeInTheDocument();
   });
 
   it("shows err.message for non-409/429 status errors", async () => {

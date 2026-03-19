@@ -8,13 +8,13 @@
 
 ## Prerequisites
 
-| Requirement | Check |
-|---|---|
-| **Funded mainnet coldkey** with sufficient TAO for registration | `btcli wallet balance --wallet.name <NAME> --subtensor.network finney` |
-| **Registered hotkey** on the target subnet | `btcli subnet register --netuid <UID> --wallet.name <NAME> --subtensor.network finney` |
-| **Kubernetes cluster** with secrets provisioned (see `k8s/external-secrets.yaml`) | `kubectl get secrets -n carbonscope` |
-| **Database migrations** applied (Alembic) | `alembic upgrade head` |
-| **Monitoring** in place (Prometheus + Grafana dashboard from `k8s/grafana-dashboard.json`) | `/health/detail` returns all-green |
+| Requirement                                                                                | Check                                                                                  |
+| ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| **Funded mainnet coldkey** with sufficient TAO for registration                            | `btcli wallet balance --wallet.name <NAME> --subtensor.network finney`                 |
+| **Registered hotkey** on the target subnet                                                 | `btcli subnet register --netuid <UID> --wallet.name <NAME> --subtensor.network finney` |
+| **Kubernetes cluster** with secrets provisioned (see `k8s/external-secrets.yaml`)          | `kubectl get secrets -n carbonscope`                                                   |
+| **Database migrations** applied (Alembic)                                                  | `alembic upgrade head`                                                                 |
+| **Monitoring** in place (Prometheus + Grafana dashboard from `k8s/grafana-dashboard.json`) | `/health/detail` returns all-green                                                     |
 
 ---
 
@@ -67,9 +67,9 @@ Edit `k8s/configmap.yaml`:
 
 ```yaml
 data:
-  ESTIMATION_MODE: "subnet"        # ← change from "local" to "subnet"
-  BT_NETWORK: "finney"             # ← already set, verify
-  BT_NETUID: "<TARGET_NETUID>"     # ← update to your subnet UID
+  ESTIMATION_MODE: "subnet" # ← change from "local" to "subnet"
+  BT_NETWORK: "finney" # ← already set, verify
+  BT_NETUID: "<TARGET_NETUID>" # ← update to your subnet UID
   BT_WALLET_NAME: "carbonscope_mainnet"
   BT_WALLET_HOTKEY: "default"
   BT_QUERY_TIMEOUT: "30.0"
@@ -158,14 +158,14 @@ HOTKEY=validator \
 
 ## Step 6 — Post-Migration Verification
 
-| Check | Command / URL |
-|---|---|
-| Health endpoint | `GET /health/detail` → all services `"ok"` |
+| Check                        | Command / URL                                                                       |
+| ---------------------------- | ----------------------------------------------------------------------------------- |
+| Health endpoint              | `GET /health/detail` → all services `"ok"`                                          |
 | Carbon estimation via subnet | `POST /api/v1/carbon/estimate` with test payload → response includes `miner_scores` |
-| Metagraph connectivity | `btcli subnet metagraph --netuid <UID> --subtensor.network finney` |
-| Grafana dashboard | Verify `carbonscope_requests_total` counter increments |
-| Audit log | `GET /api/v1/audit/` → recent estimation entries present |
-| Error rate | `carbonscope_errors_total` should not spike |
+| Metagraph connectivity       | `btcli subnet metagraph --netuid <UID> --subtensor.network finney`                  |
+| Grafana dashboard            | Verify `carbonscope_requests_total` counter increments                              |
+| Audit log                    | `GET /api/v1/audit/` → recent estimation entries present                            |
+| Error rate                   | `carbonscope_errors_total` should not spike                                         |
 
 ---
 
@@ -213,10 +213,10 @@ Set up the following Prometheus alerts during and after migration:
 
 ## Common Issues
 
-| Symptom | Cause | Fix |
-|---|---|---|
-| `bittensor: "unavailable"` in health | Wallet not found in pod | Mount wallet keyfiles or fix secret reference |
-| `ConnectionRefusedError` to subtensor | Wrong network or firewall | Verify `BT_NETWORK=finney` and outbound port 9944 is open |
-| `NotRegisteredError` | Hotkey not registered on subnet | Run `btcli subnet register` with correct netuid |
-| Estimation returns `null` | No active miners responding | Check metagraph for active miners; verify miner axon is reachable |
-| High latency (>30s) | Network congestion or slow miners | Increase `BT_QUERY_TIMEOUT`; validator circuit breaker will skip slow miners |
+| Symptom                               | Cause                             | Fix                                                                          |
+| ------------------------------------- | --------------------------------- | ---------------------------------------------------------------------------- |
+| `bittensor: "unavailable"` in health  | Wallet not found in pod           | Mount wallet keyfiles or fix secret reference                                |
+| `ConnectionRefusedError` to subtensor | Wrong network or firewall         | Verify `BT_NETWORK=finney` and outbound port 9944 is open                    |
+| `NotRegisteredError`                  | Hotkey not registered on subnet   | Run `btcli subnet register` with correct netuid                              |
+| Estimation returns `null`             | No active miners responding       | Check metagraph for active miners; verify miner axon is reachable            |
+| High latency (>30s)                   | Network congestion or slow miners | Increase `BT_QUERY_TIMEOUT`; validator circuit breaker will skip slow miners |

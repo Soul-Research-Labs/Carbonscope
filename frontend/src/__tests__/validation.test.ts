@@ -99,9 +99,7 @@ describe("register validation", () => {
       "Industry is required",
     );
     values.region = "";
-    expect(validateRegisterField("region", values)).toBe(
-      "Region is required",
-    );
+    expect(validateRegisterField("region", values)).toBe("Region is required");
   });
 
   it("validateRegisterForm returns all errors for fully empty form", () => {

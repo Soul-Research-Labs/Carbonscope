@@ -66,9 +66,7 @@
         "overrides": [
           {
             "matcher": { "id": "byName", "options": "5xx/s" },
-            "properties": [
-              { "id": "unit", "value": "reqps" }
-            ]
+            "properties": [{ "id": "unit", "value": "reqps" }]
           }
         ]
       }
