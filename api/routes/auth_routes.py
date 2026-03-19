@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 logger = logging.getLogger(__name__)
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -38,9 +38,23 @@ from api.config import (
     RATE_LIMIT_AUTH,
 )
 from api.database import get_db
-from api.deps import get_current_user
+from api.deps import get_current_user, require_admin
 from api.limiter import limiter
-from api.models import Company, MFASecret, User, _utcnow
+from api.models import (
+    Company,
+    DataListing,
+    DataUpload,
+    EmissionReport,
+    FinancedPortfolio,
+    MFASecret,
+    Questionnaire,
+    Scenario,
+    Subscription,
+    SupplyChainLink,
+    User,
+    Webhook,
+    _utcnow,
+)
 from api.schemas import PasswordChange, Token, UserLogin, UserOut, UserProfileUpdate, UserRegister
 from api.services import audit
 
@@ -316,6 +330,51 @@ async def delete_account(
     await audit.record(
         db, user_id=user.id, company_id=user.company_id,
         action="delete", resource_type="user", resource_id=user.id,
+    )
+    await db.commit()
+
+
+@router.delete("/users/{user_id}/purge", status_code=status.HTTP_204_NO_CONTENT)
+@limiter.limit(RATE_LIMIT_AUTH)
+async def gdpr_hard_delete(
+    user_id: str,
+    request: Request,
+    admin: User = Depends(require_admin),
+    db: AsyncSession = Depends(get_db),
+):
+    """Permanently delete a soft-deleted user and all associated data (GDPR Art. 17)."""
+    result = await db.execute(
+        select(User).where(User.id == user_id, User.deleted_at.isnot(None))
+    )
+    target = result.scalar_one_or_none()
+    if target is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Soft-deleted user not found",
+        )
+
+    company_id = target.company_id
+
+    # Delete owned resources in dependency order (children first)
+    for model in (
+        DataListing, FinancedPortfolio, Scenario, Questionnaire,
+        SupplyChainLink, Webhook, Subscription,
+        EmissionReport, DataUpload,
+    ):
+        if hasattr(model, "company_id"):
+            await db.execute(
+                delete(model).where(model.company_id == company_id)
+            )
+
+    # Delete the user's MFA secrets
+    await db.execute(delete(MFASecret).where(MFASecret.user_id == user_id))
+
+    # Delete the user record
+    await db.delete(target)
+
+    await audit.record(
+        db, user_id=admin.id, company_id=admin.company_id,
+        action="gdpr_hard_delete", resource_type="user", resource_id=user_id,
     )
     await db.commit()
 
