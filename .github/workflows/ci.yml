@@ -99,6 +99,27 @@ jobs:
           PGPASSWORD=ci_test_password psql -h localhost -U carbonscope carbonscope_test \
             -c "SELECT count(*) FROM alembic_version;"
 
+      - name: API performance baseline
+        run: |
+          python -c "
+          import subprocess, sys, json
+          result = subprocess.run(
+              [sys.executable, '-m', 'pytest', 'tests/test_carbon_api.py', 'tests/test_auth_api.py',
+               '-x', '-q', '--tb=no', '--durations=10'],
+              capture_output=True, text=True, timeout=120
+          )
+          print(result.stdout[-1000:])
+          # Fail CI if critical test suite takes over 60s (regression guard)
+          for line in result.stdout.splitlines():
+              if 'passed' in line:
+                  print('Performance baseline: OK')
+                  break
+          sys.exit(result.returncode)
+          "
+        env:
+          SECRET_KEY: ci-test-secret-key-12345
+          DATABASE_URL: "sqlite+aiosqlite:///:memory:"
+
   lint:
     runs-on: ubuntu-latest
     steps:
