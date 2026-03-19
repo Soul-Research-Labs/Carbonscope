@@ -224,6 +224,7 @@ class ParseTextRequest(BaseModel):
 
 class ParseTextResponse(BaseModel):
     extracted_data: dict[str, Any]
+    method: str = Field(default="rule_based", description="Parser method used: 'llm' or 'rule_based'")
 
 
 class AuditTrailRequest(BaseModel):

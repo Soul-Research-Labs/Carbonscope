@@ -33,7 +33,8 @@ async def parse_text(
 ):
     """Parse unstructured text (invoices, bills, etc.) into structured data."""
     extracted = await ai_svc.parse_text(body.text)
-    return ParseTextResponse(extracted_data=extracted)
+    method = extracted.pop("_method", "rule_based")
+    return ParseTextResponse(extracted_data=extracted, method=method)
 
 
 @router.post("/predict", response_model=PredictionResponse)

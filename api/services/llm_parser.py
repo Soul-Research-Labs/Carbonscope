@@ -138,11 +138,14 @@ async def parse_unstructured_text(text: str) -> dict[str, Any]:
     """Parse unstructured text into structured operational data.
 
     Uses LLM if available, falls back to rule-based extraction.
+    Returns dict with an ``_method`` key indicating which parser was used.
     """
     client = _get_llm_client()
 
     if client is None:
-        return parse_text_rule_based(text)
+        result = parse_text_rule_based(text)
+        result["_method"] = "rule_based"
+        return result
 
     try:
         provider = "anthropic" if os.getenv("ANTHROPIC_API_KEY") else "openai"
@@ -170,13 +173,19 @@ async def parse_unstructured_text(text: str) -> dict[str, Any]:
         # Parse JSON from response
         json_match = re.search(r"\{[^}]+\}", content, re.DOTALL)
         if json_match:
-            return json.loads(json_match.group())
+            result = json.loads(json_match.group())
+            result["_method"] = "llm"
+            return result
 
-        return json.loads(content)
+        result = json.loads(content)
+        result["_method"] = "llm"
+        return result
 
     except Exception as e:
         logger.warning("LLM extraction failed, falling back to rule-based: %s", e)
-        return parse_text_rule_based(text)
+        result = parse_text_rule_based(text)
+        result["_method"] = "rule_based"
+        return result
 
 
 # ── Audit trail generation ───────────────────────────────────────────
