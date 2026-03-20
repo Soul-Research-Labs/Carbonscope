@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [0.26.0] — 2026-03-20 — Round 4 Security Hardening
+
+### Security
+
+- **AuditLog FK resilience** (`models.py`): Changed `user_id`/`company_id` FKs from `CASCADE` to `SET NULL` so audit trail survives user/company deletion; added Alembic migration with partial indexes on `deleted_at`
+- **TOTP HKDF key derivation** (`mfa.py`): Replaced raw truncation+pad with HKDF (SHA-256, salt=`carbonscope-totp-v1`, info=`fernet-key`); Fernet instance cached via `@lru_cache`
+- **Bcrypt explicit rounds** (`auth.py`): Pinned `bcrypt__rounds=12` in CryptContext to prevent silent downgrades
+- **GDPR delete safety** (`auth_routes.py`): Hard-delete now checks for other active company users before cascading company data removal
+- **Login response refactor** (`auth_routes.py`, `auth-context.tsx`): Login endpoint returns `user` object; frontend uses it directly instead of decoding JWT client-side
+- **CSP tightened** (`next.config.js`): Removed `'unsafe-inline'` from `style-src` directive
+- **Cookie Secure flag** (`auth-context.tsx`): `cs_access_token` cookie now includes `Secure` attribute
+- **JWT expiry check** (`middleware.ts`): Next.js edge middleware validates JWT `exp` claim with 30 s clock-skew tolerance
+- **Webhook HTTPS enforcement** (`url_validator.py`): Production environment rejects non-HTTPS webhook URLs
+- **Webhook secret exposure** (`schemas.py`, `webhook_routes.py`): `WebhookOut` no longer includes `secret`; new `WebhookCreatedOut` returns it only on creation
+- **Admin-gated supply chain delete** (`supply_chain_routes.py`): `delete_link` now requires `role == "admin"`, returns 403 otherwise
+- **Validator score integrity** (`validator.py`): Score persistence file protected by HMAC-SHA256 with `.sig` sidecar; tampered files are rejected on load
+- **Chunked body limit bypass** (`middleware.py`): `RequestBodyLimitMiddleware` now reads request body for chunked-encoded POST/PUT/PATCH requests
+
+### Added
+
+- **ConfirmDialog guards** (`pcaf/page.tsx`, `billing/page.tsx`, `reviews/page.tsx`): Destructive actions (asset delete, plan change, review reject) now require explicit confirmation
+- **K8s zero-downtime deploy** (`backend.yaml`): Rolling update strategy with `maxUnavailable: 0`, `maxSurge: 1`
+- **Coverage enforcement** (`pyproject.toml`): Added `[tool.coverage]` config with `fail_under = 80`, branch coverage, and source scoping
+
+### Infrastructure
+
+- **pytest-asyncio** (`requirements.txt`): Updated from 1.3.0 to 0.25.0
+- **Version bump**: 0.25.0 → 0.26.0 across pyproject.toml and README badge
+
+---
+
 ## [0.25.0] — 2026-03-20 — Round 3 Gap Analysis
 
 ### Security
