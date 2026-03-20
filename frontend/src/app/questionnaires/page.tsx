@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -21,8 +22,6 @@ export default function QuestionnairesPage() {
   useDocumentTitle("Questionnaires");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [questionnaires, setQuestionnaires] = useState<QuestionnaireOut[]>([]);
-  const [templates, setTemplates] = useState<TemplateSummary[]>([]);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
   const [activeTab, setActiveTab] = useState<"list" | "upload" | "templates">(
@@ -30,26 +29,29 @@ export default function QuestionnairesPage() {
   );
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const fetchData = useCallback(async () => {
-    try {
-      const [qRes, tRes] = await Promise.all([
-        listQuestionnaires(),
-        listTemplates(),
-      ]);
-      setQuestionnaires(qRes.items);
-      setTemplates(tRes);
-    } catch {
+  const dataQuery = useQuery<
+    [{ items: QuestionnaireOut[] }, TemplateSummary[]]
+  >({
+    queryKey: ["questionnaires", user?.company_id],
+    queryFn: () => Promise.all([listQuestionnaires(), listTemplates()]),
+    enabled: !!user && !loading,
+  });
+
+  const questionnaires = dataQuery.data?.[0]?.items ?? [];
+  const templates = dataQuery.data?.[1] ?? [];
+
+  useEffect(() => {
+    if (dataQuery.error) {
       setError("Failed to load data");
     }
-  }, []);
+  }, [dataQuery.error]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) fetchData();
-  }, [user, loading, router, fetchData]);
+  }, [user, loading, router]);
 
   const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
   const ALLOWED_EXTENSIONS = ["pdf", "docx", "xlsx", "csv"];
@@ -80,7 +82,7 @@ export default function QuestionnairesPage() {
     try {
       const q = await uploadQuestionnaire(file);
       await extractQuestions(q.id);
-      await fetchData();
+      await dataQuery.refetch();
       setActiveTab("list");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -94,7 +96,7 @@ export default function QuestionnairesPage() {
     setError("");
     try {
       await applyTemplate(templateId);
-      await fetchData();
+      await dataQuery.refetch();
       setActiveTab("list");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to apply template");
@@ -104,7 +106,7 @@ export default function QuestionnairesPage() {
   async function handleDelete(id: string) {
     try {
       await deleteQuestionnaire(id);
-      setQuestionnaires((prev) => prev.filter((q) => q.id !== id));
+      await dataQuery.refetch();
     } catch {
       setError("Failed to delete questionnaire");
     } finally {
@@ -129,7 +131,7 @@ export default function QuestionnairesPage() {
     );
   };
 
-  if (loading) return <PageSkeleton />;
+  if (loading || dataQuery.isLoading) return <PageSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto p-8">

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/Skeleton";
@@ -32,42 +33,49 @@ export default function AlertsPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [data, setData] = useState<PaginatedResponse<AlertOut> | null>(null);
   const [error, setError] = useState("");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [checking, setChecking] = useState(false);
 
-  const fetchAlerts = useCallback(async () => {
-    try {
-      const res = await listAlerts({ unread_only: unreadOnly, limit: 50 });
-      setData(res);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load alerts");
+  const alertsQuery = useQuery<PaginatedResponse<AlertOut>>({
+    queryKey: ["alerts", user?.company_id, unreadOnly],
+    queryFn: () => listAlerts({ unread_only: unreadOnly, limit: 50 }),
+    enabled: !!user && !loading,
+  });
+
+  const data = alertsQuery.data ?? null;
+
+  useEffect(() => {
+    if (alertsQuery.error) {
+      setError(
+        alertsQuery.error instanceof Error
+          ? alertsQuery.error.message
+          : "Failed to load alerts",
+      );
     }
-  }, [unreadOnly]);
+  }, [alertsQuery.error]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) fetchAlerts();
-  }, [user, loading, router, fetchAlerts]);
+  }, [user, loading, router]);
 
   // Auto-refresh when backend pushes SSE events
   const sseHandlers = useMemo(
     () => ({
-      "alert.created": () => fetchAlerts(),
-      "alert.acknowledged": () => fetchAlerts(),
+      "alert.created": () => alertsQuery.refetch(),
+      "alert.acknowledged": () => alertsQuery.refetch(),
     }),
-    [fetchAlerts],
+    [alertsQuery.refetch],
   );
   useEventSource(sseHandlers, !!user);
 
   async function handleAcknowledge(id: string) {
     try {
       await acknowledgeAlert(id);
-      await fetchAlerts();
+      await alertsQuery.refetch();
       toast("Alert acknowledged", "success");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to acknowledge");
@@ -78,7 +86,7 @@ export default function AlertsPage() {
     setChecking(true);
     try {
       await triggerAlertCheck();
-      await fetchAlerts();
+      await alertsQuery.refetch();
       toast("Alert check completed", "success");
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Check failed");
@@ -87,7 +95,7 @@ export default function AlertsPage() {
     }
   }
 
-  if (loading || (!data && !error)) {
+  if (loading || (alertsQuery.isLoading && !error)) {
     return <PageSkeleton />;
   }
 

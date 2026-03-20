@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
@@ -46,8 +47,6 @@ export default function SupplyChainPage() {
   useDocumentTitle("Supply Chain");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [scope3, setScope3] = useState<Scope3Summary | null>(null);
   const [error, setError] = useState("");
 
   // Add supplier form
@@ -58,26 +57,31 @@ export default function SupplyChainPage() {
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const refresh = useCallback(async () => {
-    try {
-      const [s, sc] = await Promise.all([
-        listSuppliers(),
-        getScope3FromSuppliers(),
-      ]);
-      setSuppliers(s.items);
-      setScope3(sc);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load");
+  const supplyQuery = useQuery<[{ items: Supplier[] }, Scope3Summary]>({
+    queryKey: ["supply-chain", user?.company_id],
+    queryFn: () => Promise.all([listSuppliers(), getScope3FromSuppliers()]),
+    enabled: !!user && !loading,
+  });
+
+  const suppliers = supplyQuery.data?.[0]?.items ?? [];
+  const scope3 = supplyQuery.data?.[1] ?? null;
+
+  useEffect(() => {
+    if (supplyQuery.error) {
+      setError(
+        supplyQuery.error instanceof Error
+          ? supplyQuery.error.message
+          : "Failed to load",
+      );
     }
-  }, []);
+  }, [supplyQuery.error]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) refresh();
-  }, [user, loading, router, refresh]);
+  }, [user, loading, router]);
 
   async function handleAdd(e: React.FormEvent) {
     e.preventDefault();
@@ -91,7 +95,7 @@ export default function SupplyChainPage() {
       setSupplierId("");
       setSpend("");
       setCategory("general");
-      await refresh();
+      await supplyQuery.refetch();
       toast("Supplier added successfully", "success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to add");
@@ -103,7 +107,7 @@ export default function SupplyChainPage() {
   async function handleVerify(linkId: string) {
     try {
       await updateSupplyChainLink(linkId, "verified");
-      await refresh();
+      await supplyQuery.refetch();
       toast("Supplier verified", "success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to verify");
@@ -113,7 +117,7 @@ export default function SupplyChainPage() {
   async function handleRemove(linkId: string) {
     try {
       await deleteSupplyChainLink(linkId);
-      await refresh();
+      await supplyQuery.refetch();
       toast("Supplier removed", "success");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to remove");
@@ -122,7 +126,7 @@ export default function SupplyChainPage() {
     }
   }
 
-  if (loading) return <PageSkeleton />;
+  if (loading || supplyQuery.isLoading) return <PageSkeleton />;
   if (error && suppliers.length === 0)
     return <div className="p-8 text-[var(--danger)]">Error: {error}</div>;
 

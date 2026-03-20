@@ -130,20 +130,21 @@ async def _run_periodic_checks() -> None:
 
                     for company_id in company_ids:
                         try:
-                            existing_ids = await _get_latest_alert_report_ids(db, company_id)
-                            new_alerts = await check_company_alerts(db, company_id)
+                            async with db.begin_nested():
+                                existing_ids = await _get_latest_alert_report_ids(db, company_id)
+                                new_alerts = await check_company_alerts(db, company_id)
 
-                            kept = 0
-                            for alert in new_alerts:
-                                meta = alert.metadata_json or {}
-                                if meta.get("latest_report_id") in existing_ids:
-                                    await db.delete(alert)
-                                else:
-                                    total_alerts += 1
-                                    kept += 1
+                                kept = 0
+                                for alert in new_alerts:
+                                    meta = alert.metadata_json or {}
+                                    if meta.get("latest_report_id") in existing_ids:
+                                        await db.delete(alert)
+                                    else:
+                                        total_alerts += 1
+                                        kept += 1
 
-                            if kept > 0:
-                                publish_event(company_id, "alert.created", {"count": kept})
+                                if kept > 0:
+                                    publish_event(company_id, "alert.created", {"count": kept})
                         except (SQLAlchemyError, OSError, ValueError) as exc:
                             logger.error("Alert check failed for company %s: %s", company_id, exc, exc_info=True)
 
@@ -197,13 +198,14 @@ async def _run_monthly_credit_reset() -> None:
 
                         for company_id in company_ids:
                             try:
-                                sub = await get_or_create_subscription(db, company_id)
-                                monthly = PLAN_LIMITS.get(sub.plan, PLAN_LIMITS["free"])["monthly_credits"]
-                                current = await get_credit_balance(db, company_id)
-                                top_up = max(0, monthly - current)
-                                if top_up > 0:
-                                    await grant_credits(db, company_id, top_up, "monthly_reset")
-                                total_reset += 1
+                                async with db.begin_nested():
+                                    sub = await get_or_create_subscription(db, company_id)
+                                    monthly = PLAN_LIMITS.get(sub.plan, PLAN_LIMITS["free"])["monthly_credits"]
+                                    current = await get_credit_balance(db, company_id)
+                                    top_up = max(0, monthly - current)
+                                    if top_up > 0:
+                                        await grant_credits(db, company_id, top_up, "monthly_reset")
+                                    total_reset += 1
                             except (SQLAlchemyError, OSError, ValueError) as exc:
                                 logger.error("Credit reset failed for company %s: %s", company_id, exc, exc_info=True)
 

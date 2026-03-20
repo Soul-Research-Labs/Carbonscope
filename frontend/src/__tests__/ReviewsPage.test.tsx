@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 import userEvent from "@testing-library/user-event";
 
 const mockPush = vi.fn();
@@ -26,6 +28,15 @@ vi.mock("@/lib/auth-context", () => ({
 
 import ReviewsPage from "@/app/reviews/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 describe("ReviewsPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -34,7 +45,7 @@ describe("ReviewsPage", () => {
   });
 
   it("renders heading", async () => {
-    render(<ReviewsPage />);
+    renderWithQueryClient(<ReviewsPage />);
     expect(await screen.findByText("Data Reviews")).toBeInTheDocument();
   });
 
@@ -51,19 +62,19 @@ describe("ReviewsPage", () => {
         },
       ],
     });
-    render(<ReviewsPage />);
+    renderWithQueryClient(<ReviewsPage />);
     expect(await screen.findByText("submitted")).toBeInTheDocument();
   });
 
   it("shows create form on button click", async () => {
-    render(<ReviewsPage />);
-    await userEvent.click(screen.getByText("New Review"));
+    renderWithQueryClient(<ReviewsPage />);
+    await userEvent.click(await screen.findByText("New Review"));
     expect(screen.getByText("Create Review for Report")).toBeInTheDocument();
   });
 
   it("shows error on API failure", async () => {
     mockListReviews.mockRejectedValue(new Error("Server error"));
-    render(<ReviewsPage />);
+    renderWithQueryClient(<ReviewsPage />);
     expect(await screen.findByText(/Server error/)).toBeInTheDocument();
   });
 });

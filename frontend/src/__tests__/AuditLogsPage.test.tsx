@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -35,6 +37,15 @@ vi.mock("@/components/Skeleton", () => ({
 
 import AuditLogsPage from "@/app/audit-logs/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const LOGS = {
   items: [
     {
@@ -64,12 +75,12 @@ describe("AuditLogsPage", () => {
   });
 
   it("renders heading", async () => {
-    render(<AuditLogsPage />);
+    renderWithQueryClient(<AuditLogsPage />);
     expect(await screen.findByText("Audit Log")).toBeInTheDocument();
   });
 
   it("renders table headers", async () => {
-    render(<AuditLogsPage />);
+    renderWithQueryClient(<AuditLogsPage />);
     expect(await screen.findByText("Timestamp")).toBeInTheDocument();
     expect(screen.getByText("Action")).toBeInTheDocument();
     expect(screen.getByText("Resource")).toBeInTheDocument();
@@ -77,14 +88,14 @@ describe("AuditLogsPage", () => {
   });
 
   it("displays audit log entries", async () => {
-    render(<AuditLogsPage />);
+    renderWithQueryClient(<AuditLogsPage />);
     expect(await screen.findByText("report.created")).toBeInTheDocument();
     expect(screen.getByText("data.uploaded")).toBeInTheDocument();
   });
 
   it("shows empty state when no logs", async () => {
     mockListAuditLogs.mockResolvedValue({ items: [], total: 0 });
-    render(<AuditLogsPage />);
+    renderWithQueryClient(<AuditLogsPage />);
     expect(
       await screen.findByText(/No audit log entries found/),
     ).toBeInTheDocument();
@@ -92,14 +103,14 @@ describe("AuditLogsPage", () => {
 
   it("shows error on API failure", async () => {
     mockListAuditLogs.mockRejectedValue(new Error("Failed to load audit logs"));
-    render(<AuditLogsPage />);
+    renderWithQueryClient(<AuditLogsPage />);
     expect(
       await screen.findByText(/Failed to load audit logs/),
     ).toBeInTheDocument();
   });
 
   it("has table role for accessibility", async () => {
-    render(<AuditLogsPage />);
+    renderWithQueryClient(<AuditLogsPage />);
     await screen.findByText("report.created");
     expect(screen.getByRole("table")).toBeInTheDocument();
   });

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -55,6 +57,15 @@ vi.mock("@/components/ConfirmDialog", () => ({
 
 import MarketplacePage from "@/app/marketplace/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const LISTING = {
   id: "lst1",
   title: "2024 Emissions Data",
@@ -79,24 +90,24 @@ describe("MarketplacePage", () => {
   });
 
   it("renders heading and listings", async () => {
-    render(<MarketplacePage />);
+    renderWithQueryClient(<MarketplacePage />);
     expect(await screen.findByText("Data Marketplace")).toBeInTheDocument();
     expect(await screen.findByText("2024 Emissions Data")).toBeInTheDocument();
   });
 
   it("shows listing count", async () => {
-    render(<MarketplacePage />);
+    renderWithQueryClient(<MarketplacePage />);
     expect(await screen.findByText(/1 listing\b/)).toBeInTheDocument();
   });
 
   it("applies industry/region filter", async () => {
-    render(<MarketplacePage />);
+    renderWithQueryClient(<MarketplacePage />);
     await screen.findByText("Data Marketplace");
 
     const industryInput = screen.getByPlaceholderText(/filter by industry/i);
     fireEvent.change(industryInput, { target: { value: "energy" } });
 
-    fireEvent.click(screen.getByText("Apply"));
+    fireEvent.click(await screen.findByText("Apply"));
 
     await waitFor(() => {
       expect(mockBrowseListings).toHaveBeenCalledWith(
@@ -106,14 +117,14 @@ describe("MarketplacePage", () => {
   });
 
   it("opens create listing modal", async () => {
-    render(<MarketplacePage />);
+    renderWithQueryClient(<MarketplacePage />);
     fireEvent.click(await screen.findByText("+ Create Listing"));
     expect(await screen.findByText("Create New Listing")).toBeInTheDocument();
   });
 
   it("shows error on fetch failure", async () => {
     mockBrowseListings.mockRejectedValue(new Error("network error"));
-    render(<MarketplacePage />);
+    renderWithQueryClient(<MarketplacePage />);
     expect(await screen.findByText(/Error:/)).toBeInTheDocument();
   });
 });

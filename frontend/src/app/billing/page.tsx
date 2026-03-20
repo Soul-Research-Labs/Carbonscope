@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -23,42 +24,58 @@ export default function BillingPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
-  const [sub, setSub] = useState<SubscriptionOut | null>(null);
-  const [credits, setCredits] = useState<CreditBalanceOut | null>(null);
-  const [plans, setPlans] = useState<Record<string, PlanLimits> | null>(null);
+  const queryClient = useQueryClient();
   const [error, setError] = useState("");
   const [changing, setChanging] = useState(false);
   const [pendingPlan, setPendingPlan] = useState<string | null>(null);
+
+  const subQuery = useQuery<SubscriptionOut>({
+    queryKey: ["billing-subscription", user?.company_id],
+    queryFn: getSubscription,
+    enabled: !!user && !loading,
+  });
+
+  const creditsQuery = useQuery<CreditBalanceOut>({
+    queryKey: ["billing-credits", user?.company_id],
+    queryFn: getCredits,
+    enabled: !!user && !loading,
+  });
+
+  const plansQuery = useQuery<Record<string, PlanLimits>>({
+    queryKey: ["billing-plans"],
+    queryFn: listPlans,
+    enabled: !!user && !loading,
+  });
+
+  const sub = subQuery.data ?? null;
+  const credits = creditsQuery.data ?? null;
+  const plans = plansQuery.data ?? null;
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) {
-      Promise.allSettled([getSubscription(), getCredits(), listPlans()]).then(
-        ([sResult, cResult, pResult]) => {
-          if (sResult.status === "fulfilled") setSub(sResult.value);
-          if (cResult.status === "fulfilled") setCredits(cResult.value);
-          if (pResult.status === "fulfilled") setPlans(pResult.value);
-          const failed = [sResult, cResult, pResult].filter(
-            (r) => r.status === "rejected",
-          );
-          if (failed.length) setError("Some billing data failed to load");
-        },
-      );
-    }
   }, [user, loading, router]);
+
+  // Surface errors from any of the billing queries
+  useEffect(() => {
+    const failCount = [subQuery, creditsQuery, plansQuery].filter(
+      (q) => q.isError,
+    ).length;
+    if (failCount > 0) setError("Some billing data failed to load");
+  }, [subQuery.isError, creditsQuery.isError, plansQuery.isError]);
 
   async function handleChangePlan(plan: string) {
     setChanging(true);
     setError("");
     setPendingPlan(null);
     try {
-      const updated = await changePlan(plan);
-      setSub(updated);
-      const c = await getCredits();
-      setCredits(c);
+      await changePlan(plan);
+      await queryClient.invalidateQueries({
+        queryKey: ["billing-subscription"],
+      });
+      await queryClient.invalidateQueries({ queryKey: ["billing-credits"] });
       toast(`Plan changed to ${plan}`, "success");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Failed to change plan");
@@ -67,7 +84,7 @@ export default function BillingPage() {
     }
   }
 
-  if (loading || (!sub && !error)) {
+  if (loading || (subQuery.isLoading && !error)) {
     return (
       <div className="max-w-4xl mx-auto p-8 space-y-6">
         <CardSkeleton />

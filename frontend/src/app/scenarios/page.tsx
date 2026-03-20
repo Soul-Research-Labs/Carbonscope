@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
@@ -94,37 +95,49 @@ function ScenariosPageInner() {
   const [creating, setCreating] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
 
-  const fetchData = useCallback(
-    async (status?: string) => {
-      try {
-        const [sRes, rRes] = await Promise.all([
-          listScenarios({ status: status || undefined }),
-          listReports({ limit: 50 }),
-        ]);
-        setScenarios(sRes.items);
-        setReports(rRes.items);
-        if (rRes.items.length > 0) {
-          setBaseReportId((prev) => prev || rRes.items[0].id);
-        }
-        // Sync filter to URL
-        const params = new URLSearchParams();
-        if (status) params.set("status", status);
-        const qs = params.toString();
-        router.replace(`/scenarios${qs ? `?${qs}` : ""}`, { scroll: false });
-      } catch {
-        setError("Failed to load data");
+  const dataQuery = useQuery<
+    [{ items: ScenarioOut[] }, { items: EmissionReport[] }]
+  >({
+    queryKey: ["scenarios", user?.company_id, statusFilter],
+    queryFn: () =>
+      Promise.all([
+        listScenarios({ status: statusFilter || undefined }),
+        listReports({ limit: 50 }),
+      ]),
+    enabled: !!user && !loading,
+  });
+
+  // Sync derived state from query
+  useEffect(() => {
+    if (dataQuery.data) {
+      setScenarios(dataQuery.data[0].items);
+      setReports(dataQuery.data[1].items);
+      if (dataQuery.data[1].items.length > 0) {
+        setBaseReportId((prev) => prev || dataQuery.data![1].items[0].id);
       }
-    },
-    [router],
-  );
+    }
+  }, [dataQuery.data]);
+
+  useEffect(() => {
+    if (dataQuery.error) {
+      setError("Failed to load data");
+    }
+  }, [dataQuery.error]);
+
+  // Sync filter to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (statusFilter) params.set("status", statusFilter);
+    const qs = params.toString();
+    router.replace(`/scenarios${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [statusFilter, router]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) fetchData(searchParams.get("status") ?? "");
-  }, [user, loading, router, fetchData, searchParams]);
+  }, [user, loading, router]);
 
   function toggleAdjustment(key: string, paramKey: string, defaultVal: number) {
     setAdjustments((prev) => {
@@ -163,7 +176,7 @@ function ScenariosPageInner() {
         parameters: adjustments,
       });
       await computeScenario(scenario.id);
-      await fetchData(statusFilter);
+      await dataQuery.refetch();
       setShowCreate(false);
       setName("");
       setDescription("");
@@ -181,7 +194,7 @@ function ScenariosPageInner() {
   async function handleCompute(id: string) {
     try {
       await computeScenario(id);
-      await fetchData(statusFilter);
+      await dataQuery.refetch();
       toast("Scenario computed", "success");
     } catch {
       setError("Failed to compute scenario");
@@ -191,7 +204,7 @@ function ScenariosPageInner() {
   async function handleDelete(id: string) {
     try {
       await deleteScenario(id);
-      setScenarios((prev) => prev.filter((s) => s.id !== id));
+      await dataQuery.refetch();
       toast("Scenario deleted", "success");
     } catch {
       setError("Failed to delete");
@@ -200,7 +213,7 @@ function ScenariosPageInner() {
     }
   }
 
-  if (loading) return <PageSkeleton />;
+  if (loading || dataQuery.isLoading) return <PageSkeleton />;
 
   return (
     <div className="max-w-5xl mx-auto p-8">

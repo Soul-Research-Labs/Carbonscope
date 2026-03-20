@@ -94,8 +94,22 @@ export default function RegisterPage() {
     <div className="flex items-center justify-center min-h-screen px-4 py-8">
       <div className="card w-full max-w-md">
         <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-[var(--primary)]">
-            🌿 CarbonScope
+          <h1 className="flex items-center justify-center gap-2 text-2xl font-bold text-[var(--primary)]">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M12 22c4-4 8-7.5 8-12a8 8 0 10-16 0c0 4.5 4 8 8 12z" />
+              <path d="M12 10a2 2 0 100-4 2 2 0 000 4z" />
+            </svg>
+            CarbonScope
           </h1>
           <p className="text-[var(--muted)] mt-1">Create your account</p>
         </div>

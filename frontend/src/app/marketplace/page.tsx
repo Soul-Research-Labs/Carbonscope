@@ -1,8 +1,9 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import ConfirmDialog from "@/components/ConfirmDialog";
@@ -33,9 +34,6 @@ function MarketplacePageInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
-  const [data, setData] = useState<PaginatedResponse<DataListingOut> | null>(
-    null,
-  );
   const [error, setError] = useState("");
   const [industry, setIndustry] = useState(searchParams.get("industry") ?? "");
   const [region, setRegion] = useState(searchParams.get("region") ?? "");
@@ -53,47 +51,51 @@ function MarketplacePageInner() {
   const [creating, setCreating] = useState(false);
   const [purchaseTarget, setPurchaseTarget] = useState<string | null>(null);
 
-  const fetchListings = useCallback(
-    async (ind?: string, reg?: string) => {
-      try {
-        const res = await browseListings({
-          industry: ind || undefined,
-          region: reg || undefined,
-          limit: 50,
-        });
-        setData(res);
-        // Sync filters to URL
-        const params = new URLSearchParams();
-        if (ind) params.set("industry", ind);
-        if (reg) params.set("region", reg);
-        const qs = params.toString();
-        router.replace(`/marketplace${qs ? `?${qs}` : ""}`, { scroll: false });
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Failed to load listings");
-      }
-    },
-    [router],
-  );
+  const listingsQuery = useQuery<PaginatedResponse<DataListingOut>>({
+    queryKey: ["marketplace", user?.company_id, industry, region],
+    queryFn: () =>
+      browseListings({
+        industry: industry || undefined,
+        region: region || undefined,
+        limit: 50,
+      }),
+    enabled: !!user && !loading,
+  });
+
+  const data = listingsQuery.data ?? null;
+
+  useEffect(() => {
+    if (listingsQuery.error) {
+      setError(
+        listingsQuery.error instanceof Error
+          ? listingsQuery.error.message
+          : "Failed to load listings",
+      );
+    }
+  }, [listingsQuery.error]);
+
+  // Sync filters to URL
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (industry) params.set("industry", industry);
+    if (region) params.set("region", region);
+    const qs = params.toString();
+    router.replace(`/marketplace${qs ? `?${qs}` : ""}`, { scroll: false });
+  }, [industry, region, router]);
 
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user)
-      fetchListings(
-        searchParams.get("industry") ?? "",
-        searchParams.get("region") ?? "",
-      );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, loading, router, fetchListings]);
+  }, [user, loading, router]);
 
   async function handlePurchase(id: string) {
     setPurchaseTarget(null);
     try {
       await purchaseListing(id);
       toast("Purchase successful!", "success");
-      await fetchListings();
+      await listingsQuery.refetch();
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Purchase failed");
     }
@@ -130,7 +132,7 @@ function MarketplacePageInner() {
         report_id: "",
         price_credits: 0,
       });
-      await fetchListings();
+      await listingsQuery.refetch();
       toast("Listing created successfully", "success");
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Failed to create listing");
@@ -139,7 +141,7 @@ function MarketplacePageInner() {
     }
   }
 
-  if (loading || (!data && !error)) {
+  if (loading || (listingsQuery.isLoading && !error)) {
     return <PageSkeleton />;
   }
 
@@ -208,7 +210,7 @@ function MarketplacePageInner() {
           />
         </div>
         <button
-          onClick={() => fetchListings(industry, region)}
+          onClick={() => listingsQuery.refetch()}
           className="text-sm px-4 py-1.5 rounded-md bg-[var(--card-border)] hover:bg-[var(--primary)] hover:text-black transition-colors"
         >
           Apply

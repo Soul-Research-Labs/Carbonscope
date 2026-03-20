@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/Skeleton";
@@ -16,32 +17,28 @@ export default function BenchmarksPage() {
   useDocumentTitle("Benchmarks");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [benchmarks, setBenchmarks] = useState<IndustryBenchmark | null>(null);
-  const [peers, setPeers] = useState<PeerComparison | null>(null);
   const [industry, setIndustry] = useState("technology");
-  const [error, setError] = useState("");
+
+  const benchmarksQuery = useQuery<[IndustryBenchmark, PeerComparison]>({
+    queryKey: ["benchmarks", user?.company_id, industry],
+    queryFn: () =>
+      Promise.all([getIndustryBenchmarks(industry), getPeerComparison()]),
+    enabled: !!user && !loading,
+  });
+
+  const [benchmarks, peers] = benchmarksQuery.data ?? [null, null];
+  const error =
+    benchmarksQuery.error instanceof Error
+      ? benchmarksQuery.error.message
+      : benchmarksQuery.error
+        ? "Failed to load benchmarks"
+        : "";
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (!user) return;
-    (async () => {
-      try {
-        const [b, p] = await Promise.all([
-          getIndustryBenchmarks(industry),
-          getPeerComparison(),
-        ]);
-        setBenchmarks(b);
-        setPeers(p);
-      } catch (e: unknown) {
-        setError(e instanceof Error ? e.message : "Failed to load benchmarks");
-      }
-    })();
-  }, [user, industry]);
-
-  if (loading) return <PageSkeleton />;
+  if (loading || benchmarksQuery.isLoading) return <PageSkeleton />;
   if (!user) return null;
 
   return (

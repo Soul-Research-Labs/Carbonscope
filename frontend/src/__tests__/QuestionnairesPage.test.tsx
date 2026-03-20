@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 const mockReplace = vi.fn();
 const mockPush = vi.fn();
@@ -51,6 +53,15 @@ vi.mock("@/components/ConfirmDialog", () => ({
 
 import QuestionnairesPage from "@/app/questionnaires/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const QUESTIONNAIRES = {
   items: [
     {
@@ -91,26 +102,26 @@ describe("QuestionnairesPage", () => {
   });
 
   it("renders heading", async () => {
-    render(<QuestionnairesPage />);
+    renderWithQueryClient(<QuestionnairesPage />);
     expect(
       await screen.findByText("Sustainability Questionnaires"),
     ).toBeInTheDocument();
   });
 
   it("shows tabs", async () => {
-    render(<QuestionnairesPage />);
+    renderWithQueryClient(<QuestionnairesPage />);
     expect(await screen.findByText("My Questionnaires")).toBeInTheDocument();
     expect(screen.getByText("Upload Document")).toBeInTheDocument();
     expect(screen.getByText("Template Library")).toBeInTheDocument();
   });
 
   it("lists questionnaires", async () => {
-    render(<QuestionnairesPage />);
+    renderWithQueryClient(<QuestionnairesPage />);
     expect(await screen.findByText("CDP Report 2024")).toBeInTheDocument();
   });
 
   it("shows templates tab", async () => {
-    render(<QuestionnairesPage />);
+    renderWithQueryClient(<QuestionnairesPage />);
     fireEvent.click(await screen.findByText("Template Library"));
     expect(
       await screen.findByText("CDP Climate Change Questionnaire"),
@@ -123,13 +134,13 @@ describe("QuestionnairesPage", () => {
   it("shows error on load failure", async () => {
     mockListQuestionnaires.mockRejectedValue(new Error("Network error"));
     mockListTemplates.mockRejectedValue(new Error("Network error"));
-    render(<QuestionnairesPage />);
+    renderWithQueryClient(<QuestionnairesPage />);
     expect(await screen.findByText("Failed to load data")).toBeInTheDocument();
   });
 
   it("applies template", async () => {
     mockApplyTemplate.mockResolvedValue({ id: "q2" });
-    render(<QuestionnairesPage />);
+    renderWithQueryClient(<QuestionnairesPage />);
     fireEvent.click(await screen.findByText("Template Library"));
     const useButtons = await screen.findAllByText("Use Template");
     fireEvent.click(useButtons[0]);

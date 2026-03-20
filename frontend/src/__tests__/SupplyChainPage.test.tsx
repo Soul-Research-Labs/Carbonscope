@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -54,6 +56,15 @@ vi.mock("@/components/ConfirmDialog", () => ({
 
 import SupplyChainPage from "@/app/supply-chain/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const SUPPLIER = {
   link_id: "l1",
   company_id: "s1",
@@ -88,33 +99,37 @@ describe("SupplyChainPage", () => {
   });
 
   it("renders heading and supplier list", async () => {
-    render(<SupplyChainPage />);
+    renderWithQueryClient(<SupplyChainPage />);
     expect(await screen.findByText("Supply Chain Network")).toBeInTheDocument();
     expect(await screen.findByText("SupplierCo")).toBeInTheDocument();
   });
 
   it("shows scope3 summary cards", async () => {
-    render(<SupplyChainPage />);
+    renderWithQueryClient(<SupplyChainPage />);
     expect(await screen.findByText(/1,200 tCO₂e/)).toBeInTheDocument();
   });
 
   it("adds a supplier", async () => {
     mockAddSupplier.mockResolvedValue({});
-    render(<SupplyChainPage />);
+    renderWithQueryClient(<SupplyChainPage />);
 
     await screen.findByText("Supply Chain Network");
 
     // Label is not linked via htmlFor, find parent div and get input
     const label = screen.getByText("Supplier Company ID");
     const idInput = label.parentElement!.querySelector("input")!;
-    fireEvent.change(idInput, { target: { value: "550e8400-e29b-41d4-a716-446655440000" } });
+    fireEvent.change(idInput, {
+      target: { value: "550e8400-e29b-41d4-a716-446655440000" },
+    });
 
     const addBtn = screen.getByRole("button", { name: /add supplier/i });
     fireEvent.click(addBtn);
 
     await waitFor(() => {
       expect(mockAddSupplier).toHaveBeenCalledWith(
-        expect.objectContaining({ supplier_company_id: "550e8400-e29b-41d4-a716-446655440000" }),
+        expect.objectContaining({
+          supplier_company_id: "550e8400-e29b-41d4-a716-446655440000",
+        }),
       );
     });
   });
@@ -122,7 +137,7 @@ describe("SupplyChainPage", () => {
   it("shows error on fetch failure", async () => {
     mockListSuppliers.mockRejectedValue(new Error("fail"));
     mockGetScope3.mockRejectedValue(new Error("fail"));
-    render(<SupplyChainPage />);
+    renderWithQueryClient(<SupplyChainPage />);
     expect(await screen.findByText(/Error:/)).toBeInTheDocument();
   });
 });

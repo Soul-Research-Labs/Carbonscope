@@ -11,9 +11,13 @@ vi.mock("next/navigation", () => ({
 }));
 
 vi.mock("next/link", () => ({
-  default: ({ children, href }: { children: React.ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
 }));
 
 const mockListReports = vi.fn();
@@ -96,7 +100,10 @@ describe("RecommendationsIndexPage", () => {
     renderWithQuery(<RecommendationsIndexPage />);
 
     const card = await screen.findByText("2023 Emission Report");
-    expect(card.closest("a")).toHaveAttribute("href", "/recommendations/abc123");
+    expect(card.closest("a")).toHaveAttribute(
+      "href",
+      "/recommendations/abc123",
+    );
   });
 
   it("shows error message on API failure", async () => {

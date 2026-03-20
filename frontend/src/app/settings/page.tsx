@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -24,13 +25,11 @@ export default function SettingsPage() {
   useDocumentTitle("Settings");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [company, setCompany] = useState<Company | null>(null);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   // User profile state
-  const [profile, setProfile] = useState<User | null>(null);
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [profileSaving, setProfileSaving] = useState(false);
@@ -51,27 +50,35 @@ export default function SettingsPage() {
   const [employeeCount, setEmployeeCount] = useState("");
   const [revenueUsd, setRevenueUsd] = useState("");
 
+  const settingsQuery = useQuery<[User, Company]>({
+    queryKey: ["settings", user?.company_id],
+    queryFn: () => Promise.all([getProfile(), getCompany()]),
+    enabled: !!user && !loading,
+  });
+
+  // Populate form fields when data loads
+  useEffect(() => {
+    if (settingsQuery.data) {
+      const [p, c] = settingsQuery.data;
+      setFullName(p.full_name);
+      setEmail(p.email);
+      setName(c.name);
+      setIndustry(c.industry);
+      setRegion(c.region);
+      setEmployeeCount(c.employee_count?.toString() ?? "");
+      setRevenueUsd(c.revenue_usd?.toString() ?? "");
+    }
+  }, [settingsQuery.data]);
+
   useEffect(() => {
     if (!loading && !user) {
       router.replace("/login");
       return;
     }
-    if (user) {
-      Promise.all([getProfile(), getCompany()])
-        .then(([p, c]) => {
-          setProfile(p);
-          setFullName(p.full_name);
-          setEmail(p.email);
-          setCompany(c);
-          setName(c.name);
-          setIndustry(c.industry);
-          setRegion(c.region);
-          setEmployeeCount(c.employee_count?.toString() ?? "");
-          setRevenueUsd(c.revenue_usd?.toString() ?? "");
-        })
-        .catch(() => setProfileErr("Failed to load settings"));
-    }
   }, [user, loading, router]);
+
+  const company = settingsQuery.data?.[1] ?? null;
+  const profile = settingsQuery.data?.[0] ?? null;
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -79,14 +86,14 @@ export default function SettingsPage() {
     setSuccess("");
     setSaving(true);
     try {
-      const updated = await updateCompany({
+      await updateCompany({
         name,
         industry,
         region,
         employee_count: employeeCount ? parseInt(employeeCount) : null,
         revenue_usd: revenueUsd ? parseFloat(revenueUsd) : null,
       });
-      setCompany(updated);
+      await settingsQuery.refetch();
       setSuccess("Company profile updated.");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Update failed");
@@ -101,8 +108,8 @@ export default function SettingsPage() {
     setProfileMsg("");
     setProfileSaving(true);
     try {
-      const updated = await updateProfile({ full_name: fullName, email });
-      setProfile(updated);
+      await updateProfile({ full_name: fullName, email });
+      await settingsQuery.refetch();
       setProfileMsg("Profile updated.");
     } catch (err: unknown) {
       setProfileErr(err instanceof Error ? err.message : "Update failed");

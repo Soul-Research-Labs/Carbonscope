@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/Skeleton";
@@ -32,45 +33,46 @@ export default function ReviewsPage() {
   useDocumentTitle("Data Reviews");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [reviews, setReviews] = useState<DataReview[]>([]);
-  const [reports, setReports] = useState<EmissionReport[]>([]);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedReport, setSelectedReport] = useState("");
   const [rejectTarget, setRejectTarget] = useState<string | null>(null);
   const [rejectNotes, setRejectNotes] = useState("");
 
-  const fetchReviews = useCallback(async () => {
-    try {
-      const data = await listReviews();
-      setReviews(data.items);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load reviews");
-    }
-  }, []);
+  const reviewsQuery = useQuery<{ items: DataReview[] }>({
+    queryKey: ["reviews", user?.company_id],
+    queryFn: listReviews,
+    enabled: !!user && !loading,
+  });
 
-  const fetchReports = useCallback(async () => {
-    try {
-      const data = await listReports();
-      setReports(data.items);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load reports");
+  const reportsQuery = useQuery<{ items: EmissionReport[] }>({
+    queryKey: ["reviews-reports", user?.company_id],
+    queryFn: listReports,
+    enabled: !!user && !loading,
+  });
+
+  const reviews = reviewsQuery.data?.items ?? [];
+  const reports = reportsQuery.data?.items ?? [];
+
+  useEffect(() => {
+    if (reviewsQuery.error) {
+      setError(
+        reviewsQuery.error instanceof Error
+          ? reviewsQuery.error.message
+          : "Failed to load reviews",
+      );
     }
-  }, []);
+  }, [reviewsQuery.error]);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
-    if (user) {
-      fetchReviews();
-      fetchReports();
-    }
-  }, [user, loading, router, fetchReviews, fetchReports]);
+  }, [user, loading, router]);
 
   const handleCreate = async () => {
     if (!selectedReport) return;
     try {
-      const r = await createReview(selectedReport);
-      setReviews((prev) => [r, ...prev]);
+      await createReview(selectedReport);
+      await reviewsQuery.refetch();
       setShowCreate(false);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to create review");
@@ -83,8 +85,8 @@ export default function ReviewsPage() {
     notes?: string,
   ) => {
     try {
-      const updated = await reviewAction(reviewId, action, notes);
-      setReviews((prev) => prev.map((r) => (r.id === reviewId ? updated : r)));
+      await reviewAction(reviewId, action, notes);
+      await reviewsQuery.refetch();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Action failed");
     }
@@ -97,7 +99,7 @@ export default function ReviewsPage() {
     setRejectNotes("");
   };
 
-  if (loading) return <PageSkeleton />;
+  if (loading || reviewsQuery.isLoading) return <PageSkeleton />;
   if (!user) return null;
 
   return (

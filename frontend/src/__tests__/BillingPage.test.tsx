@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -57,6 +59,15 @@ vi.mock("@/lib/auth-context", () => ({
 
 import BillingPage from "@/app/billing/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const defaultSub = {
   plan: "free",
   status: "active",
@@ -77,20 +88,20 @@ describe("BillingPage", () => {
   });
 
   it("renders billing heading", async () => {
-    render(<BillingPage />);
+    renderWithQueryClient(<BillingPage />);
     expect(
       await screen.findByText("Billing & Subscription"),
     ).toBeInTheDocument();
   });
 
   it("displays current plan", async () => {
-    render(<BillingPage />);
+    renderWithQueryClient(<BillingPage />);
     const elements = await screen.findAllByText(/free/i);
     expect(elements.length).toBeGreaterThanOrEqual(1);
   });
 
   it("displays credit balance", async () => {
-    render(<BillingPage />);
+    renderWithQueryClient(<BillingPage />);
     await screen.findByText("Billing & Subscription");
     expect(screen.getByText(/80/)).toBeInTheDocument();
   });
@@ -100,7 +111,7 @@ describe("BillingPage", () => {
     mockChangePlan.mockResolvedValueOnce(updatedSub);
     mockGetCredits.mockResolvedValue({ balance: 1000 });
 
-    render(<BillingPage />);
+    renderWithQueryClient(<BillingPage />);
     await screen.findByText("Billing & Subscription");
 
     const upgradeBtn = screen
@@ -123,7 +134,7 @@ describe("BillingPage", () => {
       new ApiError("Plan change failed", 400),
     );
 
-    render(<BillingPage />);
+    renderWithQueryClient(<BillingPage />);
     await screen.findByText("Billing & Subscription");
 
     const buttons = screen.getAllByRole("button");
@@ -146,7 +157,7 @@ describe("BillingPage", () => {
       useAuth: () => ({ user: null, loading: false }),
     }));
     // mockReplace will be called by the useEffect
-    render(<BillingPage />);
+    renderWithQueryClient(<BillingPage />);
     // loading skeleton shown while redirecting
     expect(screen.queryAllByText("Loading...").length).toBeGreaterThanOrEqual(
       0,

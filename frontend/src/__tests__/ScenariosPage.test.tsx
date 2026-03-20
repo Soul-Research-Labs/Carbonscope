@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -55,6 +57,15 @@ vi.mock("@/components/ConfirmDialog", () => ({
 
 import ScenariosPage from "@/app/scenarios/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const SCENARIO = {
   id: "s1",
   name: "Green Plan",
@@ -76,13 +87,13 @@ describe("ScenariosPage", () => {
   });
 
   it("renders heading and scenarios list", async () => {
-    render(<ScenariosPage />);
+    renderWithQueryClient(<ScenariosPage />);
     expect(await screen.findByText("What-If Scenarios")).toBeInTheDocument();
     expect(await screen.findByText("Green Plan")).toBeInTheDocument();
   });
 
   it("shows create form when button clicked", async () => {
-    render(<ScenariosPage />);
+    renderWithQueryClient(<ScenariosPage />);
     const btn = await screen.findByText("New Scenario");
     fireEvent.click(btn);
     expect(screen.getByText("Create Scenario")).toBeInTheDocument();
@@ -91,7 +102,7 @@ describe("ScenariosPage", () => {
   it("creates a scenario through the form", async () => {
     mockCreateScenario.mockResolvedValue({ id: "s2" });
     mockComputeScenario.mockResolvedValue({});
-    render(<ScenariosPage />);
+    renderWithQueryClient(<ScenariosPage />);
 
     fireEvent.click(await screen.findByText("New Scenario"));
 
@@ -114,12 +125,12 @@ describe("ScenariosPage", () => {
   it("shows error on fetch failure", async () => {
     mockListScenarios.mockRejectedValue(new Error("fail"));
     mockListReports.mockRejectedValue(new Error("fail"));
-    render(<ScenariosPage />);
+    renderWithQueryClient(<ScenariosPage />);
     expect(await screen.findByText("Failed to load data")).toBeInTheDocument();
   });
 
   it("has a status filter dropdown", async () => {
-    render(<ScenariosPage />);
+    renderWithQueryClient(<ScenariosPage />);
     const select = await screen.findByLabelText("Filter by status");
     expect(select).toBeInTheDocument();
     fireEvent.change(select, { target: { value: "computed" } });

@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { ReactElement } from "react";
 
 const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -36,6 +38,15 @@ vi.mock("@/hooks/useEventSource", () => ({
 
 import AlertsPage from "@/app/alerts/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const ALERTS = {
   items: [
     {
@@ -67,31 +78,31 @@ describe("AlertsPage", () => {
   });
 
   it("renders heading", async () => {
-    render(<AlertsPage />);
+    renderWithQueryClient(<AlertsPage />);
     expect(await screen.findByText("Alerts")).toBeInTheDocument();
   });
 
   it("displays alert titles", async () => {
-    render(<AlertsPage />);
+    renderWithQueryClient(<AlertsPage />);
     expect(await screen.findByText("Emissions spike")).toBeInTheDocument();
     expect(screen.getByText("New benchmark data")).toBeInTheDocument();
   });
 
   it("displays alert messages", async () => {
-    render(<AlertsPage />);
+    renderWithQueryClient(<AlertsPage />);
     expect(
       await screen.findByText("Your Scope 1 increased 50%"),
     ).toBeInTheDocument();
   });
 
   it("has run check button", async () => {
-    render(<AlertsPage />);
+    renderWithQueryClient(<AlertsPage />);
     expect(await screen.findByText("Run Check")).toBeInTheDocument();
   });
 
   it("triggers alert check", async () => {
     mockTriggerAlertCheck.mockResolvedValue({});
-    render(<AlertsPage />);
+    renderWithQueryClient(<AlertsPage />);
     const btn = await screen.findByText("Run Check");
     fireEvent.click(btn);
     await waitFor(() => {
@@ -101,14 +112,14 @@ describe("AlertsPage", () => {
 
   it("shows error on load failure", async () => {
     mockListAlerts.mockRejectedValue(new Error("Failed to load alerts"));
-    render(<AlertsPage />);
+    renderWithQueryClient(<AlertsPage />);
     expect(
       await screen.findByText(/Failed to load alerts/),
     ).toBeInTheDocument();
   });
 
   it("has unread filter", async () => {
-    render(<AlertsPage />);
+    renderWithQueryClient(<AlertsPage />);
     const checkbox = await screen.findByRole("checkbox");
     expect(checkbox).toBeInTheDocument();
   });

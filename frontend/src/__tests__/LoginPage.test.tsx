@@ -45,7 +45,7 @@ describe("LoginPage", () => {
 
   it("renders sign-in form", () => {
     render(<LoginPage />);
-    expect(screen.getByText("🌿 CarbonScope")).toBeInTheDocument();
+    expect(screen.getByText("CarbonScope")).toBeInTheDocument();
     expect(screen.getByText("Sign In")).toBeInTheDocument();
     expect(screen.getByText("Forgot password?")).toBeInTheDocument();
   });

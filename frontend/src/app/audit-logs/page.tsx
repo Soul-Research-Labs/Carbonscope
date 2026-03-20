@@ -1,7 +1,8 @@
 "use client";
 
-import { Suspense, useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { listAuditLogs, AuditLogEntry, ApiError } from "@/lib/api";
 import { SkeletonRows } from "@/components/Skeleton";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -28,14 +29,26 @@ function AuditLogsPageInner() {
   const { user, loading: authLoading } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [logs, setLogs] = useState<AuditLogEntry[]>([]);
-  const [total, setTotal] = useState(0);
   const [offset, setOffset] = useState(() => {
     const p = searchParams.get("page");
     return p ? (Math.max(1, Number(p)) - 1) * PAGE_SIZE : 0;
   });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+
+  const logsQuery = useQuery<{ items: AuditLogEntry[]; total: number }>({
+    queryKey: ["audit-logs", user?.company_id, offset],
+    queryFn: () => listAuditLogs({ limit: PAGE_SIZE, offset }),
+    enabled: !!user && !authLoading,
+  });
+
+  const logs = logsQuery.data?.items ?? [];
+  const total = logsQuery.data?.total ?? 0;
+  const loading = logsQuery.isLoading;
+  const error =
+    logsQuery.error instanceof ApiError
+      ? logsQuery.error.message
+      : logsQuery.error
+        ? "Failed to load audit logs"
+        : "";
 
   // Sync page to URL
   useEffect(() => {
@@ -46,28 +59,11 @@ function AuditLogsPageInner() {
     router.replace(`/audit-logs${qs ? `?${qs}` : ""}`, { scroll: false });
   }, [offset, router]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const res = await listAuditLogs({ limit: PAGE_SIZE, offset });
-      setLogs(res.items);
-      setTotal(res.total);
-    } catch (err) {
-      if (err instanceof ApiError) setError(err.message);
-      else setError("Failed to load audit logs");
-    } finally {
-      setLoading(false);
-    }
-  }, [offset]);
-
   useEffect(() => {
     if (!authLoading && !user) {
       router.replace("/login");
-      return;
     }
-    if (user) load();
-  }, [user, authLoading, router, load]);
+  }, [user, authLoading, router]);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
   const currentPage = Math.floor(offset / PAGE_SIZE) + 1;

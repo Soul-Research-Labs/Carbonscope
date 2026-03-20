@@ -195,6 +195,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install backend dependencies
+        run: pip install -r requirements.txt
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
@@ -213,6 +221,20 @@ jobs:
       - name: Build frontend
         working-directory: frontend
         run: npm run build
+
+      - name: Start backend API
+        run: uvicorn api.main:app --host 0.0.0.0 --port 8000 &
+        env:
+          DATABASE_URL: "sqlite+aiosqlite:///./test_e2e.db"
+          SECRET_KEY: "e2e-test-secret-key-not-for-production"
+          ALLOWED_ORIGINS: "http://localhost:3000"
+
+      - name: Wait for backend
+        run: |
+          for i in $(seq 1 30); do
+            curl -sf http://localhost:8000/docs > /dev/null && break
+            sleep 1
+          done
 
       - name: Start frontend server
         working-directory: frontend

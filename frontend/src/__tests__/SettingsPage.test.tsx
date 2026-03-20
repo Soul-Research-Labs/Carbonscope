@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import type { InputHTMLAttributes, ReactNode } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type { InputHTMLAttributes, ReactElement, ReactNode } from "react";
 
 const mockReplace = vi.fn();
 vi.mock("next/navigation", () => ({
@@ -85,6 +86,15 @@ vi.mock("@/components/ConfirmDialog", () => ({
 
 import SettingsPage from "@/app/settings/page";
 
+function renderWithQueryClient(ui: ReactElement) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+  return render(
+    <QueryClientProvider client={queryClient}>{ui}</QueryClientProvider>,
+  );
+}
+
 const COMPANY = {
   id: "c1",
   name: "TestCo",
@@ -115,29 +125,29 @@ describe("SettingsPage", () => {
   });
 
   it("renders heading", async () => {
-    render(<SettingsPage />);
+    renderWithQueryClient(<SettingsPage />);
     expect(await screen.findByText("Settings")).toBeInTheDocument();
   });
 
   it("shows user profile fields", async () => {
-    render(<SettingsPage />);
+    renderWithQueryClient(<SettingsPage />);
     expect(await screen.findByDisplayValue("Test User")).toBeInTheDocument();
     expect(screen.getByDisplayValue("u@test.com")).toBeInTheDocument();
   });
 
   it("shows company fields", async () => {
-    render(<SettingsPage />);
+    renderWithQueryClient(<SettingsPage />);
     expect(await screen.findByDisplayValue("TestCo")).toBeInTheDocument();
   });
 
   it("shows webhook section heading", async () => {
-    render(<SettingsPage />);
+    renderWithQueryClient(<SettingsPage />);
     expect(await screen.findByText("Webhooks")).toBeInTheDocument();
   });
 
   it("handles company save error", async () => {
     mockUpdateCompany.mockRejectedValue(new Error("Update failed"));
-    render(<SettingsPage />);
+    renderWithQueryClient(<SettingsPage />);
     await screen.findByDisplayValue("TestCo");
 
     fireEvent.click(screen.getByText("Save Changes"));
@@ -150,7 +160,7 @@ describe("SettingsPage", () => {
 
   it("saves profile on submit", async () => {
     mockUpdateProfile.mockResolvedValue({ ...PROFILE, full_name: "New Name" });
-    render(<SettingsPage />);
+    renderWithQueryClient(<SettingsPage />);
     await screen.findByDisplayValue("Test User");
 
     const nameInput = screen.getByDisplayValue("Test User");
@@ -164,7 +174,7 @@ describe("SettingsPage", () => {
   });
 
   it("has password change section", async () => {
-    render(<SettingsPage />);
+    renderWithQueryClient(<SettingsPage />);
     await screen.findByText("Settings");
 
     const heading = screen.getByRole("heading", { name: "Change Password" });

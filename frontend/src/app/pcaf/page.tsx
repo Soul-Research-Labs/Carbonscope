@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/Skeleton";
@@ -22,10 +23,7 @@ export default function PCAFPage() {
   useDocumentTitle("PCAF Portfolios");
   const { user, loading } = useAuth();
   const router = useRouter();
-  const [portfolios, setPortfolios] = useState<FinancedPortfolio[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [summary, setSummary] = useState<PortfolioSummary | null>(null);
-  const [assets, setAssets] = useState<FinancedAsset[]>([]);
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [newName, setNewName] = useState("");
@@ -43,41 +41,47 @@ export default function PCAFPage() {
     data_quality_score: 3,
   });
 
-  const fetchPortfolios = useCallback(async () => {
-    try {
-      const data = await listPortfolios();
-      setPortfolios(data.items);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load portfolios");
-    }
-  }, []);
+  const portfoliosQuery = useQuery<{ items: FinancedPortfolio[] }>({
+    queryKey: ["pcaf-portfolios", user?.company_id],
+    queryFn: listPortfolios,
+    enabled: !!user && !loading,
+  });
 
-  const fetchPortfolioDetails = useCallback(async (id: string) => {
-    try {
-      const [s, a] = await Promise.all([
-        getPortfolioSummary(id),
-        listPortfolioAssets(id),
-      ]);
-      setSummary(s);
-      setAssets(a.items);
-    } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Failed to load portfolio");
+  const portfolios = portfoliosQuery.data?.items ?? [];
+
+  const detailsQuery = useQuery<[PortfolioSummary, { items: FinancedAsset[] }]>(
+    {
+      queryKey: ["pcaf-details", selectedId],
+      queryFn: () =>
+        Promise.all([
+          getPortfolioSummary(selectedId!),
+          listPortfolioAssets(selectedId!),
+        ]),
+      enabled: !!selectedId,
+    },
+  );
+
+  const summary = detailsQuery.data?.[0] ?? null;
+  const assets = detailsQuery.data?.[1]?.items ?? [];
+
+  useEffect(() => {
+    if (portfoliosQuery.error) {
+      setError(
+        portfoliosQuery.error instanceof Error
+          ? portfoliosQuery.error.message
+          : "Failed to load portfolios",
+      );
     }
-  }, []);
+  }, [portfoliosQuery.error]);
 
   useEffect(() => {
     if (!loading && !user) router.push("/login");
-    if (user) fetchPortfolios();
-  }, [user, loading, router, fetchPortfolios]);
-
-  useEffect(() => {
-    if (selectedId) fetchPortfolioDetails(selectedId);
-  }, [selectedId, fetchPortfolioDetails]);
+  }, [user, loading, router]);
 
   const handleCreate = async () => {
     try {
       const p = await createPortfolio({ name: newName, year: newYear });
-      setPortfolios((prev) => [p, ...prev]);
+      await portfoliosQuery.refetch();
       setShowCreate(false);
       setNewName("");
       setSelectedId(p.id);
@@ -90,9 +94,8 @@ export default function PCAFPage() {
     if (!selectedId) return;
     try {
       const a = await addPortfolioAsset(selectedId, assetForm);
-      setAssets((prev) => [a, ...prev]);
       setShowAssetForm(false);
-      fetchPortfolioDetails(selectedId);
+      await detailsQuery.refetch();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to add asset");
     }
@@ -102,8 +105,7 @@ export default function PCAFPage() {
     if (!selectedId) return;
     try {
       await deletePortfolioAsset(selectedId, assetId);
-      setAssets((prev) => prev.filter((a) => a.id !== assetId));
-      fetchPortfolioDetails(selectedId);
+      await detailsQuery.refetch();
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to delete asset");
     } finally {
@@ -111,7 +113,7 @@ export default function PCAFPage() {
     }
   };
 
-  if (loading) return <PageSkeleton />;
+  if (loading || portfoliosQuery.isLoading) return <PageSkeleton />;
   if (!user) return null;
 
   return (
