@@ -8,6 +8,8 @@ anti-hallucination, benchmark), and sets weights on-chain via EMA.
 from __future__ import annotations
 
 import argparse
+import hashlib
+import hmac
 import json
 import os
 import random
@@ -22,6 +24,16 @@ from carbonscope.test_cases.generator import get_curated_cases, generate_synthet
 
 # Path for persisting EMA scores across restarts
 _SCORES_FILE = os.getenv("VALIDATOR_SCORES_PATH", "validator_scores.json")
+_SCORES_HMAC_FILE = _SCORES_FILE + ".sig"
+
+
+def _score_hmac_key() -> bytes:
+    """Derive HMAC key from the validator wallet hotkey (unique per validator)."""
+    key = os.getenv("VALIDATOR_SCORE_HMAC_KEY", "")
+    if not key:
+        # Fallback: use a static salt — better than nothing
+        key = "carbonscope-validator-scores-v1"
+    return key.encode("utf-8")
 
 
 class CarbonValidator:
@@ -133,10 +145,21 @@ class CarbonValidator:
     # ── Score persistence ─────────────────────────────────────────────
 
     def _load_scores(self) -> dict[int, float]:
-        """Load persisted EMA scores from disk."""
+        """Load persisted EMA scores from disk with HMAC integrity verification."""
         try:
             with open(_SCORES_FILE) as f:
-                data = json.load(f)
+                raw_data = f.read()
+                data = json.loads(raw_data)
+            # Verify HMAC if signature file exists
+            if os.path.exists(_SCORES_HMAC_FILE):
+                with open(_SCORES_HMAC_FILE) as f:
+                    stored_sig = f.read().strip()
+                expected_sig = hmac.new(
+                    _score_hmac_key(), raw_data.encode("utf-8"), hashlib.sha256
+                ).hexdigest()
+                if not hmac.compare_digest(stored_sig, expected_sig):
+                    bt.logging.error("Score file integrity check failed — possible tampering. Starting fresh.")
+                    return {}
             scores = {int(k): float(v) for k, v in data.items()}
             bt.logging.info(f"Loaded {len(scores)} persisted scores from {_SCORES_FILE}")
             return scores
@@ -144,14 +167,23 @@ class CarbonValidator:
             return {}
 
     def _save_scores(self) -> None:
-        """Persist EMA scores to disk atomically (write-then-rename)."""
+        """Persist EMA scores to disk atomically with HMAC signature."""
         tmp = _SCORES_FILE + ".tmp"
         try:
+            raw_data = json.dumps({str(k): v for k, v in self.scores.items()})
             with open(tmp, "w") as f:
-                json.dump({str(k): v for k, v in self.scores.items()}, f)
+                f.write(raw_data)
             os.replace(tmp, _SCORES_FILE)
+            # Write HMAC signature
+            sig = hmac.new(
+                _score_hmac_key(), raw_data.encode("utf-8"), hashlib.sha256
+            ).hexdigest()
+            sig_tmp = _SCORES_HMAC_FILE + ".tmp"
+            with open(sig_tmp, "w") as f:
+                f.write(sig)
+            os.replace(sig_tmp, _SCORES_HMAC_FILE)
         except OSError:
-            bt.logging.warning("Failed to persist scores to disk")
+            bt.logging.error("Failed to persist scores to disk — data may be lost on restart")
 
     # ── Weight management ───────────────────────────────────────────
 

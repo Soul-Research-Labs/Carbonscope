@@ -90,6 +90,7 @@ async def auth_client(client: AsyncClient) -> AsyncClient:
         "email": "test@example.com",
         "password": "Securepass123!",
     })
-    token = resp.json()["access_token"]
+    # Extract token from httpOnly cookie or response body (backward compat)
+    token = resp.cookies.get("access_token") or resp.json().get("access_token", "")
     client.headers["Authorization"] = f"Bearer {token}"
     return client

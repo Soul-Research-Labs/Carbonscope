@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/Skeleton";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   listReviews,
   createReview,
@@ -29,6 +30,8 @@ export default function ReviewsPage() {
   const [error, setError] = useState("");
   const [showCreate, setShowCreate] = useState(false);
   const [selectedReport, setSelectedReport] = useState("");
+  const [rejectTarget, setRejectTarget] = useState<string | null>(null);
+  const [rejectNotes, setRejectNotes] = useState("");
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -67,13 +70,20 @@ export default function ReviewsPage() {
     }
   };
 
-  const handleAction = async (reviewId: string, action: string) => {
+  const handleAction = async (reviewId: string, action: string, notes?: string) => {
     try {
-      const updated = await reviewAction(reviewId, action);
+      const updated = await reviewAction(reviewId, action, notes);
       setReviews((prev) => prev.map((r) => (r.id === reviewId ? updated : r)));
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Action failed");
     }
+  };
+
+  const handleReject = async () => {
+    if (!rejectTarget) return;
+    await handleAction(rejectTarget, "reject", rejectNotes);
+    setRejectTarget(null);
+    setRejectNotes("");
   };
 
   if (loading) return <PageSkeleton />;
@@ -171,7 +181,7 @@ export default function ReviewsPage() {
                       Approve
                     </button>
                     <button
-                      onClick={() => handleAction(r.id, "reject")}
+                      onClick={() => setRejectTarget(r.id)}
                       className="rounded bg-red-600 px-3 py-1 text-sm text-white"
                     >
                       Reject
@@ -188,6 +198,19 @@ export default function ReviewsPage() {
           </p>
         )}
       </div>
+
+      <ConfirmDialog
+        open={!!rejectTarget}
+        title="Reject Review"
+        message="Are you sure you want to reject this review? Please provide a reason."
+        confirmLabel="Reject"
+        variant="danger"
+        onConfirm={handleReject}
+        onCancel={() => { setRejectTarget(null); setRejectNotes(""); }}
+      />
+      {rejectTarget && (
+        <div className="fixed inset-0 z-40" aria-hidden="true" />
+      )}
     </main>
   );
 }

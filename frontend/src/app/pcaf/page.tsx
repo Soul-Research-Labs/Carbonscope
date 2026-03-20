@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { PageSkeleton } from "@/components/Skeleton";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import {
   listPortfolios,
   createPortfolio,
@@ -30,6 +31,7 @@ export default function PCAFPage() {
 
   // Asset form
   const [showAssetForm, setShowAssetForm] = useState(false);
+  const [deleteAssetId, setDeleteAssetId] = useState<string | null>(null);
   const [assetForm, setAssetForm] = useState({
     asset_name: "",
     asset_class: "corporate_bonds",
@@ -102,6 +104,8 @@ export default function PCAFPage() {
       fetchPortfolioDetails(selectedId);
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to delete asset");
+    } finally {
+      setDeleteAssetId(null);
     }
   };
 
@@ -335,7 +339,7 @@ export default function PCAFPage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => handleDeleteAsset(a.id)}
+                      onClick={() => setDeleteAssetId(a.id)}
                       className="text-red-400 hover:text-red-300"
                     >
                       Delete
@@ -351,6 +355,16 @@ export default function PCAFPage() {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!deleteAssetId}
+        title="Delete Asset"
+        message="Are you sure you want to delete this asset? This action cannot be undone."
+        confirmLabel="Delete"
+        variant="danger"
+        onConfirm={() => deleteAssetId && handleDeleteAsset(deleteAssetId)}
+        onCancel={() => setDeleteAssetId(null)}
+      />
     </main>
   );
 }

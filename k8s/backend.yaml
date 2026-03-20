@@ -7,6 +7,11 @@ metadata:
     app: backend
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
   selector:
     matchLabels:
       app: backend
@@ -17,7 +22,7 @@ spec:
     spec:
       initContainers:
         - name: migrate
-          image: ghcr.io/carbonscope/carbonscope:v0.6.0 # Pin to release tag; update on deploy
+          image: ghcr.io/carbonscope/carbonscope:v0.6.0 # Update via: kubectl set image or CI/CD pipeline
           imagePullPolicy: IfNotPresent
           command: ["alembic", "upgrade", "head"]
           envFrom:
@@ -38,7 +43,7 @@ spec:
               value: "postgresql+asyncpg://carbonscope:$(POSTGRES_PASSWORD)@postgres:5432/carbonscope"
       containers:
         - name: backend
-          image: ghcr.io/carbonscope/carbonscope:v0.6.0 # Pin to release tag; update on deploy
+          image: ghcr.io/carbonscope/carbonscope:v0.6.0 # Must match initContainers image tag
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

@@ -34,6 +34,10 @@ def validate_webhook_url(url: str) -> None:
     parsed = urlparse(url)
 
     # Must be HTTPS (or HTTP in development)
+    import os
+    env = os.getenv("ENV", "development").lower()
+    if env == "production" and parsed.scheme != "https":
+        raise ValueError("Webhook URL must use HTTPS in production")
     if parsed.scheme not in ("http", "https"):
         raise ValueError("Webhook URL must use http or https scheme")
 

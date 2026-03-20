@@ -331,8 +331,8 @@ class AuditLog(Base):
     )
 
     id: str = Column(String(32), primary_key=True, default=_new_id)
-    user_id: str = Column(String(32), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
-    company_id: str = Column(String(32), ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id: str = Column(String(32), ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True)
+    company_id: str = Column(String(32), ForeignKey("companies.id", ondelete="SET NULL"), nullable=True, index=True)
     action: str = Column(String(100), nullable=False)
     resource_type: str = Column(String(100), nullable=False)
     resource_id: str | None = Column(String(32), nullable=True)

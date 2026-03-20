@@ -51,7 +51,7 @@ function syncLoggedInCookie(loggedIn: boolean): void {
     document.cookie = "cs_access_token=; Path=/; Max-Age=0; SameSite=Lax";
     return;
   }
-  document.cookie = "cs_access_token=1; Path=/; SameSite=Lax";
+  document.cookie = "cs_access_token=1; Path=/; SameSite=Lax; Secure";
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -86,16 +86,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // Server sets httpOnly cookies (access_token, refresh_token) automatically
       syncLoggedInCookie(true);
 
-      // Decode JWT payload — handle base64url encoding (RFC 7519)
-      const raw = resp.access_token.split(".")[1];
-      const payload = decodeBase64UrlPayload(raw);
-      const u: User = {
-        id: String(payload.sub ?? ""),
-        email,
-        full_name: "",
-        company_id: String(payload.company_id ?? ""),
-        role: "",
-      };
+      // Use user info from login response (server no longer sends raw JWT in body)
+      const u: User = resp.user
+        ? {
+            id: resp.user.id,
+            email: resp.user.email,
+            full_name: resp.user.full_name ?? "",
+            company_id: resp.user.company_id,
+            role: resp.user.role ?? "",
+          }
+        : { id: "", email, full_name: "", company_id: "", role: "" };
       localStorage.setItem("user", JSON.stringify(u));
       setUser(u);
       const redirect = searchParams.get("redirect");
@@ -156,9 +156,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router, toast]);
 
   return (
-    <AuthContext.Provider
-      value={{ user, loading, login, register, logout }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

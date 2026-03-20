@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 
 logger = logging.getLogger(__name__)
 from pydantic import BaseModel, EmailStr, Field, field_validator
-from sqlalchemy import delete, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -63,12 +63,20 @@ from api.services import audit
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
+class LoginUser(BaseModel):
+    id: str
+    email: str
+    company_id: str
+    role: str
+
+
 class TokenWithRefresh(BaseModel):
-    access_token: str
-    refresh_token: str
+    access_token: str = ""
+    refresh_token: str = ""
     csrf_token: str | None = None
     token_type: str = "bearer"
     mfa_required: bool = False
+    user: LoginUser | None = None
 
 
 REFRESH_TOKEN_COOKIE_MAX_AGE = 30 * 24 * 60 * 60  # 30 days
@@ -265,9 +273,14 @@ async def login(request: Request, body: UserLogin, db: AsyncSession = Depends(ge
     )
     await db.commit()
 
+    login_user = LoginUser(
+        id=user.id, email=user.email,
+        company_id=user.company_id, role=user.role,
+    )
     response = Response(
         content=TokenWithRefresh(
             access_token=access, refresh_token=refresh, csrf_token=csrf,
+            user=login_user,
         ).model_dump_json(),
         media_type="application/json",
     )
@@ -402,16 +415,27 @@ async def gdpr_hard_delete(
 
     company_id = target.company_id
 
-    # Delete owned resources in dependency order (children first)
-    for model in (
-        DataListing, FinancedPortfolio, Scenario, Questionnaire,
-        SupplyChainLink, Webhook, Subscription,
-        EmissionReport, DataUpload,
-    ):
-        if hasattr(model, "company_id"):
-            await db.execute(
-                delete(model).where(model.company_id == company_id)
-            )
+    # Check if other active users belong to the same company
+    other_users = await db.execute(
+        select(func.count()).select_from(User).where(
+            User.company_id == company_id,
+            User.id != user_id,
+            User.deleted_at.is_(None),
+        )
+    )
+    has_other_users = other_users.scalar() > 0
+
+    # Only delete company-level resources if no other active users remain
+    if not has_other_users:
+        for model in (
+            DataListing, FinancedPortfolio, Scenario, Questionnaire,
+            SupplyChainLink, Webhook, Subscription,
+            EmissionReport, DataUpload,
+        ):
+            if hasattr(model, "company_id"):
+                await db.execute(
+                    delete(model).where(model.company_id == company_id)
+                )
 
     # Delete the user's MFA secrets
     await db.execute(delete(MFASecret).where(MFASecret.user_id == user_id))

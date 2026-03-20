@@ -14,6 +14,7 @@ import {
   ApiError,
 } from "@/lib/api";
 import { CardSkeleton } from "@/components/Skeleton";
+import ConfirmDialog from "@/components/ConfirmDialog";
 import { useToast } from "@/components/Toast";
 
 export default function BillingPage() {
@@ -25,6 +26,7 @@ export default function BillingPage() {
   const [plans, setPlans] = useState<Record<string, PlanLimits> | null>(null);
   const [error, setError] = useState("");
   const [changing, setChanging] = useState(false);
+  const [pendingPlan, setPendingPlan] = useState<string | null>(null);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -49,6 +51,7 @@ export default function BillingPage() {
   async function handleChangePlan(plan: string) {
     setChanging(true);
     setError("");
+    setPendingPlan(null);
     try {
       const updated = await changePlan(plan);
       setSub(updated);
@@ -168,7 +171,7 @@ export default function BillingPage() {
                         : "btn-primary"
                     }`}
                     disabled={isCurrent || changing}
-                    onClick={() => handleChangePlan(planKey)}
+                    onClick={() => setPendingPlan(planKey)}
                   >
                     {isCurrent
                       ? "Current Plan"
@@ -206,6 +209,15 @@ export default function BillingPage() {
           ))}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={!!pendingPlan}
+        title="Change Plan"
+        message={`Are you sure you want to switch to the ${pendingPlan} plan? Feature access may change.`}
+        confirmLabel="Switch Plan"
+        onConfirm={() => pendingPlan && handleChangePlan(pendingPlan)}
+        onCancel={() => setPendingPlan(null)}
+      />
     </div>
   );
 }

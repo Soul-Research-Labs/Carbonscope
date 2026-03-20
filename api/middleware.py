@@ -21,7 +21,11 @@ _MAX_BODY_BYTES = int(os.getenv("MAX_REQUEST_BODY_BYTES", str(1 * 1024 * 1024)))
 
 
 class RequestBodyLimitMiddleware(BaseHTTPMiddleware):
-    """Reject requests whose Content-Length exceeds the configured maximum."""
+    """Reject requests whose body exceeds the configured maximum.
+
+    Checks both Content-Length header and actual body stream size
+    to prevent bypass via chunked transfer encoding.
+    """
 
     async def dispatch(self, request: Request, call_next):
         content_length = request.headers.get("content-length")
@@ -30,6 +34,14 @@ class RequestBodyLimitMiddleware(BaseHTTPMiddleware):
                 status_code=413,
                 content={"detail": "Request body too large"},
             )
+        # For requests without Content-Length (chunked), read and check body size
+        if request.method in ("POST", "PUT", "PATCH") and not content_length:
+            body = await request.body()
+            if len(body) > _MAX_BODY_BYTES:
+                return JSONResponse(
+                    status_code=413,
+                    content={"detail": "Request body too large"},
+                )
         return await call_next(request)
 
 

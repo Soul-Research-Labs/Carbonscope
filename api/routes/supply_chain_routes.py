@@ -147,7 +147,9 @@ async def delete_link(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    """Remove a supply chain link."""
+    """Remove a supply chain link (admin only)."""
+    if user.role != "admin":
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin role required")
     removed = await remove_link(db, link_id, user.company_id)
     if not removed:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Link not found")

@@ -85,14 +85,14 @@ kubectl -n carbonscope scale deployment backend --replicas=4
 
 The namespace-level quota prevents runaway resource consumption:
 
-| Resource | Limit |
-|---|---|
-| CPU requests | 8 cores |
-| Memory requests | 8 Gi |
-| CPU limits | 16 cores |
-| Memory limits | 16 Gi |
-| Pods | 30 |
-| PVCs | 5 |
+| Resource        | Limit    |
+| --------------- | -------- |
+| CPU requests    | 8 cores  |
+| Memory requests | 8 Gi     |
+| CPU limits      | 16 cores |
+| Memory limits   | 16 Gi    |
+| Pods            | 30       |
+| PVCs            | 5        |
 
 To check current usage:
 

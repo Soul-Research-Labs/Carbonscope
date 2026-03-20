@@ -221,11 +221,12 @@ export interface User {
 }
 
 export interface Token {
-  access_token: string;
+  access_token?: string;
   refresh_token?: string;
   csrf_token?: string | null;
   mfa_required?: boolean;
   token_type: string;
+  user?: User;
 }
 
 export async function register(data: {

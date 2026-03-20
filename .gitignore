@@ -34,3 +34,6 @@ Thumbs.db
 k8s/secrets.local.yaml
 .commit_msg.txt
 tests_output.log
+
+# Validator HMAC artifacts
+validator_scores.json.sig

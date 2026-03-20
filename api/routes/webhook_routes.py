@@ -12,7 +12,7 @@ from api.database import get_db
 from api.deps import get_current_user, require_admin
 from api.limiter import limiter
 from api.models import User
-from api.schemas import PaginatedResponse, WebhookCreate, WebhookDeliveryOut, WebhookOut, WebhookOutPublic, WebhookToggle
+from api.schemas import PaginatedResponse, WebhookCreate, WebhookCreatedOut, WebhookDeliveryOut, WebhookOut, WebhookOutPublic, WebhookToggle
 from api.services.webhooks import create_webhook, delete_webhook, list_deliveries, list_webhooks, retry_delivery, toggle_webhook
 from api.services import audit
 
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 
-@router.post("/", response_model=WebhookOut, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=WebhookCreatedOut, status_code=status.HTTP_201_CREATED)
 @limiter.limit(RATE_LIMIT_DEFAULT)
 async def add_webhook(
     request: Request,

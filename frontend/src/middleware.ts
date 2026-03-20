@@ -10,6 +10,29 @@ const PUBLIC_ROUTES = [
 ];
 
 /**
+ * Decode the JWT payload and check if the token has expired.
+ * Does NOT verify signature (edge middleware has no access to secret);
+ * the backend validates signatures on every API call.
+ */
+function isTokenExpired(jwt: string): boolean {
+  try {
+    const parts = jwt.split(".");
+    if (parts.length !== 3) return true;
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(
+      base64.length + ((4 - (base64.length % 4)) % 4),
+      "=",
+    );
+    const payload = JSON.parse(atob(padded));
+    if (typeof payload.exp !== "number") return true;
+    // Allow 30s clock skew
+    return payload.exp * 1000 < Date.now() - 30_000;
+  } catch {
+    return true;
+  }
+}
+
+/**
  * Next.js Edge Middleware — redirects unauthenticated users to /login
  * and authenticated users away from auth pages.
  */
@@ -25,13 +48,19 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const token =
-    request.cookies.get("access_token")?.value ??
-    request.cookies.get("cs_access_token")?.value;
+  const accessToken = request.cookies.get("access_token")?.value;
+  const indicator = request.cookies.get("cs_access_token")?.value;
+
+  // Token is valid if the httpOnly access_token exists and isn't expired
+  const hasValidToken = accessToken ? !isTokenExpired(accessToken) : false;
+  // Fallback: if no httpOnly cookie visible (it may not be readable in edge),
+  // use the indicator cookie as a hint (backend still validates on each API call)
+  const isAuthenticated = hasValidToken || !!indicator;
+
   const isPublicRoute = PUBLIC_ROUTES.some((r) => pathname.startsWith(r));
 
   // Unauthenticated user trying to access protected route → redirect to login
-  if (!token && !isPublicRoute && pathname !== "/") {
+  if (!isAuthenticated && !isPublicRoute && pathname !== "/") {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("redirect", pathname);
@@ -39,7 +68,7 @@ export function middleware(request: NextRequest) {
   }
 
   // Authenticated user trying to access auth pages → redirect to dashboard
-  if (token && isPublicRoute) {
+  if (isAuthenticated && isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

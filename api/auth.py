@@ -15,7 +15,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from api.config import ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, MFA_PENDING_TOKEN_EXPIRE_MINUTES, SECRET_KEY
 from api.models import User, RefreshToken, RevokedToken, PasswordResetToken
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
 
 # Refresh token expiry
 REFRESH_TOKEN_EXPIRE_DAYS = 30

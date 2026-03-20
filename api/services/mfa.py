@@ -9,15 +9,25 @@ import os
 import secrets
 import struct
 import time
+from functools import lru_cache
 
 from cryptography.fernet import Fernet
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.primitives import hashes
 
 
+@lru_cache(maxsize=1)
 def _get_fernet() -> Fernet:
-    """Build a Fernet cipher from TOTP_ENCRYPTION_KEY (32 hex chars → 16 bytes → url-safe b64)."""
+    """Build a Fernet cipher from TOTP_ENCRYPTION_KEY using HKDF key derivation."""
     from api.config import TOTP_ENCRYPTION_KEY
-    raw = TOTP_ENCRYPTION_KEY.encode("utf-8")[:32]
-    key = base64.urlsafe_b64encode(raw.ljust(32, b"\0"))
+    raw = TOTP_ENCRYPTION_KEY.encode("utf-8")
+    derived = HKDF(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=b"carbonscope-totp-v1",
+        info=b"fernet-key",
+    ).derive(raw)
+    key = base64.urlsafe_b64encode(derived)
     return Fernet(key)
 
 

@@ -404,16 +404,20 @@ class WebhookToggle(BaseModel):
 
 
 class WebhookOut(BaseModel):
-    """Full webhook details — includes secret (returned only on creation)."""
+    """Webhook details returned from API (secret is excluded for security)."""
     id: str
     company_id: str
     url: str
     event_types: list[str]
-    secret: str
     active: bool
     created_at: datetime
 
     model_config = {"from_attributes": True}
+
+
+class WebhookCreatedOut(WebhookOut):
+    """Webhook details returned on creation only — includes secret so user can save it."""
+    secret: str
 
 
 class WebhookOutPublic(BaseModel):
