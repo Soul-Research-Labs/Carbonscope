@@ -6,6 +6,51 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ---
 
+## [0.27.0] — 2026-03-20 — Round 5 Hardening & Polish
+
+### Security
+
+- **Specific exception handling**: Replaced 19 bare `except Exception:` blocks with targeted types across 10 backend files (scheduler, email, llm_parser, questionnaire, recommendations, database, main, stripe_routes, marketplace_routes, auth_routes)
+- **Soft-delete filter consistency** (`deps.py`, `auth_routes.py`): `get_current_user`, `get_mfa_pending_user`, and `forgot_password` now filter `deleted_at IS NULL` — prevents ghost accounts from authenticating
+- **Open redirect hardening** (`auth-context.tsx`): Replaced regex with `new URL()` parser + origin check for redirect validation
+- **Token refresh race fix** (`api.ts`): Moved `refreshPromise = null` to `finally` block; added try-catch to `getCsrfToken()`
+- **Review admin gate** (`review_routes.py`): Approve/reject actions now require `role == "admin"` at route level
+- **security.txt** (`frontend/public/.well-known/security.txt`): RFC 9116 compliant security contact file
+
+### Added
+
+- **Dashboard empty state** (`dashboard/page.tsx`): New users see onboarding CTA instead of blank KPI cards
+- **Toast accessibility** (`Toast.tsx`): Error toasts now use `role="alert"` with `aria-live="assertive"`; info/success keep `role="status"` with `polite`
+- **DataTable memoization** (`DataTable.tsx`): Wrapped in `React.memo` to prevent unnecessary re-renders
+- **Breadcrumbs navigation**: Added `Breadcrumbs` component to reports, scenarios, supply-chain, compliance, and upload pages
+- **Frontend health endpoint** (`/api/health`): Lightweight JSON endpoint for k8s probes
+- **Database schema reference** (`docs/DATABASE.md`): Complete schema docs covering all 25 models, relationships, indexes, and constraints
+
+### Infrastructure
+
+- **Alembic autogenerate** (`env.py`): Added `compare_type=True` to detect column type changes
+- **Ruff lint rules** (`pyproject.toml`): Expanded from `E/F/W/I` to include `B` (bugbear), `UP` (pyupgrade), `SIM` (simplify)
+- **Docker resource limits** (`docker-compose.yml`): Redis 256M/0.5 CPU, backend 1G/1.0 CPU
+- **K8s frontend probes** (`frontend.yaml`): Changed probe path from `/` to `/api/health`
+- **Redis PDB** (`redis.yaml`): Added `PodDisruptionBudget` (`maxUnavailable: 1`)
+- **Version sync** (`setup.py`): Updated to 0.27.0, `bittensor>=10.0.0`
+- **Frontend coverage script** (`package.json`): Added `test:coverage` npm script
+
+### Fixed
+
+- **AlertsPage tests**: Added `useEventSource` mock — resolved all 7 pre-existing test failures
+- **DataTable tests**: Updated pagination button queries to match new `aria-label` attributes
+- **Toast tests**: Updated ARIA assertions for per-item `role`/`aria-live`; added assertive error test
+- **Soft-delete test** (`test_phase6_business_logic.py`): Updated expected status from 403 → 401 to match new `deleted_at` filter behavior
+- **N+1 query** (`data_export.py`): Batch-loaded assets and questions via `.in_()` queries instead of per-item lookups
+
+### Tests
+
+- Backend: 778 passed
+- Frontend: 215 passed (0 failures — first time all green)
+
+---
+
 ## [0.26.0] — 2026-03-20 — Round 4 Security Hardening
 
 ### Security

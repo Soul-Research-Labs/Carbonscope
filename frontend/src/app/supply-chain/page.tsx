@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { useAuth } from "@/lib/auth-context";
 import ConfirmDialog from "@/components/ConfirmDialog";
 import {
@@ -125,6 +126,7 @@ export default function SupplyChainPage() {
 
   return (
     <div className="max-w-6xl mx-auto p-8 space-y-8">
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Supply Chain" }]} />
       <h1 className="text-2xl font-bold">Supply Chain Network</h1>
 
       {error && (

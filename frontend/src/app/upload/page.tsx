@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { useAuth } from "@/lib/auth-context";
 import { uploadData, createEstimate } from "@/lib/api";
 import { PageSkeleton } from "@/components/Skeleton";
@@ -92,6 +93,7 @@ export default function UploadPage() {
 
   return (
     <div className="max-w-3xl mx-auto p-8">
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Upload Data" }]} />
       <h1 className="text-2xl font-bold mb-2">Upload Operational Data</h1>
       <p className="text-[var(--muted)] mb-8">
         Enter your company&apos;s operational data. CarbonScope will estimate

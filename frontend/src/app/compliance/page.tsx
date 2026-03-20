@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Breadcrumbs from "@/components/Breadcrumbs";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -89,6 +90,7 @@ export default function CompliancePage() {
 
   return (
     <div className="max-w-5xl mx-auto p-8 space-y-8">
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Compliance" }]} />
       <h1 className="text-2xl font-bold">Compliance Reports</h1>
 
       {/* Controls */}

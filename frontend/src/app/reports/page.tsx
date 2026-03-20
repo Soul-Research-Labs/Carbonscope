@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/lib/auth-context";
 import { listReports, exportReports, type EmissionReport } from "@/lib/api";
 import { CardSkeleton } from "@/components/Skeleton";
+import Breadcrumbs from "@/components/Breadcrumbs";
 
 const PAGE_SIZE = 10;
 
@@ -126,6 +127,7 @@ export default function ReportsPage() {
 
   return (
     <div className="max-w-5xl mx-auto p-8">
+      <Breadcrumbs items={[{ label: "Dashboard", href: "/dashboard" }, { label: "Reports" }]} />
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Emission Reports</h1>
         <button

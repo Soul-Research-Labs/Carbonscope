@@ -30,6 +30,10 @@ vi.mock("@/components/Toast", () => ({
   useToast: () => ({ toast: vi.fn() }),
 }));
 
+vi.mock("@/hooks/useEventSource", () => ({
+  useEventSource: vi.fn(),
+}));
+
 import AlertsPage from "@/app/alerts/page";
 
 const ALERTS = {

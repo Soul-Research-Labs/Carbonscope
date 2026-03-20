@@ -1,0 +1,5 @@
+# RFC 9116 — https://securitytxt.org/
+Contact: mailto:security@carbonscope.io
+Preferred-Languages: en
+Canonical: https://carbonscope.io/.well-known/security.txt
+Expires: 2027-03-20T00:00:00.000Z
